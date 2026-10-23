@@ -217,7 +217,9 @@
 최종 실행 함수입니다. 위 전역 변수가 기본값이고, 인자로 **그 실행에서만** 덮어쓸 수 있습니다.
 
 ```python
-state = run_bunker_maxi(spec=base_spec, duration=SIM_TIME, buff_delay=BUFF_DELAY, order=ORDER_ORIGIN)
+state = run_bunker_maxi(spec, duration=60, buff_delay=BUFF_DELAY, breaker=True, vulkan=True, afterimage=True,
+                    infantry=True, aura=True, order=None, hecate_on=True,
+                    extra_buffs=True, conti_on=None, restraint_on=None, reuse=True, link_on=None, fatal_on=True)
 ```
 
 | 인자 | 의미 | 기본값 |
