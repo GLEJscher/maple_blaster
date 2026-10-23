@@ -2,9 +2,10 @@
 
 메이플스토리 블래스터(블래) DPM 시뮬레이터입니다. 이 문서는 **사용자가 직접 바꿀 수 있는 입력값**만 설명합니다.
 
+- `Skills.py`와 `Skills.ipynb`는 같은 내용의 파일입니다. (ipynb를 py로 변환한 것)
 - 입력값은 `Skills.py`(또는 `Skills.ipynb`)의 맨 위, `아래 코드 수정X` 구분선 **위쪽**에 모여 있습니다.
 - 구분선 아래의 코드(스킬 정의, 이벤트 엔진, 규칙)는 수정하지 않는 것을 전제로 합니다.
-- 캐릭터 스탯은 `Attribute.py`의 `CharaInfo`로 입력합니다.
+- 캐릭터 스펙은 `Skills` 파일의 `base_spec`에 있는 `CharaInfo(...)` 값을 직접 수정해서 입력합니다. (`CharaInfo` 클래스 자체는 `Attribute.py`에 정의되어 있음)
 - 값을 바꾼 뒤에는 **입력 셀부터 아래로 다시 실행**해야 반영됩니다. (ipynb 기준)
 - 주석에 `임시값`이라고 적힌 항목은 인게임에서 측정하지 못해 가정한 값입니다. 측정하면 바꿔 주세요.
 
@@ -13,7 +14,7 @@
 ## 1. 캐릭터 스펙
 
 ### `base_spec` (`CharaInfo`)
-스탯창 기준 스펙입니다. **자버프를 모두 사용하고 헤카테를 소환한 비전투 스탯창** 기준으로 적습니다.
+`Skills` 파일의 `base_spec = CharaInfo(...)`에 있는 값을 자신의 스펙으로 바꿔 입력합니다. 스탯창 기준 스펙이며, **자버프를 모두 사용하고 헤카테를 소환한 비전투 스탯창** 기준으로 적습니다.
 
 | 필드 | 의미 |
 |---|---|
@@ -246,4 +247,19 @@ state = run_bunker_maxi(spec, duration=60, buff_delay=BUFF_DELAY, breaker=True, 
 
 ```python
 dframe = pd.DataFrame(state.log, columns=["t", "skill", "damage"])
+```
+
+### 예시: 총합 데미지 확인
+
+```python
+total_damage = dframe["damage"].sum()
+print(f"총합 데미지: {total_damage:,.0f}")
+print(f"{SIM_TIME}초 동안의 DPM: {total_damage / SIM_TIME * 60:,.0f}")
+```
+
+스킬별 총 데미지와 비중은 다음처럼 볼 수 있습니다.
+
+```python
+by_skill = dframe.groupby("skill")["damage"].sum().sort_values(ascending=False)
+print(by_skill)
 ```
