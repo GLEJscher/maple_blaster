@@ -18,9 +18,9 @@
 | 필드 | 의미 |
 |---|---|
 | `level` | 캐릭터 레벨 |
-| `mainStat`, `mainStatp`, `fixedMainStat` | 주스탯, 주스탯 %, 고정 주스탯 |
-| `subStat`, `subStatp`, `fixedSubStat` | 부스탯, 부스탯 %, 고정 부스탯 |
-| `attack`, `attackp` | 공격력, 공격력 % |
+| `mainStat`, `mainStatp`, `fixedMainStat` | 주스탯 기본 수치, 주스탯 % 수치, % 미적용 주스탯 |
+| `subStat`, `subStatp`, `fixedSubStat` | 부스탯 기본 수치, 부스탯 % 수치, % 미적용 부스탯 |
+| `attack`, `attackp` | 공격력 기본 수치, 공격력 % 수치 |
 | `damage` | 데미지 % |
 | `bossDamage` | 보스 데미지 % |
 | `armorIgnore` | 방어율 무시 % (다른 값과 곱연산으로 합쳐짐) |
