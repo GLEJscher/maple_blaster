@@ -257,9 +257,14 @@ print(f"총합 데미지: {total_damage:,.0f}")
 print(f"{SIM_TIME}초 동안의 DPM: {total_damage / SIM_TIME * 60:,.0f}")
 ```
 
-스킬별 총 데미지와 비중은 다음처럼 볼 수 있습니다.
+### 예시: 스킬별 딜 점유율 확인
 
 ```python
-by_skill = dframe.groupby("skill")["damage"].sum().sort_values(ascending=False)
-print(by_skill)
+by_skill = dframe.groupby("skill")["damage"].agg(["sum", "count"])
+by_skill.columns = ["총 데미지", "사용 횟수"]
+by_skill["점유율(%)"] = by_skill["총 데미지"] / by_skill["총 데미지"].sum() * 100
+by_skill = by_skill.sort_values("총 데미지", ascending=False)
+print(by_skill.round({"점유율(%)": 2}))
 ```
+
+`사용 횟수`는 로그에 찍힌 행 수(공격 발동 횟수)이고, 점유율의 합은 100%입니다.
