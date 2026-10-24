@@ -326,3 +326,13 @@ print(origin_plan_candidates(base_spec, ORDER_ORIGIN_FIRST, top=5))
 ```
 
 오리진을 극딜에 붙여 쓰는 조합(`ORIGIN_LATE_MODE = "미루기"` 기준)을 후보 번호별로 돌려서, 오리진 4번이 1200초 안에 온전히 들어오는지, 극딜 횟수, 총딜을 비교합니다.
+
+---
+
+## 라이선스
+
+[MIT License](LICENSE)
+
+## AI 활용
+
+이 프로젝트는 개발 과정에서 Claude(Anthropic)의 도움을 받았습니다. 규칙 설계와 검증은 작성자가 직접 했습니다.
