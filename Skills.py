@@ -163,7 +163,7 @@ LINK_LVL = {"데슬": 2, "데벤져": 2, "카데나": 2, "레테": 2, "키네시
 KAIN_HITS_PER_PREP = 5     # 사전 준비 1번에 필요한 공격 적중 횟수
 KAIN_PREP_NEED = 5         # 발동에 필요한 사전 준비 횟수
 
-# 오리진: 쿨 360초, 7.26초 동안 다른 행동 불가(선딜/후딜 없음)
+# 오리진: 쿨 360초, 7.26초 동안 다른 행동 불가 + 0.5초 후딜(ORIGIN_P2_END)
 #  0 ~ P1_LEN초: 첫타 P1_HITS회를 균등하게 -> GAP초 쉬고 -> P2_LEN초 동안 (첫타 P2_F회 + 후속타 P2_S회)를 균등하게
 ORIGIN_P1_LEN = 3.0        # 첫 구간 길이
 ORIGIN_P1_HITS = 23        # 첫 구간 첫타 횟수
@@ -1371,7 +1371,7 @@ def origin_plan_candidates(spec=None, style=None, top=5, max_wait=99):
     return out.head(top)
 
 # 예: 현재 스펙(base_spec의 cooldown)에서 선오리진으로 쓸 때
-# display(origin_plan_candidates(base_spec, ORDER_ORIGIN_FIRST))
+# print(origin_plan_candidates(base_spec, ORDER_ORIGIN_FIRST))
 
 
 ###############################################################################################

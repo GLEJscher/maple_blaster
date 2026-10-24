@@ -312,7 +312,7 @@ print(by_skill.round({"점유율(%)": 2}))
 
 ```python
 timeline, ori_starts, origin_ready = burst_timeline()   # 현재 base_spec 기준, 1500초까지 돌림
-display(timeline.head(14))                               # 번호, 종류(극딜/준극딜), 시작(초), 오리진 사용(초)
+print(timeline.head(14))                                 # 번호, 종류(극딜/준극딜), 시작(초), 오리진 사용(초)
 print("오리진 쿨이 도는 시각(초):", origin_ready)
 ```
 
@@ -322,7 +322,7 @@ print("오리진 쿨이 도는 시각(초):", origin_ready)
 ### 예시: 오리진극 후보 비교
 
 ```python
-display(origin_plan_candidates(base_spec, ORDER_ORIGIN_FIRST, top=5))
+print(origin_plan_candidates(base_spec, ORDER_ORIGIN_FIRST, top=5))
 ```
 
 오리진을 극딜에 붙여 쓰는 조합(`ORIGIN_LATE_MODE = "미루기"` 기준)을 후보 번호별로 돌려서, 오리진 4번이 1200초 안에 온전히 들어오는지, 극딜 횟수, 총딜을 비교합니다.
