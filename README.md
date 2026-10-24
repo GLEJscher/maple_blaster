@@ -58,7 +58,7 @@
 | `ORDER_ORIGIN` | t=0 첫 극딜의 순서. `ORIGIN_BIG_ORDER`의 가장 앞 번호 값을 자동으로 씀 (직접 정하지 않음) |
 | `ORDER_BIG` | 오리진을 쓰지 않는 2분 극딜 순서. 기본 `["인팬트리", "버프", "버브", "발칸"]` |
 | `ORDER_MINI` | 1분 준극딜 순서. 기본 `["인팬트리", "엔버", "버브"]` |
-| `t_n`, `WINDOW_N`, `WINDOW` | 그래프/표에서 볼 시간 구간(초) |
+| `t_0`, `t_n`, `WINDOW` | 그래프를 그릴 때 볼 시간 구간(초). `t_0`은 시작, `t_n`은 끝이고 `WINDOW = (t_0, t_n)`. 기본값은 0~40초. 시뮬레이션 결과에는 영향 없고, 직접 그래프를 그릴 때만 사용 |
 
 순서에 쓸 수 있는 행동 이름: `인팬트리`, `버프`(버프 시퀀스 전체), `엔버`(엔버 링크 1개), `버브`, `발칸`, `오리진`.
 
@@ -195,7 +195,7 @@
 | `ORIGIN_P2_LEN` | 두 번째 구간 길이 + 후딜 | 2.26 + 0.5 |
 | `ORIGIN_P2_F`, `ORIGIN_P2_S` | 두 번째 구간 첫타 횟수, 후속타 횟수 | 20, 30 |
 | `ORIGIN_DELAY` | 오리진 시전이 끝나고 다음 행동을 할 수 있을 때까지의 시간 (위 값의 합) | 7.76 |
-| `ORIGIN_ACCEL_REDUCTION` | 스킬 가속으로 줄어드는 쿨타임 (= `ORIGIN_DELAY − ORIGIN_P2_END`) | 7.26 |
+| `ORIGIN_ACCEL_REDUCTION` | 스킬 가속으로 줄어드는 쿨타임 (= `ORIGIN_DELAY − ORIGIN_P2_END`). **표시용 값**이라 직접 바꿔도 반영되지 않고, 실제 계산은 코드에서 `ORIGIN_DELAY − ORIGIN_P2_END`로 합니다. 줄어드는 시간을 바꾸려면 `ORIGIN_P1_LEN` 등 위 값을 바꾸세요 | 7.26 |
 | `ORIGIN_ACCEL_DURATION` | 스킬 가속 지속 시간 (오리진을 쓰기 시작한 시점부터) | 15 |
 | `ORIGIN_ACCEL_CD_RANGE` | 가속이 적용되는 스킬의 쿨타임 범위(초, 쿨감 적용 전 기본 쿨타임 기준) | (60, 120) |
 
@@ -275,7 +275,8 @@ state = run_bunker_maxi(spec, duration=60, buff_delay=BUFF_DELAY, breaker=True, 
 | `link_on` | 링크 ON/OFF를 일부만 바꿈. 예: `link_on={"모도": False}`. 주면 `spec` 인자는 무시하고 `base_spec_no_link`에서 링크를 다시 계산함 | `None` |
 | `fatal_on` | 일격필살 버프 사용 여부 | `True` |
 | `origin_bigs`, `origin_max_wait`, `origin_late_mode` | 이번 실행만 `ORIGIN_BIG_ORDER`, `ORIGIN_MAX_WAIT`, `ORIGIN_LATE_MODE`를 바꿈 (`None`이면 전역 변수 값) | `None` |
-| `reuse` | `True`면 쿨타임이 돌 때마다 극딜/준극딜을 반복. `False`면 반복 규칙 없이 기본 규칙(`RULES_MAXI`)을 사용 | `True` |
+
+`reuse` 인자는 함수 정의에 남아 있지만 현재 코드에서 쓰이지 않아 값을 바꿔도 아무 효과가 없습니다. (극딜/준극딜 반복은 항상 켜져 있음)
 
 ---
 
