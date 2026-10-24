@@ -335,4 +335,4 @@ print(origin_plan_candidates(base_spec, ORDER_ORIGIN_FIRST, top=5))
 
 ## AI 활용
 
-이 프로젝트는 개발 과정에서 Claude(Anthropic)의 도움을 받았습니다. 규칙 설계와 검증은 작성자가 직접 했습니다.
+이 프로젝트는 Claude(Anthropic)의 도움을 받아 작성했습니다.
