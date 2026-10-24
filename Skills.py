@@ -1337,7 +1337,7 @@ def burst_timeline(spec=None, horizon=1500, order=None):
 # timeline, _ori, origin_ready = burst_timeline()
 # print("오리진 사용 시각(초):", [round(o, 2) for o in _ori])
 # print("오리진 쿨이 도는 시각(초):", origin_ready)
-# display(timeline.head(23))
+# print(timeline.head(23))
 
 # ===== 오리진극 후보 비교: 쿨감에 따라 오리진을 몇 번째 극딜에 쓸지 정할 때 쓴다 =====
 # (ORIGIN_LATE_MODE = "미루기" 기준: 오리진을 극딜에 붙여서 쓰는 조합만 비교한다) 오리진극 번호 후보(1번째는 t=0 첫 극딜 고정, 나머지는 3~5극딜 간격)를 모두 돌려서 비교한다.
