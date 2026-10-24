@@ -29,7 +29,13 @@
 | `critDamage` | 크리티컬 데미지 % |
 | `attribResist` | 속성 내성 무시 % |
 | `buffDuration` | 버프 지속시간 % (벞지) |
-| `cooldown` | 재사용 대기시간 감소(초) |
+| `cooldown` | 재사용 대기시간 감소(초). 정수. [쿨타임 감소](#쿨타임-감소) 참고 |
+
+#### 쿨타임 감소
+- 쿨감 6%(`cooldownp`)는 `Attribute.py`의 `CharaInfo`에 고정된 값(0.06)이라 `base_spec`에서 입력하지 않습니다.
+- `base_spec`의 `cooldown=n`은 **쿨타임 n초 감소**입니다. 쿨감 %를 먼저 적용하고 그다음 n초를 뺍니다. 예: 쿨타임 120초, `cooldown=2` → 120 × 0.94 − 2 = 110.8초.
+- 이 감소는 쿨타임이 있는 모든 스킬에 적용됩니다. 단, **릴리즈/버스트 파일 벙커, 모도·카인 링크, 일격필살은 쿨감 %와 n초 모두 적용되지 않습니다.** 엔버 링크는 적용됩니다.
+- 쿨감 n초가 커지면 극딜 쿨이 짧아져서 극딜/준극딜이 빨라집니다. 오리진 사용 방식은 [7. 오리진](#7-오리진)을 참고하세요. 0~8초 구간에서 확인했고, 게임에 소수 쿨감은 없으므로 정수만 씁니다.
 
 - 링크 스킬 중 **데슬, 데벤져, 레테, 키네시스, 제논**의 효과는 이미 스탯창 숫자에 들어 있다고 보고 `base_spec`에 그대로 적습니다. 나머지 링크는 코드가 `LINK_ON`/`LINK_LVL`에 따라 더합니다.
 - 컨티뉴어스 링, 리스트레인트 링, 메여축, 리버티, 엔버 링크는 `base_spec`에 넣지 않습니다. 코드가 버프로 따로 적용합니다.
@@ -46,14 +52,17 @@
 
 | 변수 | 의미 |
 |---|---|
-| `SIM_TIME` | 시뮬레이션 시간(초). 기본 345 (오리진 1사이클) |
-| `ORDER_ORIGIN` | 오리진을 쓰는 극딜의 행동 순서. `ORDER_ORIGIN_LAST`(후오리진) 또는 `ORDER_ORIGIN_FIRST`(선오리진) 중 선택 |
-| `ORDER_ORIGIN_LAST` / `ORDER_ORIGIN_FIRST` | 위 두 순서 리스트. 행동 이름을 원하는 순서로 바꿀 수 있음 |
-| `ORDER_BIG` | 2분 극딜 순서. 기본 `["인팬트리", "버프", "버브", "발칸"]` (오리진 사용 시 끝에 `"오리진"`이 자동으로 붙음) |
+| `SIM_TIME` | 시뮬레이션 시간(초). 최대 1200 (오리진 4번이 들어가는 길이). 오리진 사용 시점은 `SIM_TIME`과 상관없이 같게 정해집니다 |
+| `ORDER_ORIGIN_LAST` / `ORDER_ORIGIN_FIRST` | 후오리진(`인팬트리 → 버프 → 버브 → 발칸 → 오리진`)과 선오리진(`버프 → 오리진 → 인팬트리 → 버브 → 발칸`)의 행동 순서. 행동 이름을 원하는 순서로 바꿀 수 있음 |
+| `ORIGIN_BIG_ORDER` | **오리진을 쓰는 극딜(오리진극)과 그 순서.** 자세한 설명은 [7. 오리진](#7-오리진) |
+| `ORDER_ORIGIN` | t=0 첫 극딜의 순서. `ORIGIN_BIG_ORDER`의 가장 앞 번호 값을 자동으로 씀 (직접 정하지 않음) |
+| `ORDER_BIG` | 오리진을 쓰지 않는 2분 극딜 순서. 기본 `["인팬트리", "버프", "버브", "발칸"]` |
 | `ORDER_MINI` | 1분 준극딜 순서. 기본 `["인팬트리", "엔버", "버브"]` |
 | `t_n`, `WINDOW_N`, `WINDOW` | 그래프/표에서 볼 시간 구간(초) |
 
 순서에 쓸 수 있는 행동 이름: `인팬트리`, `버프`(버프 시퀀스 전체), `엔버`(엔버 링크 1개), `버브`, `발칸`, `오리진`.
+
+**극딜과 준극딜은 항상 번갈아 사용합니다.** t=0 극딜 → 준극딜 → 극딜 → 준극딜 → … 순서이고, 차례가 아닌 쪽은 쿨이 돌아도 쓰지 않습니다. (준극딜은 0.5극딜로 셉니다. 예: 11.5극딜 = 극딜 11번 + 준극딜 11번)
 
 ---
 
@@ -176,19 +185,46 @@
 
 ## 7. 오리진
 
-오리진은 7.26초 동안 다른 행동을 할 수 없는 스킬입니다. 아래 값으로 타격 시점을 정합니다. 인게임 측정값이므로 보통은 바꿀 필요가 없습니다.
+오리진은 7.26초 동안 다른 행동을 할 수 없고, 0.5초의 후딜이 있는 스킬입니다. 오리진을 쓴 뒤 15초 동안 쿨타임이 60~120초인 스킬을 쓰면 그 스킬의 쿨타임이 7.26초(후딜은 제외) 줄어듭니다. 아래 값으로 타격 시점을 정합니다. 인게임 측정값이므로 보통은 바꿀 필요가 없습니다.
 
 | 변수 | 의미 | 기본값 |
 |---|---|---|
 | `ORIGIN_P1_LEN`, `ORIGIN_P1_HITS` | 첫 구간 길이, 첫타 횟수 | 3.0, 23 |
 | `ORIGIN_GAP` | 두 구간 사이 쉬는 시간 | 2.0 |
+| `ORIGIN_P2_END` | 후딜 (스킬 가속으로 줄어드는 시간에는 포함되지 않음) | 0.5 |
 | `ORIGIN_P2_LEN` | 두 번째 구간 길이 + 후딜 | 2.26 + 0.5 |
 | `ORIGIN_P2_F`, `ORIGIN_P2_S` | 두 번째 구간 첫타 횟수, 후속타 횟수 | 20, 30 |
-| `ORIGIN_DELAY` | 오리진 총 시전 시간 (위 값의 합) | 7.26 |
-| `ORIGIN_ACCEL_DURATION` | 스킬 가속 지속 시간 | 15 |
-| `ORIGIN_ACCEL_CD_RANGE` | 가속이 적용되는 스킬의 쿨타임 범위(초) | (60, 120) |
+| `ORIGIN_DELAY` | 오리진 시전이 끝나고 다음 행동을 할 수 있을 때까지의 시간 (위 값의 합) | 7.76 |
+| `ORIGIN_ACCEL_REDUCTION` | 스킬 가속으로 줄어드는 쿨타임 (= `ORIGIN_DELAY − ORIGIN_P2_END`) | 7.26 |
+| `ORIGIN_ACCEL_DURATION` | 스킬 가속 지속 시간 (오리진을 쓰기 시작한 시점부터) | 15 |
+| `ORIGIN_ACCEL_CD_RANGE` | 가속이 적용되는 스킬의 쿨타임 범위(초, 쿨감 적용 전 기본 쿨타임 기준) | (60, 120) |
 
-선오리진과 후오리진 중 무엇을 쓸지는 `ORDER_ORIGIN`에서 고릅니다.
+### 오리진 사용 규칙: `ORIGIN_BIG_ORDER`, `ORIGIN_MAX_WAIT`, `ORIGIN_LATE_MODE`
+
+오리진은 1200초 동안 **4번** 씁니다. 쓸 극딜은 번호로 정합니다. (t=0 첫 극딜이 1번)
+
+```python
+# 오리진극 = {극딜 번호: 그 극딜의 행동 순서}
+ORIGIN_BIG_ORDER = {1: ORDER_ORIGIN_LAST, 4: ORDER_ORIGIN_LAST, 7: ORDER_ORIGIN_LAST, 10: ORDER_ORIGIN_LAST}
+```
+
+| 변수 | 의미 | 기본값 |
+|---|---|---|
+| `ORIGIN_BIG_ORDER` | 오리진을 쓰는 극딜 번호와 순서. 번호마다 후오리진(`ORDER_ORIGIN_LAST`)/선오리진(`ORDER_ORIGIN_FIRST`)을 따로 고를 수 있음. 예: 첫 극딜만 선오리진 → `{1: ORDER_ORIGIN_FIRST, 4: ORDER_ORIGIN_LAST, ...}` | 극딜 1, 4, 7, 10번 모두 후오리진 |
+| `ORIGIN_MAX_WAIT` | 오리진극에서 오리진 쿨이 이 시간(초) 이하만 남았으면 **극딜 시작을 늦춰서 같이 씀**. 이보다 오래 남았으면 `ORIGIN_LATE_MODE`를 따름 (임시값) | 9 |
+| `ORIGIN_LATE_MODE` | 오리진 쿨이 `ORIGIN_MAX_WAIT`보다 오래 남았을 때의 처리. `"단독"` = 극딜은 제때 쓰고, 오리진은 쿨이 돌면 극딜과 따로 바로 씀 / `"미루기"` = 오리진을 다음 극딜로 미룸 | `"단독"` |
+
+쿨감 n초에 따른 동작 (기본값, 1200초):
+
+| 쿨감 | 오리진 사용 | 극딜 횟수 |
+|---|---|---|
+| 0~6초 | 극딜 1, 4, 7, 10번에서 극딜과 같이 씀. 쿨이 안 돌았으면 극딜 시작을 조금 늦춤 | 11 |
+| 7~8초 | 쿨이 안 맞는 3번은 극딜과 따로 씀. 12번째 극딜을 쓸 수 있음 (도중에 시간이 끝나도 상관없음) | 12 |
+
+- 쿨감 6초와 7초 사이에서 오리진 쿨이 남는 시간이 약 8초에서 10초로 바뀌기 때문에 `ORIGIN_MAX_WAIT = 9`로 잡았습니다. 스펙이 바뀌면 이 값을 다시 확인하세요. 8 이하로 낮추면 쿨감 6초도 따로 쓰고, 12 이상으로 올리면 쿨감 7~8초도 같이 씁니다.
+- 오리진 4번의 타격은 모두 1200초 안에 들어와야 합니다.
+- `"단독"`으로 따로 쓰는 오리진은 극딜 순서와 상관없이 오리진 하나만 나갑니다. 선/후오리진 선택은 오리진을 극딜과 같이 쓸 때만 적용됩니다.
+- 쿨감 7~8초에서 오리진을 다음 극딜에 붙여 쓰는 조합을 비교하려면 `ORIGIN_LATE_MODE = "미루기"`로 바꾸고 [`origin_plan_candidates()`](#10-결과-확인)를 쓰세요.
 
 ---
 
@@ -220,7 +256,8 @@
 ```python
 state = run_bunker_maxi(spec, duration=60, buff_delay=BUFF_DELAY, breaker=True, vulkan=True, afterimage=True,
                     infantry=True, aura=True, order=None, hecate_on=True,
-                    extra_buffs=True, conti_on=None, restraint_on=None, reuse=True, link_on=None, fatal_on=True)
+                    extra_buffs=True, conti_on=None, restraint_on=None, reuse=True, link_on=None, fatal_on=True,
+                    origin_bigs=None, origin_max_wait=None, origin_late_mode=None)
 ```
 
 | 인자 | 의미 | 기본값 |
@@ -237,6 +274,7 @@ state = run_bunker_maxi(spec, duration=60, buff_delay=BUFF_DELAY, breaker=True, 
 | `conti_on`, `restraint_on` | 시드링 ON/OFF (`None`이면 `SEED_CONTI`, `SEED_RESTRAINT`) | `None` |
 | `link_on` | 링크 ON/OFF를 일부만 바꿈. 예: `link_on={"모도": False}`. 주면 `spec` 인자는 무시하고 `base_spec_no_link`에서 링크를 다시 계산함 | `None` |
 | `fatal_on` | 일격필살 버프 사용 여부 | `True` |
+| `origin_bigs`, `origin_max_wait`, `origin_late_mode` | 이번 실행만 `ORIGIN_BIG_ORDER`, `ORIGIN_MAX_WAIT`, `ORIGIN_LATE_MODE`를 바꿈 (`None`이면 전역 변수 값) | `None` |
 | `reuse` | `True`면 쿨타임이 돌 때마다 극딜/준극딜을 반복. `False`면 반복 규칙 없이 기본 규칙(`RULES_MAXI`)을 사용 | `True` |
 
 ---
@@ -268,3 +306,22 @@ print(by_skill.round({"점유율(%)": 2}))
 ```
 
 `사용 횟수`는 로그에 찍힌 행 수(공격 발동 횟수)이고, 점유율의 합은 100%입니다.
+
+### 예시: 극딜, 준극딜, 오리진 시작 시각 확인 (`SIM_TIME` 정하기)
+
+```python
+timeline, ori_starts, origin_ready = burst_timeline()   # 현재 base_spec 기준, 1500초까지 돌림
+display(timeline.head(14))                               # 번호, 종류(극딜/준극딜), 시작(초), 오리진 사용(초)
+print("오리진 쿨이 도는 시각(초):", origin_ready)
+```
+
+- `base_spec`의 `cooldown`을 바꾸면 시각도 바뀌므로, 바꾼 뒤 다시 실행하세요.
+- 시각은 인팬트리 첫 공격 기준입니다. 극딜과 준극딜은 번갈아 나오므로 짝수 번째(0번부터 셈)가 극딜입니다.
+
+### 예시: 오리진극 후보 비교
+
+```python
+display(origin_plan_candidates(base_spec, ORDER_ORIGIN_FIRST, top=5))
+```
+
+오리진을 극딜에 붙여 쓰는 조합(`ORIGIN_LATE_MODE = "미루기"` 기준)을 후보 번호별로 돌려서, 오리진 4번이 1200초 안에 온전히 들어오는지, 극딜 횟수, 총딜을 비교합니다.

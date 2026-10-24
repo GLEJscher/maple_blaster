@@ -8,10 +8,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from typing import Callable, Any
 
-
 # 도핑 추가 예정(콜렉터, 세이람)
 
-# CharaInfo, 자버프 모두 사용 기준(=사냥터 기준 비전투 스탯창, 헤카테 소환 상태)
+# CharaInfo, 자버프 모두 사용 기준
 # 링크 스킬: 데슬, 데벤져, 레테, 키네시스, 제논은 스탯창에 이미 반영된 값(내 캐릭터의 실제 링크 레벨 = LINK_LVL)이고,
 #           카데나, 아크, 일리움, 엔버, 모도, 모법, 카인은 반영되어 있지 않다 -> 링크 스킬 효과표(버프 스킬 셀)에서 더한다
 base_spec = CharaInfo(level=293, mainStat=6439, mainStatp=591, fixedMainStat=30900,
@@ -19,12 +18,11 @@ base_spec = CharaInfo(level=293, mainStat=6439, mainStatp=591, fixedMainStat=309
                       attack=3293, attackp=138, damage=87, bossDamage=425,
                       armorIgnore=97.80, finalDamage=120.61, critDamage=98.3,
                       attribResist=5, cooldown=0, buffDuration=81)
-
-# 상추뎀(카데나 링크의 상추뎀은 제외: 카데나 ON/OFF와 레벨에 따라 링크 효과표에서 더한다)
-abnormal_status_damage = CharaInfo(damage=8)        
+abnormal_status_damage = CharaInfo(damage=8)        # 상추뎀(카데나 링크의 상추뎀은 제외: 카데나 ON/OFF와 레벨에 따라 링크 효과표에서 더한다)
 
 # 와헌 유니온 20% 확률로 데미지 +20%
 union_effect = CharaInfo(damage=4)
+
 
 
 base_spec_no_link = base_spec + abnormal_status_damage + union_effect      # 링크 스킬(LINK_ON, LINK_LVL)을 더하기 전 스펙
@@ -39,12 +37,27 @@ t_n = 40
 WINDOW_N = t_n
 WINDOW = (0, t_n)
 
-# 극딜 순서, 바꾸기 가능(극딜 순서가 "인팬->발칸->버브" 순서라면 리스트를 ["인팬트리","발칸","버브", ...]로 수정하면 됨)
+# 순서 바꾸기 가능
 ORDER_ORIGIN_LAST  = ["인팬트리", "버프", "버브", "발칸", "오리진"]     # 후오리진
-ORDER_ORIGIN_FIRST = ["버프", "오리진", "발칸", "인팬트리", "버브"]     # 선오리진: 오리진 시전 시간만큼 발칸/인팬트리/버브 쿨타임 감소
+ORDER_ORIGIN_FIRST = ["버프", "오리진", "인팬트리", "버브", "발칸"]     # 선오리진: 오리진 시전 시간만큼 발칸/인팬트리/버브 쿨타임 감소
 
-ORDER_ORIGIN = ORDER_ORIGIN_LAST
+# 오리진을 쓰는 극딜(오리진극): {극딜 번호: 그 극딜의 행동 순서}. 극딜 번호는 t=0 첫 극딜이 1번.
+# 오리진극마다 후오리진(ORDER_ORIGIN_LAST)/선오리진(ORDER_ORIGIN_FIRST)을 따로 고를 수 있다. 오리진은 1200초 동안 4번 쓴다.
+# 예: 선오리진을 쓰려면 {1: ORDER_ORIGIN_FIRST, 4: ORDER_ORIGIN_FIRST, ...}
+ORIGIN_BIG_ORDER = {1: ORDER_ORIGIN_LAST, 4: ORDER_ORIGIN_LAST, 7: ORDER_ORIGIN_LAST, 10: ORDER_ORIGIN_LAST}
 
+# 오리진극에서 오리진 쿨이 아직 안 돌았을 때의 처리
+#  ORIGIN_MAX_WAIT초 이하만 기다리면 되면: 극딜 시작을 늦춰서 오리진을 같이 쓴다 (쿨감 0~6초는 여기에 해당)
+#  그보다 오래 기다려야 하면(ORIGIN_LATE_MODE): "단독" = 극딜은 제때 쓰고, 오리진은 쿨이 돌면 극딜과 따로 바로 쓴다 (쿨감 7초 이상: 12번째 극딜을 쓸 수 있음)
+#                                            "미루기" = 오리진을 다음 극딜로 미룬다
+ORIGIN_MAX_WAIT = 9        # 임시값: 쿨감 6초까지는 기다리고(대기 8초 이하), 7초부터는 따로 쓴다(대기 약 10초 이상)
+ORIGIN_LATE_MODE = "단독"
+
+ORDER_ORIGIN = ORIGIN_BIG_ORDER[min(ORIGIN_BIG_ORDER)]      # t=0 첫 극딜의 순서 (오리진극 중 가장 앞 번호)
+
+# 재사용 규칙(극딜 사이클): 행동 이름 순서. "버프"는 모든 버프 시퀀스, "엔버"는 엔버링크 1개, 스틱스는 버브에 감응되어 같이 발동한다
+ORDER_BIG  = ["인팬트리", "버프", "버브", "발칸"]      # 2분 극딜 (시작할 때 오리진이 곧 돌아 있으면 끝에 "오리진"을 붙여 오리진 극딜)
+ORDER_MINI = ["인팬트리", "엔버", "버브"]               # 1분 준극딜
 
 # 스킬 레벨
 # 1~4차 스킬 레벨
@@ -68,9 +81,6 @@ VANGUARD_LVL = 9
 CONTI_LVL = 4        # 컨티뉴어스 링
 RESTRAINT_LVL = 4    # 리스트레인트 링
 
-# 시드링 ON/OFF (True면 사용). run_bunker_maxi(conti_on=..., restraint_on=...)로 그때그때 바꿀 수도 있다
-SEED_CONTI = True        # 컨티뉴어스 링: 상시 적용 (이전 시뮬레이션은 base_spec에 컨티가 더해져 있어 ON과 같은 값이었다)
-SEED_RESTRAINT = True   # 리스트레인트 링: 버프 시퀀스에서 사용(15초)
 
 # 스킬 딜레이
 # 버프 시퀀스 딜레이, 버프당 100ms(0.1) / 블래는 총 8개 사용이지만, 1개는 딜과 관련이 없으므로 시뮬레이션에서는 7개만 구현
@@ -87,6 +97,7 @@ BURST_DELAY = 0.3
 # 오버히트
 OVERHEAT_DELAY = 0.3
 
+
 # 버닝 브레이커: 키다운(선딜, 이 동안 데미지 없음) -> 키업 시 돌진 1회 + 폭발 6회 -> 후딜 없음
 BREAKER_PRE = 1          # 선딜: 키다운 준비 시간 - 임시값
 BREAKER_GAP = 0.01         # 돌진 -> 첫 폭발 간격 (0이면 키업과 동시)
@@ -100,6 +111,11 @@ VULKAN_HOLD = 2.0          # 2타 지속 시간
 VULKAN_END_DELAY = 0.5     # 2타 종료 후 딜레이 - 임시값
 VULKAN_HITS = 30           # 2타 발동 횟수
 
+
+
+
+
+
 # 전투 시작: t=0은 전투 중이 아니라서 설치기/자동 공격(인팬트리, 헤카테)은 공격하지 않는다. 이 스킬의 키다운을 시작하면 전투가 시작된다
 COMBAT_START = "버닝 브레이커"
 
@@ -110,7 +126,7 @@ INFANTRY_DELAY = INFANTRY_PRE   # 다음 행동(버프 시퀀스)을 시작하�
 INFANTRY_INTERVAL = 0.5    # 공격 간격
 INFANTRY_HITS = 10         # 최대 공격 가능 횟수
 
-# 쿨타임 감소(쿨감): 릴파벙/버파벙을 제외한 모든 스킬의 재사용 대기시간 x (1 - spec.cooldownp). 릴파벙 계열은 PILE 쿨타임을 따로 관리한다
+# 쿨타임 감소(쿨감): 릴파벙/버파벙을 제외한 모든 스킬의 재사용 대기시간 x (1 - spec.cooldownp) - spec.cooldown(초). 릴파벙 계열은 PILE 쿨타임을 따로 관리한다
 CDR_EXEMPT = ("릴리즈 파일 벙커", "버스트 파일 벙커")
 
 # 불릿 장전: 맥마가 없을 때 불릿을 전부 소모하는 스킬(버브)을 쓰면, 소모한 시점(첫 타격)부터 BULLET_RELOAD초 동안 장전하느라 리볼빙 캐논이 발동하지 않는다
@@ -119,15 +135,16 @@ CDR_EXEMPT = ("릴리즈 파일 벙커", "버스트 파일 벙커")
 BULLET_RELOAD = 1.0                       # 불릿을 모두 소모한 뒤 장전 시간 - 임시값
 BULLET_EMPTY_SKILLS = ("버닝 브레이커",)   # 불릿을 전부 소모하는 스킬
 
-# 재사용 규칙(극딜 사이클): 행동 이름 순서. "버프"는 모든 버프 시퀀스, "엔버"는 엔버링크 1개, 스틱스는 버브에 감응되어 같이 발동한다
-ORDER_BIG  = ["인팬트리", "버프", "버브", "발칸"]      # 2분 극딜 (시작할 때 오리진이 곧 돌아 있으면 끝에 "오리진"을 붙여 오리진 극딜)
-ORDER_MINI = ["인팬트리", "엔버", "버브"]               # 1분 준극딜
 MINI_BUFF_DELAY = 0.1      # 준극딜에서 엔버링크 사용 후 다음 행동까지의 딜레이 - 임시값
 BURST_START_DELAY = 0.30    # 극딜/준극딜 시작 전 딜레이: 평딜(매그팡)을 하다가 쿨이 돈 것을 보고 키보드에서 손을 떼 인팬트리를 누를 때까지 캐릭터가 멈춰 있는 시간 - 임시값
                             # (t=0의 첫 극딜은 제외. 극딜과 준극딜에 같은 값을 쓴다)
 
 # 오라 웨폰: 자신의 공격 스킬을 쓸 때 쿨타임(5초)이 끝나 있으면 같이 발동
 AURA_COOLDOWN = 5.0
+
+# 시드링 ON/OFF (True면 사용). run_bunker_maxi(conti_on=..., restraint_on=...)로 그때그때 바꿀 수도 있다
+SEED_CONTI = True        # 컨티뉴어스 링: 상시 적용 (이전 시뮬레이션은 base_spec에 컨티가 더해져 있어 ON과 같은 값이었다)
+SEED_RESTRAINT = True   # 리스트레인트 링: 버프 시퀀스에서 사용(15초)
 
 # 링크 스킬 ON/OFF와 레벨. 레벨별 효과는 버프 스킬 셀의 LINK_TABLES에 있다
 # 게임에서 링크 레벨을 올렸으면 아래 LINK_LVL의 숫자만 바꾸면 된다 (바꾼 뒤 이 셀부터 아래로 다시 실행)
@@ -150,10 +167,12 @@ KAIN_PREP_NEED = 5         # 발동에 필요한 사전 준비 횟수
 ORIGIN_P1_LEN = 3.0        # 첫 구간 길이
 ORIGIN_P1_HITS = 23        # 첫 구간 첫타 횟수
 ORIGIN_GAP = 2.0           # 두 구간 사이 쉬는 시간
-ORIGIN_P2_LEN = 2.26 + 0.5 # 두 번째 구간 길이 + 후딜
+ORIGIN_P2_END = 0.5        # 오리진 후딜 (스킬 가속으로 줄어드는 시간에는 포함되지 않음)
+ORIGIN_P2_LEN = 2.26 + ORIGIN_P2_END # 두 번째 구간 길이 + 후딜
 ORIGIN_P2_F = 20           # 두 번째 구간 첫타 횟수 (먼저 발동)
 ORIGIN_P2_S = 30           # 두 번째 구간 후속타 횟수 (첫타가 끝나자마자 발동)
-ORIGIN_DELAY = ORIGIN_P1_LEN + ORIGIN_GAP + ORIGIN_P2_LEN       # 7.26초
+ORIGIN_DELAY = ORIGIN_P1_LEN + ORIGIN_GAP + ORIGIN_P2_LEN       # 7.76초 (다음 행동까지 걸리는 시간: 시전 7.26초 + 후딜 0.5초)
+ORIGIN_ACCEL_REDUCTION = ORIGIN_DELAY - ORIGIN_P2_END           # 스킬 가속으로 줄어드는 쿨타임(초): 후딜을 뺀 오리진 시전 시간 7.26초
 ORIGIN_ACCEL_DURATION = 15 # 스킬 가속 지속 시간
 ORIGIN_ACCEL_CD_RANGE = (60, 120)    # 가속이 적용되는 스킬의 재사용 대기시간 범위
 
@@ -163,14 +182,12 @@ HECATE_PARTICLES = 4       # 헤카테가 한 번 공격할 때 생성하는 솔
 HECATE_FIRST = 0.0         # 전투 시작(COMBAT_START 키다운) 후 첫 공격까지 - 임시값
 # 헤카테 공격 규칙: 마지막 공격에서 HECATE_INTERVAL초가 지나면 다음 공격. 그 시각이 스틱스/플레게톤 시전 구간 안이면 시전이 끝나자마자 공격하고,
 # 거기서부터 다시 HECATE_INTERVAL초를 센다. 시전 구간이 아니면 계속 HECATE_INTERVAL초 주기로 공격한다.
-
 # 스틱스/플레게톤은 감응 스킬: 감응시킨 스킬(쿨타임 있는 스킬)을 쓰는 시점에 같이 발동한다 (None이면 감응 안 함)
 ATTUNE_STYX = "버닝 브레이커"         # 스틱스를 감응시킬 스킬 이름 (버브)
 ATTUNE_PHLEG = "발칸 펀치"            # 플레게톤을 감응시킬 스킬 이름 (HECATE_LVL이 30 미만이면 사용 불가)
 HECATE_AURA = False        # 헤카테 계열 공격(헤카테/스틱스/플레게톤)은 오라 웨폰을 발동시키지 않음
 STYX_DELAY = 0.96          # 스틱스 시전 시간(이 동안 헤카테 공격 불가), 쿨 60초
 STYX_HIT_AT = 0.0          # 스틱스 8타가 한 번에 들어가는 시각(사용 시작 기준) - 임시값
-
 # 플레게톤: 쿨 120초, 시전 4.2초 (이 동안 헤카테 공격 불가)
 PHLEG_DELAY = 4.2
 PHLEG_T1 = 0.96            # 격류 1회 (4타)
@@ -179,12 +196,12 @@ PHLEG_T2_N = 7
 PHLEG_T3 = (3.48, 4.02)    # 만개 PHLEG_T3_N회 (6타), 구간 안에서 균등 (양 끝 포함)
 PHLEG_T3_N = 10
 
-
 ###############################################################################################
 ###############################################################################################
 ###################################### 아래 코드 수정X #########################################
 ###############################################################################################
 ###############################################################################################
+
 
 @dataclass(frozen=True, kw_only=True)
 class Skill:
@@ -273,7 +290,12 @@ class SimState:
     attune:dict = field(default_factory=dict)           # 스킬명 -> 그 스킬을 쓸 때 같이 발동하는 헤카테 스킬들(감응)
     buff_duration:float = 0.0                           # 벞지(CharaInfo.buffDuration). run()이 spec에서 가져온다
     reload_until:float = 0.0                            # 이 시각 전까지는 불릿 장전 중(맥마가 없으면 리볼빙 캐논이 발동하지 않는다)
-    cooldownp:float = 0.0                               # 쿨타임 감소(spec.cooldownp). run()이 spec에서 가져온다
+    cooldownp:float = 0.0                               # 쿨타임 감소 %(spec.cooldownp, 0.06 = 6%). run()이 spec에서 가져온다
+    cooldown_sec:float = 0.0                            # 쿨타임 감소 n초(spec.cooldown). run()이 spec에서 가져온다
+    next_burst:str = "mini"                              # 다음에 쓸 극딜 종류("big"=2분 극딜, "mini"=1분 준극딜). t=0 오프닝이 극딜이라 처음 값은 "mini"
+    origin_alone:bool = False                            # 오리진을 극딜과 따로 쓰기로 정했고 아직 쓰지 않았다
+    origin_idx:int = 0                                   # 지금까지 쓴 오리진 횟수 (t=0 오프닝에서 쓴 것 제외)
+    big_count:int = 1                                    # 지금까지 시작한 극딜 횟수 (t=0 첫 극딜 포함, 다음 극딜의 번호 = big_count + 1)
     queue:list = field(default_factory=list)            # 극딜/준극딜의 남은 행동 대기열
     combat_started:bool = False                         # 전투가 시작되었는가
     combat_queue:list = field(default_factory=list)     # 전투 시작을 기다리는 공격: (오프셋, 스킬)
@@ -342,7 +364,6 @@ class Rule:
     pick:Callable[[SimState], Any]          # 무엇을 쓸 것인가 (Combo 또는 BuffSkill)
     on_use:Callable[[SimState, Any], None] = lambda state, action: None     # 사용 직전 상태 갱신
 
-
 # 스킬 레벨에 따라 붙는 bonus (6차 스킬의 10/20/30레벨 효과, 5차 스킬의 레벨별 최종뎀 등에도 그대로 쓸 수 있다)
 _BONUS_STATS = [p for p in inspect.signature(CharaInfo.__init__).parameters if p not in ("self", "level", "bosslevel")]
 
@@ -380,6 +401,24 @@ def fifth_fd(level):
 # 솔 헤카테 레벨 보너스 (헤카테/스틱스/플레게톤 모두 HECATE_LVL 기준으로 받는다). 표에는 그 레벨에서의 합산 값
 HECATE_BONUS_TABLE = {10: CharaInfo(armorIgnore=20, bossDamage=20),
                       20: CharaInfo(armorIgnore=40, bossDamage=40)}     # 30레벨은 플레게톤만 활성화(추가 수치 없음)
+
+# 쓸컴뱃, 콜렉터 미반영
+
+# =======================================================================================
+# 건틀렛리볼버 직접 공격 스킬(+릴파벙) (리볼빙 캐논 마스터리, 애프터이미지쇼크 적용 스킬)
+# (n)표기는 n이 적용됨을 의미, 별도 표기 없으면 둘 다 적용됨
+
+# 매그넘 펀치
+# 더블 팡
+# 해머 스매시
+# 허리케인 믹서(시뮬 내 미사용)
+# 쇼크웨이브 펀치(시뮬 내 미사용)
+# 릴리즈 파일 벙커(앺숔 1회)
+# 버스트 파일 벙커(앺숔 3회)
+# 발칸펀치(첫타 리캐마 1회+앺숔 1회 / 키다운 리캐마 2번씩, 앺숔은 쿨타임으로 키다운 동안 15회 -> 리캐마: 1 + 2*30 = 61, 앺숔: 1 + 15 = 16)
+# 버닝 브레이커 돌진 데미지(리캐마 1회)
+# 버닝 브레이커 폭발 데미지(앺숔 1회)
+# 파이널 디스트로이어(오리진 스킬)(앺숔)
 
 # 리볼빙 캐논
 revolving_cannon = AttackSkill(name="리볼빙 캐논",
@@ -578,6 +617,13 @@ def build_link_spec(spec_no_link, on=None):
 
 base_spec = build_link_spec(base_spec_no_link)
 
+# 30레벨 기준, 6차 강화 코어 반영
+# 레벨 1 ~ 레벨 9   : 11~19% (1%씩 증가)
+# 레벨10 ~ 레벨 19 : 25~34% (1%씩 증가)
+# 레벨20 ~ 레벨 29 : 40~49% (1%씩 증가)
+# 레벨30 : 60%
+# 5개
+
 # 벙커 버스터
 bunker_buster_att = AttackSkill(name="벙커 버스터", 
                             base_pct=475, pct_per_level=0, skill_level=BUNK_BUST_LVL, hit_count=8,
@@ -642,7 +688,12 @@ aura_weapon = AttackSkill(name="오라 웨폰",
 # 자신의 공격 스킬 사용 시 5초 쿨타임으로 발동(공격 타이밍이 쿨타임이 끝난 뒤여야 발동)
 aura_passive = Passive(skill=aura_weapon, cooldown=AURA_COOLDOWN)   # 공격 스킬 사용 시 쿨 5초 / 최종뎀·방무 효과는 캐릭터 스펙에 이미 반영
 
+# burning_breaker_f.bonus.finalDamage
+
+# 4개
+
 # 오리진 (파이널 디스트로이어)
+
 origin_bonus = level_bonus(ORIGIN_LVL, ORIGIN_BONUS_TABLE)   # replace: 도달한 가장 높은 단계의 값 하나만 적용
 
 # 첫타(열기): 10번 공격 x 43회 / 후속타(폭발): 14번 공격 x 30회 -> 사용 횟수 73회, 총 공격 횟수 850회
@@ -777,7 +828,7 @@ def make_origin_combo(p1_len=ORIGIN_P1_LEN, p1_hits=ORIGIN_P1_HITS, gap=ORIGIN_G
     off1 = [i*p1_len/p1_hits for i in range(p1_hits)]                       # 첫 구간: 0초부터 p1_len초까지 균등
     off2 = [p1_len + gap + j*p2_len/n2 for j in range(n2)]                  # 두 번째 구간: 쉰 뒤 p2_len초 동안 균등 (첫타 -> 후속타 순서)
     delay = p1_len + gap + p2_len
-    accel = CooldownAccel(duration=ORIGIN_ACCEL_DURATION, reduction=delay,
+    accel = CooldownAccel(duration=ORIGIN_ACCEL_DURATION, reduction=delay - ORIGIN_P2_END,
                           cd_min=ORIGIN_ACCEL_CD_RANGE[0], cd_max=ORIGIN_ACCEL_CD_RANGE[1])
     return Combo(name="오리진", cooldown=360, delay=delay,
                  parts=((final_destroyer_f, p1_hits + p2_f), (final_destroyer_s, p2_s)),
@@ -817,7 +868,7 @@ def calc_damage(spec, skill, t=0.0, state=None):
 def cast(buff, state, t):
     dur = buff.duration * (1 + 0.01*state.buff_duration) if buff.buff_duration_applies else buff.duration    # 엔버링크만 벞지 적용
     state.active_buffs[buff.name] = (buff, t + dur)
-    state.next_ready[buff.name] = t + (buff.cooldown * (1 - state.cooldownp) if buff.cooldown_applies else buff.cooldown)     # 쿨감 적용(링크 스킬은 미적용)
+    state.next_ready[buff.name] = t + (max(0.0, buff.cooldown * (1 - state.cooldownp) - state.cooldown_sec) if buff.cooldown_applies else buff.cooldown)     # 쿨감 %를 먼저, 그 다음 n초 감소 (모도/카인/일필은 미적용)
     for group, (value, uses) in buff.cooldown_override.items():
         state.cd_override[group] = [value, uses, t + dur]
     for skill_name, limit in buff.use_limits.items():
@@ -974,12 +1025,11 @@ def flush(state, upto, spec):
 def cooldown_with_accel(cd, t, state, name=""):
     base = cd
     if name not in CDR_EXEMPT:
-        cd = cd * (1 - state.cooldownp)                  # 쿨감 %를 먼저 적용 (릴파벙/버파벙 제외)
+        cd = max(0.0, cd * (1 - state.cooldownp) - state.cooldown_sec)    # 쿨감 %를 먼저 적용하고 그 다음 쿨감 n초(CharaInfo.cooldown)를 뺀다 (릴파벙/버파벙 제외)
     for expire, acc in state.accels:
         if t < expire and acc.cd_min <= base <= acc.cd_max:
             cd = max(0.0, cd - acc.reduction)            # 그 다음 쿨감 n초(오리진 가속). 적용 범위는 기본 쿨타임 기준
     return cd
-
 
 # ===== 로테이션 엔진 =====
 # run()은 규칙(Rule) 목록을 위에서부터 보고, 조건이 맞는 첫 규칙의 행동을 실행한다.
@@ -1032,7 +1082,7 @@ def execute(action, state, spec):
 def run(spec, duration, rules, opening=(), passives=(), hecate=None, attune=None, always=(), triggers=()):
     state = SimState(passives=list(passives), hecate=hecate, hecate_interval=HECATE_INTERVAL,
                      hecate_end=duration, attune=dict(attune or {}), buff_duration=spec.buffDuration,
-                     cooldownp=getattr(spec, 'cooldownp', 0.0), link_triggers=list(triggers))
+                     cooldownp=getattr(spec, 'cooldownp', 0.0), cooldown_sec=getattr(spec, 'cooldown', 0), link_triggers=list(triggers))
     for b in always:                                     # 상시 적용 버프(컨티): 시작 시각 0부터 켜 둔다
         cast(b, state, 0.0)
     for buff in opening:
@@ -1144,10 +1194,11 @@ def make_opening(order, buff_combo):
     return [actions[n] for n in order]
 
 # ===== 재사용 규칙: 쿨타임이 돌면 극딜/준극딜을 쓴다 =====
+# 극딜과 준극딜은 항상 번갈아 쓴다 (t=0 극딜 -> 준극딜 -> 극딜 -> ...)
 # 우선순위: 대기열(진행 중인 극딜/준극딜) > 오버히트 > 릴파벙(쓸 수 있으면 극딜 전에 먼저) > 2분 극딜 > 1분 준극딜 > 해매팡 > 매그팡
 #  2분 극딜: 인팬트리와 2분 쿨 버프(버프 시퀀스 중 쿨 100초 이상)가 모두 돌았을 때. 시작 시점에 (인팬트리->버프->버브->발칸)을 마칠 때쯤 오리진이 돌아 있으면 오리진 극딜
 #  1분 준극딜: 인팬트리와 엔버링크가 돌았을 때 (버브는 시퀀스 중에 돌지 않았으면 execute가 기다린다)
-def make_cycle_rules(buff_combo, order_big=ORDER_BIG, order_mini=ORDER_MINI):
+def make_cycle_rules(buff_combo, order_big=ORDER_BIG, order_mini=ORDER_MINI, origin_bigs=ORIGIN_BIG_ORDER, max_wait=ORIGIN_MAX_WAIT, opening_origin=True, late_mode=ORIGIN_LATE_MODE):
     big_gate  = ["인팬트리"] + [b.name for b in buff_combo.buffs if b.cooldown >= 100]
     has_enver = soul_contract.name in [b.name for b in buff_combo.buffs]        # 엔버 링크가 꺼져 있으면 준극딜에서 엔버만 빠진다(인팬트리 -> 버브)
     mini_gate = ["인팬트리"] + ([soul_contract.name] if has_enver else [])
@@ -1159,28 +1210,71 @@ def make_cycle_rules(buff_combo, order_big=ORDER_BIG, order_mini=ORDER_MINI):
     def with_wait(actions):
         return ([start_wait] if BURST_START_DELAY > 0 else []) + actions
 
+    origin_list = sorted(origin_bigs.items())                          # [(오리진을 쓸 극딜 번호, 그 극딜의 행동 순서), ...]
+
+    def origin_due(state):
+        # 이번 극딜에서 오리진을 쓸 차례인가: 쓴 횟수 번째 오리진극의 번호에 도달했으면(미뤄진 경우 포함) 해당
+        if state.origin_alone:
+            return None
+        k = state.origin_idx + (1 if opening_origin else 0)
+        if k < len(origin_list) and state.big_count + 1 >= origin_list[k][0]:
+            return origin_list[k][1]
+        return None
+
+    def origin_lag(state, order):
+        # 이 극딜을 지금 시작하면 오리진을 쓰게 될 때 오리진 쿨이 아직 몇 초 남았는가
+        actions = with_wait(make_opening(order, buff_combo))
+        t_origin = state.t + sum(a.delay for a in actions[:[a.name for a in actions].index(origin_action.name)])
+        return state.next_ready.get(origin_action.name, 0.0) - t_origin
+
+    def big_start_ok(state):
+        if state.next_burst != "big" or not ready(state, big_gate):
+            return False
+        order = origin_due(state)
+        if order is not None and 1e-9 < origin_lag(state, order) <= max_wait:
+            return False                                                 # 오리진 쿨이 조금 남았다 -> 쿨이 돌 때까지 극딜 시작을 늦춘다
+        return True
+
     def pick_big(state):
-        actions = with_wait(make_opening(order_big, buff_combo))
-        t_origin = state.t + sum(a.delay for a in actions)               # 오리진을 쓰게 될 시각
-        if state.next_ready.get(origin_action.name, 0.0) <= t_origin + 1e-9:
-            actions.append(origin_action)
+        order = origin_due(state)
+        if order is not None and origin_lag(state, order) > max_wait:
+            order = None                                                 # 너무 오래 기다려야 한다
+            if late_mode == "단독":
+                state.origin_alone = True                                # -> 오리진을 극딜과 따로, 쿨이 돌면 바로 쓴다
+            # late_mode == "미루기": 오리진을 다음 극딜로 미룬다
+        if order is not None:
+            actions = with_wait(make_opening(order, buff_combo))
+            state.origin_idx += 1
+        else:
+            actions = with_wait(make_opening(order_big, buff_combo))
+        state.big_count += 1
         state.queue = actions[1:]
+        state.next_burst = "mini"                                       # 극딜 다음은 준극딜
         return actions[0]
 
     def pick_mini(state):
         actions = with_wait(make_opening([n for n in order_mini if has_enver or n != "엔버"], buff_combo))
         state.queue = actions[1:]
+        state.next_burst = "big"                                        # 준극딜 다음은 극딜
         return actions[0]
 
     queue_rule = Rule("대기열", lambda s: bool(s.queue), lambda s: s.queue.pop(0))
-    big_rule   = Rule("2분 극딜", lambda s: ready(s, big_gate), pick_big)
-    mini_rule  = Rule("1분 준극딜", lambda s: ready(s, mini_gate), pick_mini)
-    return [queue_rule, overheat_rule, pile_rule, big_rule, mini_rule, hamm_rule, mag_fang_rule]
+    # 극딜 -> 준극딜 -> 극딜 -> ... 를 번갈아 쓴다. 차례가 아닌 쪽은 쿨이 돌아도 쓰지 않고, 차례인 쪽의 쿨이 돌 때까지 평딜을 한다
+    big_rule   = Rule("2분 극딜", big_start_ok, pick_big)
+    mini_rule  = Rule("1분 준극딜", lambda s: s.next_burst == "mini" and ready(s, mini_gate), pick_mini)
+    def pick_origin_alone(state):
+        state.origin_alone = False
+        state.origin_idx += 1
+        return origin_action
+    alone_rule = Rule("오리진 단독", lambda s: s.origin_alone and ready(s, [origin_action.name]), pick_origin_alone)
+    return [queue_rule, overheat_rule, pile_rule, big_rule, mini_rule, alone_rule, hamm_rule, mag_fang_rule]
 
 
 def run_bunker_maxi(spec, duration=60, buff_delay=BUFF_DELAY, breaker=True, vulkan=True, afterimage=True,
                     infantry=True, aura=True, order=None, hecate_on=True,
-                    extra_buffs=True, conti_on=None, restraint_on=None, reuse=True, link_on=None, fatal_on=True):
+                    extra_buffs=True, conti_on=None, restraint_on=None, reuse=True, link_on=None, fatal_on=True,
+                    origin_bigs=None, origin_max_wait=None, origin_late_mode=None):
+    # origin_bigs: 이번 실행만 오리진극 {극딜 번호: 순서}를 바꾼다(None이면 ORIGIN_BIG_ORDER) / origin_max_wait / origin_late_mode: 이번 실행만 ORIGIN_MAX_WAIT / ORIGIN_LATE_MODE를 바꾼다
     # (인팬트리) -> 벙버 + 맥마 (+ 앺숔, 메여축, 리버티, 엔버링크, 리레) -> (버닝 브레이커, 발칸 펀치) -> 벙버와 해매팡 사이클
     # extra_buffs: 메여축/리버티/엔버링크 사용 여부 / conti_on, restraint_on: 시드링 ON/OFF (None이면 SEED_CONTI, SEED_RESTRAINT 값)
     # link_on: 링크 스킬 ON/OFF를 이번 실행만 바꾼다 (예: link_on={"모도": False}, 없는 링크는 LINK_ON 값). 주면 spec 인자는 무시하고 링크를 다시 계산한 스펙(base_spec_no_link 기준)을 쓴다
@@ -1203,12 +1297,87 @@ def run_bunker_maxi(spec, duration=60, buff_delay=BUFF_DELAY, breaker=True, vulk
             opening.append(burning_breaker_action)
         if vulkan:
             opening.append(vulkan_action)
-    rules = make_cycle_rules(buff_combo) if reuse else RULES_MAXI      # reuse=True면 쿨타임이 돌 때마다 극딜/준극딜 반복
+    rules = make_cycle_rules(buff_combo, origin_bigs=ORIGIN_BIG_ORDER if origin_bigs is None else origin_bigs,
+                             max_wait=ORIGIN_MAX_WAIT if origin_max_wait is None else origin_max_wait,
+                             opening_origin=bool(order) and "오리진" in order, late_mode=ORIGIN_LATE_MODE if origin_late_mode is None else origin_late_mode) if reuse else RULES_MAXI      # reuse=True면 쿨타임이 돌 때마다 극딜/준극딜 반복
     return run(spec, duration, rules, opening=opening, passives=(aura_passive,) if aura else (),
                hecate=hecate if hecate_on else None, attune=make_attune() if hecate_on else None,
                always=(continuous,) if conti_on else (),
                triggers=tuple(tb for name, tb in (("모도", modo_trigger), ("카인", kain_trigger)) if links[name]) + ((fatal_trigger,) if fatal_on else ()))
 
+# ===== SIM_TIME 정하기: 지금 스펙(base_spec의 cooldown 등)에서 극딜/준극딜/오리진이 언제 시작하는지 보여준다 =====
+# 이 표를 보고 위쪽 입력 셀의 SIM_TIME을 정하면 된다. (예: "극딜 3번째 시작 직전"이면 그 시각을, "오리진 쿨이 돌기 직전"이면 그 시각을 SIM_TIME에 입력)
+# 시각은 인팬트리 첫 공격 기준(실제 키 입력은 선딜 INFANTRY_PRE만큼 앞). 극딜과 준극딜은 번갈아 나오므로 짝수 번째가 극딜이다.
+def burst_timeline(spec=None, horizon=1500, order=None):
+    spec = base_spec if spec is None else spec
+    st = run_bunker_maxi(spec=spec, duration=horizon, buff_delay=BUFF_DELAY, order=ORDER_ORIGIN if order is None else order)
+    df = pd.DataFrame(st.log, columns=["t", "skill", "damage"])
+    inf = df[df.skill == "인팬트리"].t.tolist()
+    starts = []
+    for x in inf:                                   # 인팬트리는 한 번 쓰면 5초 동안 연속으로 공격하므로, 10초 넘게 떨어진 첫 공격만 사용 시작으로 본다
+        if not starts or x - starts[-1] > 10:
+            starts.append(x)
+    ori = df[df.skill == "파이널 디스트로이어"].t.tolist()      # 오리진 타격
+    ori_starts = []
+    for x in ori:
+        if not ori_starts or x - ori_starts[-1] > 20:
+            ori_starts.append(x)
+    rows = []
+    for i, s in enumerate(starts):
+        nxt = starts[i + 1] if i + 1 < len(starts) else horizon
+        used = [o for o in ori_starts if s <= o < nxt]
+        rows.append({"번호": i, "종류": "극딜" if i % 2 == 0 else "준극딜", "시작(초)": round(s, 2),
+                     "오리진 사용(초)": round(used[0], 2) if used else None})
+    out = pd.DataFrame(rows)
+    ready = [round(o + cooldown_with_accel(origin_action.cooldown, o, st, origin_action.name), 2) for o in ori_starts]
+    return out, ori_starts, ready
+
+# 사용 예 (필요할 때 주석을 풀어서 실행)
+# timeline, _ori, origin_ready = burst_timeline()
+# print("오리진 사용 시각(초):", [round(o, 2) for o in _ori])
+# print("오리진 쿨이 도는 시각(초):", origin_ready)
+# display(timeline.head(23))
+
+# ===== 오리진극 후보 비교: 쿨감에 따라 오리진을 몇 번째 극딜에 쓸지 정할 때 쓴다 =====
+# (ORIGIN_LATE_MODE = "미루기" 기준: 오리진을 극딜에 붙여서 쓰는 조합만 비교한다) 오리진극 번호 후보(1번째는 t=0 첫 극딜 고정, 나머지는 3~5극딜 간격)를 모두 돌려서 비교한다.
+#  완전 = 타격이 전부 1200초 안에 들어온 오리진 횟수(4가 되어야 함) / 극딜 = 시작한 극딜 횟수(마지막 극딜은 도중에 끝나도 센다)
+def origin_plan_candidates(spec=None, style=None, top=5, max_wait=99):
+    spec = base_spec if spec is None else spec
+    order = ORDER_ORIGIN_FIRST if style is None else style
+    rows = []
+    for n2 in (4, 5):
+        for n3 in (n2 + 3, n2 + 4):
+            for n4 in (n3 + 3, n3 + 4, n3 + 5):
+                if n4 > 12:
+                    continue
+                nums = (1, n2, n3, n4)
+                st = run_bunker_maxi(spec=spec, duration=1200, buff_delay=BUFF_DELAY, order=order,
+                                     origin_bigs={n: order for n in nums}, origin_max_wait=max_wait, origin_late_mode="미루기")
+                df = pd.DataFrame(st.log, columns=["t", "skill", "damage"])
+                inf, hits = [], df[df.skill == "인팬트리"].t.tolist()
+                for x in hits:
+                    if not inf or x - inf[-1] > 10:
+                        inf.append(x)
+                ori, sizes, last = [], [], -1e9
+                for x in df[df.skill == "파이널 디스트로이어"].t.tolist():
+                    if x - last > 20:
+                        ori.append(round(x, 1)); sizes.append(0)
+                    sizes[-1] += 1; last = x
+                full = sum(1 for s in sizes if s >= sum(n for _, n in origin_action.parts))
+                rows.append({"오리진극 번호": nums, "완전": full, "극딜": len(inf[0::2]), "준극": len(inf[1::2]),
+                             "오리진 시각": ori, "총딜(조)": round(df.damage.sum() / 1e12, 1)})
+    out = pd.DataFrame(rows).sort_values(["완전", "극딜", "총딜(조)"], ascending=False).reset_index(drop=True)
+    return out.head(top)
+
+# 예: 현재 스펙(base_spec의 cooldown)에서 선오리진으로 쓸 때
+# display(origin_plan_candidates(base_spec, ORDER_ORIGIN_FIRST))
+
+
+###############################################################################################
+###############################################################################################
+############################### 아래부터 코드 수정 및 추가 가능 ##################################
+###############################################################################################
+###############################################################################################
 
 state = run_bunker_maxi(spec=base_spec, duration=SIM_TIME, buff_delay=BUFF_DELAY, order=ORDER_ORIGIN)
 
