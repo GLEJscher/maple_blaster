@@ -154,7 +154,7 @@ SEED_RESTRAINT = True   # 리스트레인트 링: 버프 시퀀스에서 사용(
 #   레벨을 올렸다면 스탯창 값(위의 base_spec 숫자)도 같이 새로 옮겨 적고 LINK_LVL도 맞춰야 한다.
 # run_bunker_maxi(link_on={"모도": False})처럼 ON/OFF만 그때그때 일부만 바꿀 수도 있다
 LINK_ON  = {"데슬": True, "데벤져": True, "카데나": True, "레테": True, "키네시스": True, "제논": True,
-            "아크": True, "엔버": True, "모도": True, "모법": True, "일리움": True, "카인": False}      # 카인: 적중 횟수 규칙을 확인하는 중이라 OFF
+            "아크": True, "엔버": True, "모도": True, "모법": True, "일리움": True, "카인": True}      
 
 LINK_LVL = {"데슬": 2, "데벤져": 2, "카데나": 2, "레테": 2, "키네시스": 3, "제논": 2,
             "아크": 2, "엔버": 3, "모도": 6, "모법": 6, "일리움": 2, "카인": 2}
@@ -580,7 +580,7 @@ modo_trigger = TriggerBuff(buff=modo_buff, hits_needed=1)      # 스틱스(바�
 # 재발동 대기시간이 끝난 뒤부터 공격 적중을 센다
 kain_buff = BuffSkill(name="카인 링크", duration=20, cooldown=40, cooldown_applies=False,
                       effect=LINK_TABLES["카인"][LINK_LVL["카인"]])
-kain_trigger = TriggerBuff(buff=kain_buff, hits_needed=KAIN_HITS_PER_PREP*KAIN_PREP_NEED, ignore=("스틱스",))      # 스틱스는 카인 링크를 못 켠다
+kain_trigger = TriggerBuff(buff=kain_buff, hits_needed=KAIN_HITS_PER_PREP*KAIN_PREP_NEED, ignore=("스틱스", "솔 헤카테", "인팬트리"))      # 스틱스, 헤카테, 인팬트리는 카인 링크를 못 켠다
 
 # 시드링: 레벨별 효과표. 시드링 레벨을 바꾸려면 CONTI_LVL/RESTRAINT_LVL만 바꾸면 된다 (마력 증가는 블래스터에 해당 없어 넣지 않았다)
 # 리스트레인트 링(액티브, 쿨 120초): 레벨별 공격력 증가와 지속 시간 (5레벨부터 지속 시간 20초)
