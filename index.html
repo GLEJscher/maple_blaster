@@ -623,6 +623,7 @@ function numInput(id, get, set, step, opt = {}) {
   i.addEventListener("input", () => {
     if (i.value === "") { if (opt.nullable) set(null); return; }
     const v = Number(i.value); if (isNaN(v) || !inRange(v)) return;
+    if (opt.snap && v % opt.snap !== 0) return;               // 칸 간격(예: 2의 배수)이 아닌 값은 입력을 마칠 때 고친다
     set(opt.int ? Math.round(v) : v);
   });
   i.addEventListener("change", () => {                     // 범위를 벗어난 값은 가장 가까운 허용 값으로 고친다
@@ -630,6 +631,7 @@ function numInput(id, get, set, step, opt = {}) {
     let v = Number(i.value); if (isNaN(v)) return;
     if (lo() != null) v = Math.max(lo(), v);
     if (hi() != null) v = Math.min(hi(), v);
+    if (opt.snap) v = Math.max(lo() ?? -Infinity, Math.min(hi() ?? Infinity, Math.round(v / opt.snap) * opt.snap));
     if (opt.int) v = Math.round(v);
     i.value = v; set(v);
   });
@@ -647,7 +649,7 @@ function buildField(it) {
     const c = selectInput(idb, it.choices, () => S.values[n], (v) => setVal(n, v));
     control = el("div", { class: "ctl" }, c.input); sync = c.sync;
   } else if (k === "int" || k === "float") {
-    const c = numInput(idb, () => S.values[n], (v) => setVal(n, v), k === "int" ? "1" : "any", { min: RANGE_LIM[n] ? RANGE_LIM[n].min : it.min, max: RANGE_LIM[n] ? RANGE_LIM[n].max : it.max, int: k === "int" && it.min != null });
+    const c = numInput(idb, () => S.values[n], (v) => setVal(n, v), it.step ? String(it.step) : k === "int" ? "1" : "any", { snap: it.step, min: RANGE_LIM[n] ? RANGE_LIM[n].min : it.min, max: RANGE_LIM[n] ? RANGE_LIM[n].max : it.max, int: k === "int" && it.min != null });
     control = el("div", { class: "ctl" }, c.input); sync = c.sync;
   } else if (k === "bool") {
     const cb = el("input", { type: "checkbox", id: idb });
