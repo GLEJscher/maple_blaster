@@ -60,6 +60,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn[disabled]{opacity:.5;cursor:default}
 .btn.small{padding:4px 10px;font-size:12.5px}
+.themesel{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:12.5px;white-space:nowrap}
+.themesel select{padding:5px 8px;font-size:12.5px;width:auto}
 .autorun{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:12.5px;white-space:nowrap}
 
 main{padding-block:20px}
@@ -210,6 +212,10 @@ th.sort:hover{color:var(--ink)}
 .gline{display:flex;gap:8px;margin-bottom:6px}.gline .sel{flex:1 1 55%;min-width:0}.gline .num{flex:1 1 40%;min-width:0}
 .gearintro{grid-column:1/-1;font-size:12.5px;color:var(--ink2);line-height:1.55;margin:-2px 0 2px}
 </style>
+<script>
+/* 화면 색: 자동(브라우저 설정을 따름) / 밝게 / 어둡게. 깜빡임을 막으려고 맨 처음에 적용한다 */
+(function () { try { var t = JSON.parse(localStorage.getItem("blaster-dpm:theme")); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {} })();
+</script>
 
 <div class="wrap">
   <header class="bar">
@@ -219,6 +225,7 @@ th.sort:hover{color:var(--ink)}
       <button class="tab" role="tab" id="tab-analysis" aria-controls="view-analysis" aria-selected="false" data-view="analysis">분석</button>
     </nav>
     <div class="grow"></div>
+    <label class="themesel" for="theme">화면 색 <select id="theme" class="sel" aria-label="화면 색"><option value="auto">자동</option><option value="light">밝게</option><option value="dark">어둡게</option></select></label>
     <label class="autorun" for="auto"><input type="checkbox" id="auto" checked> 입력하면 바로 계산</label>
     <button class="btn primary" id="run" disabled>실행</button>
     <div class="status" role="status" aria-live="polite"><span class="dot busy" id="dot"></span><span id="stxt">파이썬 준비 중</span></div>
@@ -274,6 +281,17 @@ const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
+
+(function () {            // 화면 색 선택
+  const sel = document.getElementById("theme"); if (!sel) return;
+  const cur = store.get("blaster-dpm:theme");
+  sel.value = cur === "light" || cur === "dark" ? cur : "auto";
+  sel.addEventListener("change", () => {
+    if (sel.value === "auto") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", sel.value);
+    store.set("blaster-dpm:theme", sel.value);
+  });
+})();
 
 const STAT_KOR = {
   level: "레벨", mainStat: "주스탯(STR)", subStat: "부스탯(DEX)", mainStatp: "주스탯 %", subStatp: "부스탯 %",
