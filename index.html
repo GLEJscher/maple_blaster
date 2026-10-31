@@ -209,7 +209,7 @@ th.sort:hover{color:var(--ink)}
 .ascnote .d2{font-size:12px;opacity:.7;margin-top:2px}
 .gearhead{margin:10px 0 4px;font-size:12px;font-weight:700;opacity:.75}
 .gear .sub{margin-top:0}
-.amulti{grid-column:1/-1;font-size:13px}.amulti summary{cursor:pointer;color:var(--muted,inherit)}.amulti .gline{margin-top:6px;max-width:260px}.amulti .row-actions{margin-top:6px}
+.amulti{grid-column:1/-1;font-size:13px;border-left:3px solid var(--changed,#4a8cf0);padding:6px 10px;border-radius:6px;background:var(--plane)}.amulti summary{font-weight:700}.amopen{margin-top:4px;align-self:flex-start;font-size:12px}.amulti summary{cursor:pointer;color:var(--muted,inherit)}.amulti .gline{margin-top:6px;max-width:260px}.amulti .row-actions{margin-top:6px}
 .gline{display:flex;gap:8px;margin-bottom:6px}.gline .sel{flex:1 1 55%;min-width:0}.gline .num{flex:1 1 40%;min-width:0}
 .gearintro{grid-column:1/-1;font-size:12.5px;color:var(--ink2);line-height:1.55;margin:-2px 0 2px}
 </style>
@@ -690,8 +690,10 @@ function armorMulti(storeKey, c, setV) {
     });
   }
   const add = el("button", { class: "btn small", type: "button", onclick: () => { list.push(0); draw(); commit(); const l = rows.querySelectorAll("input"); if (l.length) l[l.length - 1].focus(); det.open = true; } }, "+ 값 추가");
-  det.append(el("summary", {}, "여러 값으로 입력 (곱적용)"), rows, el("div", { class: "row-actions" }, add, out));
+  det.append(el("summary", {}, "방어율 무시 전용 · 여러 값 입력 (곱적용)"), el("p", { class: "fnote", text: "방어율 무시만 해당합니다. 값을 따로 넣으면 합이 아니라 곱으로 합쳐서(30%, 40% → 58%) 위의 방어율 무시 칸에 넣습니다." }), rows, el("div", { class: "row-actions" }, add, out));
   det.open = list.length > 0; draw(); if (list.length) { c.input.disabled = true; out.textContent = "합산 " + armorCombine(list) + "%"; }
+  const lab = c.input.parentElement;
+  if (lab && lab.tagName === "LABEL") lab.append(el("button", { class: "btn small amopen", type: "button", onclick: (e) => { e.preventDefault(); det.open = true; det.scrollIntoView({ block: "nearest" }); } }, "여러 값으로 입력"));
   return {
     node: det,
     sync(val) { if (list.length && Math.abs(armorCombine(list) - (Number(val) || 0)) > 1e-6) { list = []; save(); draw(); c.input.disabled = false; out.textContent = ""; } },
