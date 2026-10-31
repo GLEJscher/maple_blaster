@@ -725,11 +725,7 @@ function buildField(it) {
       const c = numInput(idb + "-" + key, () => S.values[n][key], (v) => setVal(n, { ...S.values[n], [key]: v }), "any", { nullable: BLANK && BLANK_ITEMS.includes(n), ...(SPEC_LIM[key] || {}) });
       ins[key] = c; if (it.readonly) c.input.disabled = true; grid.append(el("label", { for: idb + "-" + key }, el("span", {}, STAT_KOR[key] || key, el("b", { text: key })), c.input));
     }
-    if (ins.armorIgnore && !it.readonly) {
-      const am = armorMulti("blaster-dpm:ai:" + n, ins.armorIgnore, (v) => setVal(n, { ...S.values[n], armorIgnore: v }));
-      grid.append(am.node); S.armorMulti = S.armorMulti || {}; S.armorMulti[n] = am;
-      control = grid; sync = () => { Object.values(ins).forEach((c) => c.sync()); am.sync(S.values[n].armorIgnore); };
-    } else { control = grid; sync = () => Object.values(ins).forEach((c) => c.sync()); }
+    control = grid; sync = () => Object.values(ins).forEach((c) => c.sync());
   } else if (k === "gear") {
     const box = el("div", { class: "gear" }); const ins = {}, lines = [];
     const grid = el("div", { class: "sub" });
