@@ -119,8 +119,7 @@ details.group[open]>summary::before{transform:rotate(45deg)}
 .num,.txt,.sel{padding:6px 9px;border-radius:8px;border:1px solid var(--ring);background:var(--plane);width:100%;min-width:0;font-variant-numeric:tabular-nums}
 .field.changed .num,.field.changed .txt,.field.changed .sel{border-color:var(--changed)}
 .field.links.changed .sel{border-color:var(--ring)}.field.links .rowchg .sel{border-color:var(--changed)}
-/* "변경값 하이라이트"를 끄면 바뀐 값의 주황 테두리 · "변경" 표시 · 그룹의 변경 개수를 숨긴다 (되돌리기 버튼은 그대로) */
-html.no-hl .fchg,html.no-hl .field.changed .fchg,html.no-hl .gchg{display:none}
+/* "변경값 하이라이트"를 끄면 바뀐 입력창의 주황 테두리만 평소 색으로 돌린다 ("바꾼 값 n개" 표시 · 변경 표시 · 되돌리기 버튼은 그대로) */
 html.no-hl .field.changed .num,html.no-hl .field.changed .txt,html.no-hl .field.changed .sel,html.no-hl .field.links .rowchg .sel{border-color:var(--ring)}
 .sub{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 12px;width:100%}
 .sub label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--ink2);min-width:0}
