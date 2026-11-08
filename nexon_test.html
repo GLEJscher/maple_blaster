@@ -48,9 +48,9 @@ $("go").addEventListener("click", async () => {
     const id = await call(d1, "/id?character_name=" + encodeURIComponent(name), key);
     if (!id || !id.ocid) return;
     line(d1, "ocid를 받았습니다.", "ok");
-    const d6 = step("2. 특수 스킬 반지 (추가 슬롯)");
-    const rx = await call(d6, "/character/ring-exchange-skill-equipment?ocid=" + encodeURIComponent(id.ocid), key);
-    if (rx) { line(d6, "응답 항목: " + Object.keys(rx).join(", "), "ok"); pre(d6, rx); }
+    const d6 = step("2. 예비 특수 반지 (추가 슬롯)");
+    const rx = await call(d6, "/character/ring-reserve-skill-equipment?ocid=" + encodeURIComponent(id.ocid), key);
+    if (rx) { line(d6, "응답 항목: " + Object.keys(rx).join(", "), "ok"); line(d6, "반지: " + rx.special_ring_reserve_name + " / 레벨 " + rx.special_ring_reserve_level + " / date " + rx.date, "ok"); const r2 = Object.assign({}, rx); delete r2.special_ring_reserve_icon; pre(d6, r2); }
   } finally { $("go").disabled = false; }
 });
 </script></main></body></html>
