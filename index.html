@@ -930,7 +930,7 @@ function buildNexonStat() {
       out.append(el("div", { class: "fnote", text: "장비 (지금 적용 중인 모자와 반지, 시드링 제외)" }), eqTable);
       out.append(el("div", { class: "fnote", text: "시드링: " + Object.entries(SEEDV).map(([tag, [onK, lvK]]) => tag + " " + (seedFill[onK] ? "사용" + (seedFill[lvK] != null ? " " + seedFill[lvK] + "레벨" : "") : "미착용(사용 끔)")).join(", ") }));
       for (const w of eqWarn) out.append(el("div", { class: "fnote bad", text: w }));
-    } else out.append(el("div", { class: "fnote bad", text: "장비 정보를 불러오지 못해서 모자, 반지, 시드링은 채우지 않습니다." }));
+    } else out.append(el("div", { class: "fnote bad", text: eq ? "장비 응답에 item_equipment가 없어요(응답 항목: " + Object.keys(eq).join(", ") + "). 모자, 반지, 시드링은 채우지 않습니다." : "장비 정보를 불러오지 못해서 모자, 반지, 시드링은 채우지 않습니다." }));
     out.append(el("div", { class: "fnote", text: "데이터 기준 시각(date): " + (st.date || "없음") + "  ·  지금 시각: " + new Date().toLocaleString("ko-KR") }), t);
     if (miss) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 항목이 " + miss + "개 있어요. 그 칸은 채우지 않습니다." }));
     // 합산 값 확인: floor(기본 × (1 + %) + % 미적용)
@@ -952,10 +952,15 @@ function buildNexonStat() {
   }
   go.addEventListener("click", async () => {
     go.disabled = true; out.textContent = ""; say("불러오는 중…");
-    try { const ocid = await nxOcid(); const q = encodeURIComponent(ocid), slp = (ms) => new Promise((r) => setTimeout(r, ms));
-      const [st, basic, lk] = await Promise.all([nxApi("/character/stat?ocid=" + q), nxApi("/character/basic?ocid=" + q).catch(() => null), nxApi("/character/link-skill?ocid=" + q).catch(() => null)]);
-      await slp(300);    // 초당 5건 제한을 넘지 않게 나눠서 부른다
-      const [sk, eq] = await Promise.all([nxApi("/character/skill?ocid=" + q + "&character_skill_grade=6").catch(() => null), nxApi("/character/item-equipment?ocid=" + q).catch(() => null)]); show(st, basic, lk, sk, eq); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
+    try { const ocid = await nxOcid(); const q = encodeURIComponent(ocid), slp = (ms) => new Promise((r) => setTimeout(r, ms)), errs = [];
+      // 초당 5건 제한을 넘지 않게 0.25초 간격으로 하나씩 부른다 (식별자 포함 6건이 1초에 몰리지 않게)
+      const call = async (label, path, must) => { await slp(250); try { return await nxApi(path); } catch (e) { if (must) throw e; errs.push(label + ": " + e.message); return null; } };
+      const st = await call("스탯", "/character/stat?ocid=" + q, true);
+      const basic = await call("레벨", "/character/basic?ocid=" + q);
+      const lk = await call("링크", "/character/link-skill?ocid=" + q);
+      const sk = await call("스킬 레벨", "/character/skill?ocid=" + q + "&character_skill_grade=6");
+      const eq = await call("장비", "/character/item-equipment?ocid=" + q);
+      show(st, basic, lk, sk, eq); for (const m of errs) out.append(el("div", { class: "fnote bad", text: "불러오기 실패 - " + m })); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
     catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
   });
   return root;
