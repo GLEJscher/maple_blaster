@@ -613,6 +613,7 @@ function buildInputs() {
         grid.append(buildLinks());
         continue;
       }
+      if (it.name === "base_spec") grid.append(buildNexonStat());
       if (it.name === "Hat") {
         S.gearHead = [el("div", { class: "subhead", text: "어센트에 적용되지 않는 장비" }), el("div", { class: "gearintro", text: S.gearIntro }), buildNexon()];
         grid.append(...S.gearHead);
@@ -792,20 +793,88 @@ function nxParse(item) {
   }
   return { g, skipped };
 }
-function buildNexon() {
-  const root = el("details", { class: "nexon" }, el("summary", {}, "넥슨 API로 모자/반지 불러오기"));
+const NXC = { name: "", key: "", ins: [] };          // 장비/스탯 불러오기가 이름과 키를 같이 쓴다 (저장하지 않는다)
+function nxInputs() {
   const nameIn = el("input", { class: "txt", type: "text", autocomplete: "off", placeholder: "캐릭터 이름", "aria-label": "캐릭터 이름" });
   const keyIn = el("input", { class: "txt", type: "password", autocomplete: "off", placeholder: "넥슨 오픈 API 키", "aria-label": "API 키" });
+  nameIn.value = NXC.name; keyIn.value = NXC.key; NXC.ins.push([nameIn, keyIn]);
+  nameIn.addEventListener("input", () => { NXC.name = nameIn.value; for (const [n] of NXC.ins) if (n !== nameIn) n.value = NXC.name; });
+  keyIn.addEventListener("input", () => { NXC.key = keyIn.value; for (const [, k] of NXC.ins) if (k !== keyIn) k.value = NXC.key; });
+  return [nameIn, keyIn];
+}
+async function nxApi(path) {
+  let r; try { r = await fetch(NX_BASE + path, { headers: { "x-nxopen-api-key": NXC.key.trim() } }); } catch (e) { throw new Error("넥슨 서버에 연결하지 못했어요. 네트워크나 광고 차단 확장프로그램을 확인해 주세요."); }
+  if (!r.ok) { let m = ""; try { m = (await r.json()).error.message || ""; } catch (e) {} throw new Error("넥슨 API 오류 (HTTP " + r.status + ")" + (m ? ": " + m : "")); }
+  return r.json();
+}
+async function nxOcid() {
+  if (!NXC.key.trim() || !NXC.name.trim()) throw new Error("캐릭터 이름과 API 키를 모두 입력해 주세요.");
+  const id = await nxApi("/id?character_name=" + encodeURIComponent(NXC.name.trim()));
+  if (!id.ocid) throw new Error("캐릭터를 찾지 못했어요.");
+  return id.ocid;
+}
+/* 스탯창(합산 값)을 읽어 스탯창 스펙의 8칸을 채운다. 주스탯/부스탯/공격력은 세부 수치(기본, %, % 미적용)가 API에 없어서 직접 입력하고, 합산 값만 맞는지 확인한다 */
+const NX_STAT = [["damage", "데미지", true], ["bossDamage", "보스 몬스터 데미지", true], ["finalDamage", "최종 데미지", false], ["armorIgnore", "방어율 무시", false],
+  ["critDamage", "크리티컬 데미지", false], ["attribResist", "속성 내성 무시", false], ["buffDuration", "버프 지속시간", true], ["cooldown", "재사용 대기시간 감소 (초)", true]];
+function buildNexonStat() {
+  const root = el("details", { class: "nexon" }, el("summary", {}, "넥슨 API로 스탯창 값 불러오기"));
+  const [nameIn, keyIn] = nxInputs();
+  const go = el("button", { class: "btn", type: "button" }, "스탯 불러오기");
+  const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
+  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초)를 채웁니다. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
+    el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
+  const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
+  const norm = (t) => String(t || "").replace(/\s+/g, "");
+  const num = (v) => { const x = Number(String(v).replace(/[,%]/g, "")); return isFinite(x) ? x : null; };
+  function show(st) {
+    out.textContent = "";
+    const map = new Map((st.final_stat || []).map((x) => [norm(x.stat_name), x.stat_value]));
+    const get = (n) => num(map.get(norm(n)));
+    const bs = S.values.base_spec || {}, fills = {};
+    const t = el("table", {}, el("tr", {}, ...["항목", "불러온 값", "채울 값", "지금 입력"].map((h) => el("th", { text: h }))));
+    let miss = 0;
+    for (const [key, nm, isInt] of NX_STAT) {
+      const raw = get(nm); let v = raw, note = "";
+      if (raw == null) { miss++; t.append(el("tr", {}, el("td", { text: STAT_KOR[key] || nm }), el("td", { class: "bad", text: "없음" }), el("td", { text: "-" }), el("td", { text: String(bs[key] ?? "") }))); continue; }
+      if (key === "critDamage" && typeof bs.critDamage === "number" && Math.abs(raw - 35 - bs.critDamage) < 0.051) { v = Math.round((raw - 35) * 100) / 100; note = " (35% 기본을 뺌)"; }
+      if (isInt) v = Math.round(v); else v = Math.round(v * 100) / 100;
+      fills[key] = v;
+      t.append(el("tr", {}, el("td", { text: STAT_KOR[key] || nm }), el("td", { text: String(raw) }), el("td", { text: String(v) + note }), el("td", { class: typeof bs[key] === "number" && Math.abs(bs[key] - v) > 1e-9 ? "bad" : "", text: String(bs[key] ?? "") })));
+    }
+    out.append(el("div", { class: "fnote", text: "데이터 기준 시각(date): " + (st.date || "없음") + "  ·  지금 시각: " + new Date().toLocaleString("ko-KR") }), t);
+    if (miss) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 항목이 " + miss + "개 있어요. 그 칸은 채우지 않습니다." }));
+    // 합산 값 확인: floor(기본 × (1 + %) + % 미적용)
+    const chk = [["STR", "mainStat", "mainStatp", "fixedMainStat"], ["DEX", "subStat", "subStatp", "fixedSubStat"], ["공격력", "attack", "attackp", null]];
+    const ct = el("table", {}, el("tr", {}, ...["합산 값", "API", "지금 입력으로 계산", "결과"].map((h) => el("th", { text: h }))));
+    for (const [nm, b, p, f] of chk) {
+      const api = get(nm), vals = [bs[b], bs[p], f ? bs[f] : 0];
+      const ok = vals.every((x) => typeof x === "number");
+      const calc = ok ? Math.floor(vals[0] * (1 + vals[1] / 100) + vals[2] + 1e-9) : null;
+      const same = api != null && calc != null && Math.abs(api - calc) < 1;
+      ct.append(el("tr", {}, el("td", { text: nm }), el("td", { text: api == null ? "없음" : String(api) }), el("td", { text: calc == null ? "입력 칸이 비어 있어요" : String(calc) }),
+        el("td", { class: calc == null ? "" : same ? "okc" : "bad", text: calc == null ? "-" : same ? "일치" : "다름: 세부 수치를 확인해 주세요" })));
+    }
+    out.append(el("div", { class: "fnote", text: "주스탯, 부스탯, 공격력 합산 값 확인 (소수는 내림)" }), ct);
+    const apply = el("button", { class: "btn small primary", type: "button" }, "위 8칸 채우기");
+    apply.disabled = !Object.keys(fills).length;
+    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); syncAll(); say("스탯창 스펙 " + Object.keys(fills).length + "칸을 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
+    out.append(apply);
+  }
+  go.addEventListener("click", async () => {
+    go.disabled = true; out.textContent = ""; say("불러오는 중…");
+    try { const ocid = await nxOcid(); show(await nxApi("/character/stat?ocid=" + encodeURIComponent(ocid))); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
+    catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
+  });
+  return root;
+}
+function buildNexon() {
+  const root = el("details", { class: "nexon" }, el("summary", {}, "넥슨 API로 모자/반지 불러오기"));
+  const [nameIn, keyIn] = nxInputs();
   const go = el("button", { class: "btn", type: "button" }, "장비 불러오기");
   const msg = el("div", { class: "fnote", role: "status" }), list = el("div");
   root.append(el("p", { class: "fnote", text: "보스 세팅 프리셋의 모자와 반지를 읽어 아래 칸을 채웁니다. 컨티뉴어스 링이나 리스트레인트 링을 낀 프리셋만 고를 수 있고, 시드링은 빼고 나머지 반지를 반지1~3 순서대로 넣습니다. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
     el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, list);
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
-  async function api(path) {
-    let r; try { r = await fetch(NX_BASE + path, { headers: { "x-nxopen-api-key": keyIn.value.trim() } }); } catch (e) { throw new Error("넥슨 서버에 연결하지 못했어요. 네트워크나 광고 차단 확장프로그램을 확인해 주세요."); }
-    if (!r.ok) { let m = ""; try { m = (await r.json()).error.message || ""; } catch (e) {} throw new Error("넥슨 API 오류 (HTTP " + r.status + ")" + (m ? ": " + m : "")); }
-    return r.json();
-  }
   function showPresets(eq) {
     list.textContent = "";
     let any = false;
@@ -846,12 +915,10 @@ function buildNexon() {
     else say("보스 세팅 프리셋을 고르고 채우기를 눌러 주세요.");
   }
   go.addEventListener("click", async () => {
-    if (!keyIn.value.trim() || !nameIn.value.trim()) { say("캐릭터 이름과 API 키를 모두 입력해 주세요.", "bad"); return; }
     go.disabled = true; list.textContent = ""; say("불러오는 중…");
     try {
-      const id = await api("/id?character_name=" + encodeURIComponent(nameIn.value.trim()));
-      if (!id.ocid) throw new Error("캐릭터를 찾지 못했어요.");
-      showPresets(await api("/character/item-equipment?ocid=" + encodeURIComponent(id.ocid)));
+      const ocid = await nxOcid();
+      showPresets(await nxApi("/character/item-equipment?ocid=" + encodeURIComponent(ocid)));
     } catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
   });
   root.open = false;
