@@ -220,6 +220,7 @@ th.sort:hover{color:var(--ink)}
 .nexon .nxp{border:1px solid var(--ring);border-radius:8px;padding:6px 8px;margin:8px 0}.nexon .nxp.dis{opacity:.55}.nexon .nxp label{font-weight:700;display:flex;gap:6px;align-items:center}
 .nexon table{border-collapse:collapse;width:100%;font-size:12px;margin-top:4px}.nexon td,.nexon th{border-bottom:1px solid var(--ring);padding:3px 5px;text-align:left;vertical-align:top}
 .nexon .bad{color:var(--bad,#c0262d)}.nexon .okc{color:var(--ok,#157f3b)}
+.fitem{font-size:12.5px;font-weight:700;color:var(--accent);margin:0 0 4px;overflow-wrap:anywhere}
 .gearintro{grid-column:1/-1;font-size:12.5px;color:var(--ink2);line-height:1.55;margin:-2px 0 2px}
 </style>
 <script>
@@ -435,9 +436,25 @@ function syncAscentVis() {          // 어센트를 쓰지 않으면(0회) 어�
   for (const h of S.gearHead || []) h.classList.toggle("off", !S.values.ASCENT_USES);
   for (const n of ASCENT_ONLY) { const r = S.refs[n]; if (r) r.root.classList.toggle("off", !S.values.ASCENT_USES); }
 }
+const canon = (v) => JSON.stringify(v, (k, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((q) => [q, x[q]])) : x));
+function loadGearNames() { const v = store.get("blaster-dpm:gear-names"); return v && typeof v === "object" ? v : {}; }
+function updateGearName(name, ref) {         // 넥슨에서 불러온 장비 이름을 칸 위에 보여 준다. 값을 고치면 "수정됨"을 붙이고, 기본값으로 돌리면 이름을 지운다
+  const box = ref.root.querySelector(".fitem"); if (!box) return;
+  const all = loadGearNames(), e = all[name];
+  if (e && same(S.values[name], S.defaults[name])) { delete all[name]; store.set("blaster-dpm:gear-names", all); }
+  const cur = loadGearNames()[name];
+  box.hidden = !cur;
+  if (cur) box.textContent = "불러온 장비: " + cur.item + (canon(S.values[name]) === cur.snap ? "" : " (이후 값을 수정했어요)");
+}
+function setGearName(name, item) {
+  const all = loadGearNames();
+  if (item) all[name] = { item, snap: canon(S.values[name]) }; else delete all[name];
+  store.set("blaster-dpm:gear-names", all);
+}
 function refreshChanged(name) {
   syncAscentVis();
   const ref = S.refs[name]; if (!ref) return;
+  if (GEAR_NAMES.includes(name)) updateGearName(name, ref);
   const ch = !same(S.values[name], S.defaults[name]);
   ref.root.classList.toggle("changed", ch);
   updateGroupCounts();
@@ -674,11 +691,13 @@ function applyFilter() {
 }
 
 function fieldShell(it, control, wide) {
+  const isGear = GEAR_NAMES.includes(it.name);
   const root = el("div", { class: "field" + (wide ? " wide" : "") },
     el("div", { class: "fhead" },
       it.label ? el("span", { class: "fkor strong", text: it.label }) : null, el("span", { class: "fname" + (it.label ? " dim" : ""), text: it.name }),
       el("span", { class: "fchg", text: "바꿈" }),
       el("button", { class: "freset", onclick: () => { S.values[it.name] = clone(S.defaults[it.name]); S.refs[it.name].sync(); refreshChanged(it.name); store.set("blaster-dpm:current", overrides()); S.dirty = true; scheduleRun(); } }, "되돌리기")),
+    isGear ? el("div", { class: "fitem", hidden: true }) : null,
     (it.note !== undefined ? it.note : it.comment) ? el("div", { class: "fnote", text: it.note !== undefined ? it.note : it.comment }) : null, control);
   return root;
 }
@@ -758,7 +777,7 @@ function nxParse(item) {
   const norm = (t) => String(t || "").replace(/\s+/g, "").replace(/:/g, "");
   const POT = [[/^STR\+(\d+)%$/, "pot_main_pct"], [/^DEX\+(\d+)%$/, "pot_sub_pct"], [/^올스탯\+(\d+)%$/, "pot_all_pct"]];
   const ADD = [[/^STR\+(\d+)$/, "add_main"], [/^DEX\+(\d+)$/, "add_sub"], [/^STR\+(\d+)%$/, "add_main_pct"], [/^DEX\+(\d+)%$/, "add_sub_pct"],
-    [/^올스탯\+(\d+)$/, "add_all"], [/^올스탯\+(\d+)%$/, "add_all_pct"], [/^공격력\+(\d+)$/, "add_attack"],
+    [/^올스탯\+(\d+)$/, "add_all"], [/^올스탯\+(\d+)%$/, "add_all_pct"], [/^공격력\+(\d+)$/, "add_attack"], [/^크리티컬데미지\+(\d+)%$/, "add_crit"],
     [/^캐릭터기준9레벨당STR\+(\d+)$/, "add_main_per9"], [/^캐릭터기준9레벨당DEX\+(\d+)$/, "add_sub_per9"]];
   const RELEVANT = /방어율무시|보스|데미지|크리티컬|공격력\+\d+%|올스탯|STR|DEX/;
   for (const [part, pre, table] of [["pot", "potential_option_", POT], ["add", "additional_potential_option_", ADD]]) {
@@ -800,7 +819,7 @@ function buildNexon() {
       box.append(el("label", {}, radio, "프리셋 " + no + (eq.preset_no === no ? " (지금 적용 중)" : ""), el("span", { class: ok ? "okc" : "bad", text: ok ? " · 시드링 " + seeds.join(", ") : " · 컨티/리레 시드링이 없어서 고를 수 없어요" })));
       if (ok) {
         const rows = [["모자", hat], ...rings.filter((x) => !nxSeed(x)).slice(0, 3).map((x, i) => ["반지" + (i + 1), x])];
-        const t = el("table", {}, el("tr", {}, ...["", "이름", "주스탯", "부스탯", "공격력", "잠재", "에디셔널"].map((h) => el("th", { text: h }))));
+        const t = el("table", {}, el("tr", {}, ...["", "이름", "STR", "DEX", "공격력", "잠재", "에디셔널"].map((h) => el("th", { text: h }))));
         const parsed = rows.map(([lab, x]) => ({ lab, x, ...nxParse(x) }));
         for (const r of parsed) {
           const pr = (part) => r.g[part].filter(([k]) => k).map(([k, v]) => (GEAR_KOR[k] || k) + " " + v).join(", ");
@@ -813,7 +832,7 @@ function buildNexon() {
         const apply = el("button", { class: "btn small primary", type: "button" }, "이 프리셋으로 채우기");
         apply.addEventListener("click", () => {
           const names = ["Hat", "Ring_1", "Ring_2", "Ring_3"];
-          names.forEach((n, i) => { const r = parsed[i]; setVal(n, r ? r.g : { main: 0, sub: 0, all_pct: 0, attack: 0, ignore: 0, pot: [["", null], ["", null], ["", null]], add: [["", null], ["", null], ["", null]] }); });
+          names.forEach((n, i) => { const r = parsed[i]; setVal(n, r ? r.g : { main: 0, sub: 0, all_pct: 0, attack: 0, ignore: 0, pot: [["", null], ["", null], ["", null]], add: [["", null], ["", null], ["", null]] }); setGearName(n, r ? r.x.item_name : null); });
           syncAll(); say("프리셋 " + no + "의 모자와 반지로 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc");
         });
         radio.addEventListener("change", () => { for (const b of list.querySelectorAll(".nxapply")) b.hidden = true; apply.hidden = false; });

@@ -38,15 +38,15 @@ HIDDEN = {
 
 # 어센트에 적용되지 않는 장비 입력칸 (Skills.py의 gear_stat() 인자와 같은 이름). (제목, [(변수, 화면 이름), ...])
 GEAR_ITEMS = ("Hat", "Ring_1", "Ring_2", "Ring_3")
-GEAR_BASE = [("main", "주스탯"), ("sub", "부스탯"), ("all_pct", "올스탯 %"), ("attack", "공격력"), ("ignore", "방어율 무시 %")]
+GEAR_BASE = [("main", "STR"), ("sub", "DEX"), ("all_pct", "올스탯 %"), ("attack", "공격력"), ("ignore", "방어율 무시 %")]
 GEAR_INTRO = ("어센트에 적용되지 않는 장비(모자, 반지1~3)의 스탯을 입력하는 칸입니다. 스탯창 스펙에는 들어 있지만 어센트 데미지에는 빠지는 스탯이라, 어센트 계산에서 이만큼 뺍니다. "
               "장비 툴팁의 값을 그대로 옮겨 적고, 비워 두면 0입니다. 어센트를 쓰지 않으면(0회) 입력하지 않아도 됩니다. "
               "잠재옵션과 에디셔널 잠재옵션은 줄마다 옵션을 고르고 값을 적으며, 같은 옵션을 여러 줄에 고르면 더합니다. "
-              "올스탯 %는 주스탯 %와 부스탯 %에 같은 값이 더해지고, 9레벨 당 +n은 스탯창 레벨을 9로 나눈 몫에 n을 곱합니다.")
+              "올스탯 %는 STR %와 DEX %에 같은 값이 더해지고, 9레벨 당 +n은 스탯창 레벨을 9로 나눈 몫에 n을 곱합니다.")
 # 잠재옵션 / 에디셔널 잠재옵션은 3줄이고, 줄마다 옵션 종류를 고르고 값을 적는다 (같은 옵션을 여러 줄에 고르면 더한다)
-GEAR_POT = [("pot_main_pct", "주스탯 %"), ("pot_sub_pct", "부스탯 %"), ("pot_all_pct", "올스탯 %")]
-GEAR_ADD = [("add_main", "주스탯"), ("add_main_pct", "주스탯 %"), ("add_sub", "부스탯"), ("add_sub_pct", "부스탯 %"),
-            ("add_all", "올스탯"), ("add_all_pct", "올스탯 %"), ("add_attack", "공격력"), ("add_main_per9", "9레벨 당 주스탯 +"), ("add_sub_per9", "9레벨 당 부스탯 +")]
+GEAR_POT = [("pot_main_pct", "STR %"), ("pot_sub_pct", "DEX %"), ("pot_all_pct", "올스탯 %")]
+GEAR_ADD = [("add_main", "STR"), ("add_main_pct", "STR %"), ("add_sub", "DEX"), ("add_sub_pct", "DEX %"),
+            ("add_all", "올스탯"), ("add_all_pct", "올스탯 %"), ("add_attack", "공격력"), ("add_crit", "크리티컬 데미지 %"), ("add_main_per9", "9레벨 당 STR +"), ("add_sub_per9", "9레벨 당 DEX +")]
 GEAR_LINES = 3
 GEAR_KEYS = [k for k, _ in GEAR_BASE + GEAR_POT + GEAR_ADD]
 GEAR_BASE_KEYS = [k for k, _ in GEAR_BASE]
