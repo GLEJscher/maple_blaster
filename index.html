@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>블래스터 DPM 시뮬레이터</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -816,17 +816,19 @@ async function nxOcid() {
 /* 스탯창(합산 값)을 읽어 스탯창 스펙의 8칸을 채운다. 주스탯/부스탯/공격력은 세부 수치(기본, %, % 미적용)가 API에 없어서 직접 입력하고, 합산 값만 맞는지 확인한다 */
 const NX_STAT = [["damage", "데미지", true], ["bossDamage", "보스 몬스터 데미지", true], ["finalDamage", "최종 데미지", false], ["armorIgnore", "방어율 무시", false],
   ["critDamage", "크리티컬 데미지", false], ["attribResist", "속성 내성 무시", false], ["buffDuration", "버프 지속시간", true], ["cooldown", "재사용 대기시간 감소 (초)", true]];
+const NX_LINK = { "데몬스퓨리": "데슬", "와일드레이지": "데벤져", "인텐시브인썰트": "카데나", "커버넌트": "레테", "판단": "키네시스", "하이브리드로직": "제논",
+  "무아": "아크", "소울컨트랙트": "엔버", "시프커닝": "모도", "임피리컬널리지": "모법", "전투의흐름": "일리움", "프라이어프리퍼레이션": "카인" };
 function buildNexonStat() {
   const root = el("details", { class: "nexon" }, el("summary", {}, "넥슨 API로 스탯창 값 불러오기"));
   const [nameIn, keyIn] = nxInputs();
   const go = el("button", { class: "btn", type: "button" }, "스탯 불러오기");
   const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초)와 레벨을 채웁니다. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
+  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨을 채웁니다. 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
     el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
   const norm = (t) => String(t || "").replace(/\s+/g, "");
   const num = (v) => { const x = Number(String(v).replace(/[,%]/g, "")); return isFinite(x) ? x : null; };
-  function show(st, basic) {
+  function show(st, basic, lk) {
     out.textContent = "";
     const map = new Map((st.final_stat || []).map((x) => [norm(x.stat_name), x.stat_value]));
     const get = (n) => num(map.get(norm(n)));
@@ -841,6 +843,36 @@ function buildNexonStat() {
       fills[key] = v;
       t.append(el("tr", {}, el("td", { text: STAT_KOR[key] || nm }), el("td", { text: String(raw) }), el("td", { text: String(v) + note }), el("td", { class: typeof bs[key] === "number" && Math.abs(bs[key] - v) > 1e-9 ? "bad" : "", text: String(bs[key] ?? "") })));
     }
+    // 상태이상 추가 데미지: 스탯창 값에서 카데나 링크의 상추뎀(링크 효과표가 따로 더함)을 뺀 나머지가 어빌리티 등의 값이다
+    const CADENA_ABN = { 2: 6, 3: 9 };       // Skills.py 링크 효과표의 카데나 (상추뎀 + 데미지에서 상추뎀 몫)
+    // 지금 적용 중인 링크 (API 이름 -> 코드의 링크 이름)
+    const apiLv = {}, unknown = [];
+    for (const x of (lk && lk.character_link_skill) || []) { const k = NX_LINK[norm(x.skill_name)]; if (k) apiLv[k] = num(x.skill_level); else unknown.push(x.skill_name); }
+    const LVC = (S.byName.LINK_LVL && S.byName.LINK_LVL.choices) || {}, curLv = S.values.LINK_LVL || {}, curOn = S.values.LINK_ON || {};
+    const linkFill = {}, linkOn = {}, linkWarn = [];
+    const lt = el("table", {}, el("tr", {}, ...["링크", "불러온 레벨", "지금 입력 레벨"].map((h) => el("th", { text: h }))));
+    if (lk) for (const k of Object.keys(curLv)) {
+      const lv = apiLv[k], ok = lv != null && (LVC[k] || []).some((c) => c.value === lv);
+      if (lv == null) {
+        if (!["데슬", "데벤져", "레테", "키네시스", "제논"].includes(k)) linkOn[k] = false; else linkWarn.push(k);
+        lt.append(el("tr", {}, el("td", { text: k }), el("td", { class: "bad", text: "적용 중이 아님" }), el("td", { text: String(curLv[k]) })));
+        continue;
+      }
+      if (ok) { linkFill[k] = lv; linkOn[k] = true; } else linkWarn.push(k);
+      lt.append(el("tr", {}, el("td", { text: k }), el("td", { class: ok ? "" : "bad", text: String(lv) + (ok ? "" : " (효과표에 없는 레벨)") }), el("td", { class: ok && curLv[k] !== lv ? "bad" : "", text: String(curLv[k]) })));
+    }
+    const abnRaw = get("상태이상 추가 데미지"), cl = linkFill["카데나"] ?? curLv["카데나"], cab = CADENA_ABN[cl];
+    const curAbn = (S.values.abnormal_status_damage || {}).damage;
+    let abn = null;
+    if (abnRaw != null && cab != null) abn = Math.max(0, Math.round((abnRaw - cab) * 100) / 100);
+    t.append(el("tr", {}, el("td", { text: "상태이상 추가 데미지 %" }), el("td", { text: abnRaw == null ? "없음" : String(abnRaw) }),
+      el("td", { text: abn == null ? "-" : String(abn) + " (카데나 링크 레벨 " + cl + "의 " + cab + " 제외)" }), el("td", { class: abn != null && typeof curAbn === "number" && Math.abs(curAbn - abn) > 1e-9 ? "bad" : "", text: String(curAbn ?? "") })));
+    if (abnRaw != null && cab == null) out.append(el("div", { class: "fnote bad", text: "카데나 링크 레벨(" + cl + ")을 몰라서 상태이상 추가 데미지는 채우지 않습니다." }));
+ if (lk) {
+      out.append(el("div", { class: "fnote", text: "링크 스킬 (지금 적용 중인 링크)" }), lt);
+      if (unknown.length) out.append(el("div", { class: "fnote bad", text: "알 수 없는 링크라서 건너뜀: " + unknown.join(", ") }));
+      if (linkWarn.length) out.append(el("div", { class: "fnote bad", text: "채우지 않는 링크: " + linkWarn.join(", ") + " (스탯창에 이미 들어 있는 링크가 빠졌거나 효과표에 없는 레벨입니다. 직접 확인해 주세요)" }));
+    } else out.append(el("div", { class: "fnote bad", text: "링크 스킬 정보를 불러오지 못해서 링크는 채우지 않습니다." }));
     out.append(el("div", { class: "fnote", text: "데이터 기준 시각(date): " + (st.date || "없음") + "  ·  지금 시각: " + new Date().toLocaleString("ko-KR") }), t);
     if (miss) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 항목이 " + miss + "개 있어요. 그 칸은 채우지 않습니다." }));
     // 합산 값 확인: floor(기본 × (1 + %) + % 미적용)
@@ -856,13 +888,13 @@ function buildNexonStat() {
     }
     out.append(el("div", { class: "fnote", text: "주스탯, 부스탯, 공격력 합산 값 확인 (소수는 내림)" }), ct);
     const apply = el("button", { class: "btn small primary", type: "button" }, "위 칸 채우기");
-    apply.disabled = !Object.keys(fills).length;
-    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); syncAll(); say("스탯창 스펙 " + Object.keys(fills).length + "칸을 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
+    apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length;
+    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); syncAll(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
     out.append(apply);
   }
   go.addEventListener("click", async () => {
     go.disabled = true; out.textContent = ""; say("불러오는 중…");
-    try { const ocid = await nxOcid(); const [st, basic] = await Promise.all([nxApi("/character/stat?ocid=" + encodeURIComponent(ocid)), nxApi("/character/basic?ocid=" + encodeURIComponent(ocid)).catch(() => null)]); show(st, basic); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
+    try { const ocid = await nxOcid(); const q = encodeURIComponent(ocid); const [st, basic, lk] = await Promise.all([nxApi("/character/stat?ocid=" + q), nxApi("/character/basic?ocid=" + q).catch(() => null), nxApi("/character/link-skill?ocid=" + q).catch(() => null)]); show(st, basic, lk); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
     catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
   });
   return root;
