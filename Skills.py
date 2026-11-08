@@ -217,7 +217,7 @@ AURA_EXCLUDE = ("인팬트리",)      # 이 스킬로는 오라 웨폰이 발동
 #  노블(노블레스): 데미지 +30%, 보스 데미지 +30%, 크리티컬 데미지 +30%, 방어율 무시 +NOBLE_IGNORE% (0~30, 2씩 증가). 지속 시간은 방어율 무시 %와 같은 분(2%면 2분, 10%면 10분, 30%면 30분)
 #  영메(영웅의 메아리, 30분): 공격력 +4%
 #  세이람(15분 도핑): 공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16%
-#  콜렉터(8분 도핑): 공격력 +100, 주스탯 +30, 부스탯 +30, 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 A, B, C 기본 데미지 +3%p)
+#  콜렉터(8분 도핑): 공격력 +100, 주스탯 +30, 부스탯 +30, 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 A, B, C 기본 데미지 +3%p), 방어율 무시 38% -> 41% (스탯창의 방무 38%가 41%로 바뀌므로 -38 + 41)
 DOPING_ON = {"노블": False, "영메": False, "세이람": False, "콜렉터": False}
 NOBLE_IGNORE = 0       # 노블의 방어율 무시 % (0~30, 2의 배수: 0, 2, 4, ...). 노블의 지속 시간(분)도 이 값과 같다 (0이면 효과 없음)
 
@@ -705,7 +705,7 @@ hero_echo_buff = BuffSkill(name="영메", duration=1800, cooldown=0, cooldown_ap
 seiram_buff = BuffSkill(name="세이람", duration=900, cooldown=0, cooldown_applies=False,
                         effect=CharaInfo(attackp=10, attack=50, bossDamage=10, critDamage=16))
 collector_buff = BuffSkill(name="콜렉터", duration=480, cooldown=0, cooldown_applies=False,
-                           effect=CharaInfo(attack=100+2, mainStat=30, subStat=30),
+                           effect=CharaInfo(attack=100+2, mainStat=30, subStat=30) + CharaInfo(armorIgnore=41) - CharaInfo(armorIgnore=38),
                            pct_effects={"rpb_up": 3})
 DOPING_BUFFS = {"노블": noble_buff, "영메": hero_echo_buff, "세이람": seiram_buff, "콜렉터": collector_buff}
 
