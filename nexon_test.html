@@ -48,19 +48,9 @@ $("go").addEventListener("click", async () => {
     const id = await call(d1, "/id?character_name=" + encodeURIComponent(name), key);
     if (!id || !id.ocid) return;
     line(d1, "ocid를 받았습니다.", "ok");
-    const d6 = step("2. 스킬 레벨 (전직 차수별)");
-    for (const g of ["3", "4", "5", "6", "hyperactive"]) {
-      const sk = await call(d6, "/character/skill?ocid=" + encodeURIComponent(id.ocid) + "&character_skill_grade=" + g, key);
-      if (!sk) { line(d6, "차수 " + g + ": 불러오지 못함 (여기서 멈춥니다)", "bad"); break; }
-      const arr = sk.character_skill || [];
-      line(d6, "차수 " + g + " (" + (sk.character_class || "") + ", date " + (sk.date || "") + ") · 스킬 " + arr.length + "개 · 응답 항목: " + Object.keys(sk).join(", "), arr.length ? "ok" : "");
-      if (arr.length) {
-        const t6 = document.createElement("table");
-        t6.innerHTML = "<tr><th>스킬 이름</th><th>레벨</th></tr>";
-        for (const x of arr) { const tr = document.createElement("tr"); for (const v of [x.skill_name, x.skill_level]) { const td = document.createElement("td"); td.textContent = v == null ? "" : v; tr.append(td); } t6.append(tr); }
-        d6.append(t6);
-      }
-    }
+    const d6 = step("2. 특수 스킬 반지 (추가 슬롯)");
+    const rx = await call(d6, "/character/ring-exchange-skill-equipment?ocid=" + encodeURIComponent(id.ocid), key);
+    if (rx) { line(d6, "응답 항목: " + Object.keys(rx).join(", "), "ok"); pre(d6, rx); }
   } finally { $("go").disabled = false; }
 });
 </script></main></body></html>
