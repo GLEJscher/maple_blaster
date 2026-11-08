@@ -615,7 +615,7 @@ function buildInputs() {
       }
       if (it.name === "base_spec") grid.append(buildNexonStat());
       if (it.name === "Hat") {
-        S.gearHead = [el("div", { class: "subhead", text: "어센트에 적용되지 않는 장비" }), el("div", { class: "gearintro", text: S.gearIntro }), buildNexon()];
+        S.gearHead = [el("div", { class: "subhead", text: "어센트에 적용되지 않는 장비" }), el("div", { class: "gearintro", text: S.gearIntro }), el("div", { class: "fnote", text: "모자와 반지는 위쪽 스탯창 스펙의 '넥슨 API로 불러오기'에서 스탯, 링크, 스킬 레벨과 한꺼번에 불러옵니다." })];
         grid.append(...S.gearHead);
       }
       grid.append(buildField(it));
@@ -804,6 +804,7 @@ function nxInputs() {
 }
 async function nxApi(path) {
   let r; try { r = await fetch(NX_BASE + path, { headers: { "x-nxopen-api-key": NXC.key.trim() } }); } catch (e) { throw new Error("넥슨 서버에 연결하지 못했어요. 네트워크나 광고 차단 확장프로그램을 확인해 주세요."); }
+  if (r.status === 429) throw new Error("넥슨 API 호출 한도를 넘었어요. 개발 단계 키는 초당 5건, 하루 1,000건까지입니다. 잠시 뒤나 내일 다시 시도해 주세요.");
   if (!r.ok) { let m = ""; try { m = (await r.json()).error.message || ""; } catch (e) {} throw new Error("넥슨 API 오류 (HTTP " + r.status + ")" + (m ? ": " + m : "")); }
   return r.json();
 }
@@ -824,16 +825,16 @@ const NX_SKILL = { "매그넘펀치VI": "MF_LVL", "릴리즈파일벙커VI": "RP
   "버닝브레이커강화": "BURN_BRK_LVL", "발칸펀치강화": "VULCAN_LVL", "애프터이미지쇼크강화": "AFT_SHCK_LVL", "레지스탕스라인인팬트리VI": "INFANTRY_LVL",
   "파이널디스트로이어": "ORIGIN_LVL", "오버히트펀치": "OH_LVL", "솔헤카테": "HECATE_LVL", "뱅가드임팩트": "VANGUARD_LVL" };
 function buildNexonStat() {
-  const root = el("details", { class: "nexon" }, el("summary", {}, "넥슨 API로 스탯창 값 불러오기"));
+  const root = el("details", { class: "nexon" }, el("summary", {}, "넥슨 API로 한꺼번에 불러오기 (스탯, 장비, 링크, 스킬 레벨, 시드링)"));
   const [nameIn, keyIn] = nxInputs();
-  const go = el("button", { class: "btn", type: "button" }, "스탯 불러오기");
+  const go = el("button", { class: "btn", type: "button" }, "불러오기");
   const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개를 채웁니다. 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
+  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨을 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 6건입니다 (개발 단계 키는 하루 1,000건). 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
     el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
   const norm = (t) => String(t || "").replace(/\s+/g, "");
   const num = (v) => { const x = Number(String(v).replace(/[,%]/g, "")); return isFinite(x) ? x : null; };
-  function show(st, basic, lk, sk) {
+  function show(st, basic, lk, sk, eq) {
     out.textContent = "";
     const map = new Map((st.final_stat || []).map((x) => [norm(x.stat_name), x.stat_value]));
     const get = (n) => num(map.get(norm(n)));
@@ -874,6 +875,40 @@ function buildNexonStat() {
     for (const [nm, an, lv, cur] of skRows) st2.append(el("tr", {}, el("td", { text: nm }), el("td", { text: an }), el("td", { text: String(lv) }), el("td", { class: cur !== lv ? "bad" : "", text: String(cur ?? "") })));
     const skMiss = Object.values(NX_SKILL).filter((v) => !skSeen.has(v));
     const mast = skList.find((x) => norm(x.skill_name) === "리볼빙캐논마스터리VI"), mastNote = mast && skFill.HAMM_LVL != null && num(mast.skill_level) !== skFill.HAMM_LVL;
+    // 장비: 지금 적용 중인 모자와 반지 (시드링은 반지 입력에서 빼고 시드링 사용/레벨로 채운다)
+    const SEEDV = { "컨티": ["SEED_CONTI", "CONTI_LVL"], "리레": ["SEED_RESTRAINT", "RESTRAINT_LVL"] };
+    const eqFill = {}, seedFill = {}, eqNames = {}, eqWarn = [];
+    let eqTable = null;
+    const eqItems = eq && eq.item_equipment;
+    if (Array.isArray(eqItems)) {
+      const hat = eqItems.find((x) => x.item_equipment_slot === "모자");
+      const rings = [1, 2, 3, 4].map((i) => eqItems.find((x) => x.item_equipment_slot === "반지" + i)).filter(Boolean);
+      const others = rings.filter((x) => !nxSeed(x)).slice(0, 3);
+      const rows = [["모자", hat], ...others.map((x, i) => ["반지" + (i + 1), x])].filter(([, x]) => x);
+      const parsed = rows.map(([lab, x]) => ({ lab, x, ...nxParse(x) }));
+      eqTable = el("table", {}, el("tr", {}, ...["", "이름", "STR", "DEX", "공격력", "잠재", "에디셔널"].map((h) => el("th", { text: h }))));
+      for (const r of parsed) {
+        const pr = (part) => r.g[part].filter(([k]) => k).map(([k, v]) => (GEAR_KOR[k] || k) + " " + v).join(", ");
+        eqTable.append(el("tr", {}, el("td", { text: r.lab }), el("td", { text: r.x.item_name || "" }), el("td", { text: String(r.g.main) }), el("td", { text: String(r.g.sub) }), el("td", { text: String(r.g.attack) }), el("td", { text: pr("pot") }), el("td", { text: pr("add") })));
+      }
+      const zero = { main: 0, sub: 0, all_pct: 0, attack: 0, ignore: 0, pot: [["", null], ["", null], ["", null]], add: [["", null], ["", null], ["", null]] };
+      ["Hat", "Ring_1", "Ring_2", "Ring_3"].forEach((n, i) => { const r = parsed.find((q) => q.lab === (i === 0 ? "모자" : "반지" + i)); eqFill[n] = r ? r.g : zero; eqNames[n] = r ? r.x.item_name : null; });
+      if (!hat) eqWarn.push("모자를 찾지 못했어요. 모자 칸은 0으로 채웁니다.");
+      if (others.length < 3) eqWarn.push("시드링을 빼면 반지가 " + others.length + "개라서 남는 반지 칸은 0으로 채웁니다.");
+      const sk2 = parsed.flatMap((r) => r.skipped.map((l) => r.lab + ": " + l));
+      if (sk2.length) eqWarn.push("읽지 못한 옵션(직접 확인해 주세요): " + sk2.join(" / "));
+      const seedsFound = {};
+      for (const x of rings) { const tag = nxSeed(x); if (tag) seedsFound[tag] = x; }
+      for (const [tag, [onK, lvK]] of Object.entries(SEEDV)) {
+        const x = seedsFound[tag];
+        if (!x) { seedFill[onK] = false; continue; }
+        seedFill[onK] = true;
+        const lv = num(x.special_ring_level), ch = (S.byName[lvK] && S.byName[lvK].choices) || [];
+        if (lv == null) eqWarn.push(tag + " 시드링 레벨을 응답에서 찾지 못했어요. 시드링 레벨은 직접 입력해 주세요.");
+        else if (ch.length && !ch.some((c) => c.value === lv)) eqWarn.push(tag + " 시드링 " + lv + "레벨은 효과표에 없어요. 시드링 레벨은 직접 입력해 주세요.");
+        else seedFill[lvK] = lv;
+      }
+    }
     const abnRaw = get("상태이상 추가 데미지"), cl = linkFill["카데나"] ?? curLv["카데나"], cab = CADENA_ABN[cl];
     const curAbn = (S.values.abnormal_status_damage || {}).damage;
     let abn = null;
@@ -891,6 +926,11 @@ function buildNexonStat() {
       if (skMiss.length) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 스킬: " + skMiss.join(", ") + " (그 칸은 채우지 않습니다)" }));
       if (mastNote) out.append(el("div", { class: "fnote bad", text: "리볼빙 캐논 마스터리 레벨(" + mast.skill_level + ")이 해머 스매시 레벨(" + skFill.HAMM_LVL + ")과 달라요. 시뮬레이터는 둘을 같은 값으로 계산합니다." }));
     } else out.append(el("div", { class: "fnote bad", text: "스킬 레벨을 불러오지 못해서 스킬 레벨은 채우지 않습니다." }));
+ if (eqTable) {
+      out.append(el("div", { class: "fnote", text: "장비 (지금 적용 중인 모자와 반지, 시드링 제외)" }), eqTable);
+      out.append(el("div", { class: "fnote", text: "시드링: " + Object.entries(SEEDV).map(([tag, [onK, lvK]]) => tag + " " + (seedFill[onK] ? "사용" + (seedFill[lvK] != null ? " " + seedFill[lvK] + "레벨" : "") : "미착용(사용 끔)")).join(", ") }));
+      for (const w of eqWarn) out.append(el("div", { class: "fnote bad", text: w }));
+    } else out.append(el("div", { class: "fnote bad", text: "장비 정보를 불러오지 못해서 모자, 반지, 시드링은 채우지 않습니다." }));
     out.append(el("div", { class: "fnote", text: "데이터 기준 시각(date): " + (st.date || "없음") + "  ·  지금 시각: " + new Date().toLocaleString("ko-KR") }), t);
     if (miss) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 항목이 " + miss + "개 있어요. 그 칸은 채우지 않습니다." }));
     // 합산 값 확인: floor(기본 × (1 + %) + % 미적용)
@@ -906,72 +946,18 @@ function buildNexonStat() {
     }
     out.append(el("div", { class: "fnote", text: "주스탯, 부스탯, 공격력 합산 값 확인 (소수는 내림)" }), ct);
     const apply = el("button", { class: "btn small primary", type: "button" }, "위 칸 채우기");
-    apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length && !Object.keys(skFill).length;
-    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); for (const [k, v] of Object.entries(skFill)) setVal(k, v); syncAll(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개, 스킬 레벨 " + Object.keys(skFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
+    apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length && !Object.keys(skFill).length && !eqTable;
+    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); for (const [k, v] of Object.entries(skFill)) setVal(k, v); if (eqTable) { for (const [n, g] of Object.entries(eqFill)) { setVal(n, g); setGearName(n, eqNames[n]); } for (const [k, v] of Object.entries(seedFill)) setVal(k, v); } syncAll(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개, 스킬 레벨 " + Object.keys(skFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
     out.append(apply);
   }
   go.addEventListener("click", async () => {
     go.disabled = true; out.textContent = ""; say("불러오는 중…");
-    try { const ocid = await nxOcid(); const q = encodeURIComponent(ocid); const [st, basic, lk, sk] = await Promise.all([nxApi("/character/stat?ocid=" + q), nxApi("/character/basic?ocid=" + q).catch(() => null), nxApi("/character/link-skill?ocid=" + q).catch(() => null), nxApi("/character/skill?ocid=" + q + "&character_skill_grade=6").catch(() => null)]); show(st, basic, lk, sk); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
+    try { const ocid = await nxOcid(); const q = encodeURIComponent(ocid), slp = (ms) => new Promise((r) => setTimeout(r, ms));
+      const [st, basic, lk] = await Promise.all([nxApi("/character/stat?ocid=" + q), nxApi("/character/basic?ocid=" + q).catch(() => null), nxApi("/character/link-skill?ocid=" + q).catch(() => null)]);
+      await slp(300);    // 초당 5건 제한을 넘지 않게 나눠서 부른다
+      const [sk, eq] = await Promise.all([nxApi("/character/skill?ocid=" + q + "&character_skill_grade=6").catch(() => null), nxApi("/character/item-equipment?ocid=" + q).catch(() => null)]); show(st, basic, lk, sk, eq); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
     catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
   });
-  return root;
-}
-function buildNexon() {
-  const root = el("details", { class: "nexon" }, el("summary", {}, "넥슨 API로 모자/반지 불러오기"));
-  const [nameIn, keyIn] = nxInputs();
-  const go = el("button", { class: "btn", type: "button" }, "장비 불러오기");
-  const msg = el("div", { class: "fnote", role: "status" }), list = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅 프리셋의 모자와 반지를 읽어 아래 칸을 채웁니다. 컨티뉴어스 링이나 리스트레인트 링을 낀 프리셋만 고를 수 있고, 시드링은 빼고 나머지 반지를 반지1~3 순서대로 넣습니다. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
-    el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, list);
-  const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
-  function showPresets(eq) {
-    list.textContent = "";
-    let any = false;
-    for (const no of [1, 2, 3]) {
-      const items = eq["item_equipment_preset_" + no]; if (!Array.isArray(items)) continue;
-      const rings = [1, 2, 3, 4].map((i) => items.find((x) => x.item_equipment_slot === "반지" + i)).filter(Boolean);
-      const seeds = rings.map(nxSeed).filter(Boolean), hat = items.find((x) => x.item_equipment_slot === "모자");
-      const ok = seeds.length > 0 && !!hat;
-      const box = el("div", { class: "nxp" + (ok ? "" : " dis") });
-      const radio = el("input", { type: "radio", name: "nx-preset", disabled: !ok });
-      box.append(el("label", {}, radio, "프리셋 " + no + (eq.preset_no === no ? " (지금 적용 중)" : ""), el("span", { class: ok ? "okc" : "bad", text: ok ? " · 시드링 " + seeds.join(", ") : " · 컨티/리레 시드링이 없어서 고를 수 없어요" })));
-      if (ok) {
-        const rows = [["모자", hat], ...rings.filter((x) => !nxSeed(x)).slice(0, 3).map((x, i) => ["반지" + (i + 1), x])];
-        const t = el("table", {}, el("tr", {}, ...["", "이름", "STR", "DEX", "공격력", "잠재", "에디셔널"].map((h) => el("th", { text: h }))));
-        const parsed = rows.map(([lab, x]) => ({ lab, x, ...nxParse(x) }));
-        for (const r of parsed) {
-          const pr = (part) => r.g[part].filter(([k]) => k).map(([k, v]) => (GEAR_KOR[k] || k) + " " + v).join(", ");
-          t.append(el("tr", {}, el("td", { text: r.lab }), el("td", { text: r.x.item_name || "" }), el("td", { text: String(r.g.main) }), el("td", { text: String(r.g.sub) }), el("td", { text: String(r.g.attack) }), el("td", { text: pr("pot") }), el("td", { text: pr("add") })));
-        }
-        box.append(t);
-        const sk = parsed.flatMap((r) => r.skipped.map((l) => r.lab + ": " + l));
-        if (rings.filter((x) => !nxSeed(x)).length < 3) box.append(el("div", { class: "fnote", text: "시드링을 빼면 반지가 " + rings.filter((x) => !nxSeed(x)).length + "개라서 남는 반지 칸은 0으로 채웁니다." }));
-        if (sk.length) box.append(el("div", { class: "fnote bad", text: "읽지 못한 옵션(직접 확인해 주세요): " + sk.join(" / ") }));
-        const apply = el("button", { class: "btn small primary", type: "button" }, "이 프리셋으로 채우기");
-        apply.addEventListener("click", () => {
-          const names = ["Hat", "Ring_1", "Ring_2", "Ring_3"];
-          names.forEach((n, i) => { const r = parsed[i]; setVal(n, r ? r.g : { main: 0, sub: 0, all_pct: 0, attack: 0, ignore: 0, pot: [["", null], ["", null], ["", null]], add: [["", null], ["", null], ["", null]] }); setGearName(n, r ? r.x.item_name : null); });
-          syncAll(); say("프리셋 " + no + "의 모자와 반지로 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc");
-        });
-        radio.addEventListener("change", () => { for (const b of list.querySelectorAll(".nxapply")) b.hidden = true; apply.hidden = false; });
-        apply.className += " nxapply"; apply.hidden = true; box.append(apply);
-        if (eq.preset_no === no || false) { /* 선택은 사용자가 직접 한다 */ }
-      }
-      any = any || ok; list.append(box);
-    }
-    if (!list.children.length) say("프리셋 정보를 찾지 못했어요.", "bad");
-    else if (!any) say("컨티뉴어스 링이나 리스트레인트 링을 낀 프리셋이 없어요.", "bad");
-    else say("보스 세팅 프리셋을 고르고 채우기를 눌러 주세요.");
-  }
-  go.addEventListener("click", async () => {
-    go.disabled = true; list.textContent = ""; say("불러오는 중…");
-    try {
-      const ocid = await nxOcid();
-      showPresets(await nxApi("/character/item-equipment?ocid=" + encodeURIComponent(ocid)));
-    } catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
-  });
-  root.open = false;
   return root;
 }
 function buildField(it) {
