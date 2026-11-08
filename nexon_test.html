@@ -64,6 +64,7 @@ $("go").addEventListener("click", async () => {
       }
       return { t, n: items.length };
     };
+    line(d2, "데이터 기준 시각(date): " + (eq.date || "없음"), "ok");
     line(d2, "지금 적용 중인 프리셋 번호(preset_no): " + (eq.preset_no ?? "없음"), "ok");
     line(d2, "응답에 들어 있는 항목: " + Object.keys(eq).join(", "));
     const cur = table(eq.item_equipment); line(d2, "▼ 지금 착용 중 (전체 " + (eq.item_equipment || []).length + "개 중 모자/반지 " + cur.n + "개)", "ok"); d2.append(cur.t);
@@ -82,8 +83,25 @@ $("go").addEventListener("click", async () => {
       const fs = st.final_stat || [];
       const cp = fs.find((x) => x.stat_name === "전투력");
       line(d4, cp ? "전투력(지금 적용 중인 프리셋 기준): " + cp.stat_value : "응답에서 '전투력' 항목을 찾지 못했습니다.", cp ? "ok" : "bad");
+      line(d4, "데이터 기준 시각(date): " + (st.date || "없음") + "   /   호출한 시각: " + new Date().toLocaleString("ko-KR"), "ok");
       line(d4, "응답에 들어 있는 항목: " + Object.keys(st).join(", "));
       line(d4, "스탯 이름 목록: " + fs.map((x) => x.stat_name).join(", "));
+    }
+    const d5 = step("5. 링크 스킬 (지금 적용 중인 링크)");
+    const lk = await call(d5, "/character/link-skill?ocid=" + encodeURIComponent(id.ocid), key);
+    if (lk) {
+      line(d5, "응답에 들어 있는 항목: " + Object.keys(lk).join(", "));
+      const cur = lk.character_link_skill || [];
+      line(d5, "지금 적용 중인 링크 " + cur.length + "개", cur.length ? "ok" : "bad");
+      const t5 = document.createElement("table");
+      t5.innerHTML = "<tr><th>스킬 이름</th><th>레벨</th><th>설명(앞부분)</th></tr>";
+      for (const x of cur) {
+        const tr = document.createElement("tr");
+        for (const v of [x.skill_name, x.skill_level, String(x.skill_effect || "").slice(0, 60)]) { const td = document.createElement("td"); td.textContent = v == null ? "" : v; tr.append(td); }
+        t5.append(tr);
+      }
+      d5.append(t5);
+      const raw5 = document.createElement("details"); const sm5 = document.createElement("summary"); sm5.textContent = "받은 원본 (첫 번째 링크)"; raw5.append(sm5); pre(raw5, cur[0] || lk); d5.append(raw5);
     }
   } finally { $("go").disabled = false; }
 });
