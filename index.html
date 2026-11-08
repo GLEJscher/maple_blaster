@@ -821,20 +821,20 @@ function buildNexonStat() {
   const [nameIn, keyIn] = nxInputs();
   const go = el("button", { class: "btn", type: "button" }, "스탯 불러오기");
   const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초)를 채웁니다. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
+  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초)와 레벨을 채웁니다. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
     el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
   const norm = (t) => String(t || "").replace(/\s+/g, "");
   const num = (v) => { const x = Number(String(v).replace(/[,%]/g, "")); return isFinite(x) ? x : null; };
-  function show(st) {
+  function show(st, basic) {
     out.textContent = "";
     const map = new Map((st.final_stat || []).map((x) => [norm(x.stat_name), x.stat_value]));
     const get = (n) => num(map.get(norm(n)));
     const bs = S.values.base_spec || {}, fills = {};
     const t = el("table", {}, el("tr", {}, ...["항목", "불러온 값", "채울 값", "지금 입력"].map((h) => el("th", { text: h }))));
     let miss = 0;
-    for (const [key, nm, isInt] of NX_STAT) {
-      const raw = get(nm); let v = raw, note = "";
+    for (const [key, nm, isInt] of [["level", "레벨", true], ...NX_STAT]) {
+      const raw = key === "level" ? (basic ? num(basic.character_level) : null) : get(nm); let v = raw, note = "";
       if (raw == null) { miss++; t.append(el("tr", {}, el("td", { text: STAT_KOR[key] || nm }), el("td", { class: "bad", text: "없음" }), el("td", { text: "-" }), el("td", { text: String(bs[key] ?? "") }))); continue; }
       if (key === "critDamage" && typeof bs.critDamage === "number" && Math.abs(raw - 35 - bs.critDamage) < 0.051) { v = Math.round((raw - 35) * 100) / 100; note = " (35% 기본을 뺌)"; }
       if (isInt) v = Math.round(v); else v = Math.round(v * 100) / 100;
@@ -855,14 +855,14 @@ function buildNexonStat() {
         el("td", { class: calc == null ? "" : same ? "okc" : "bad", text: calc == null ? "-" : same ? "일치" : "다름: 세부 수치를 확인해 주세요" })));
     }
     out.append(el("div", { class: "fnote", text: "주스탯, 부스탯, 공격력 합산 값 확인 (소수는 내림)" }), ct);
-    const apply = el("button", { class: "btn small primary", type: "button" }, "위 8칸 채우기");
+    const apply = el("button", { class: "btn small primary", type: "button" }, "위 칸 채우기");
     apply.disabled = !Object.keys(fills).length;
     apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); syncAll(); say("스탯창 스펙 " + Object.keys(fills).length + "칸을 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
     out.append(apply);
   }
   go.addEventListener("click", async () => {
     go.disabled = true; out.textContent = ""; say("불러오는 중…");
-    try { const ocid = await nxOcid(); show(await nxApi("/character/stat?ocid=" + encodeURIComponent(ocid))); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
+    try { const ocid = await nxOcid(); const [st, basic] = await Promise.all([nxApi("/character/stat?ocid=" + encodeURIComponent(ocid)), nxApi("/character/basic?ocid=" + encodeURIComponent(ocid)).catch(() => null)]); show(st, basic); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
     catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
   });
   return root;
