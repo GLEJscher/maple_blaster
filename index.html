@@ -809,26 +809,31 @@ async function nxApi(path) {
 }
 async function nxOcid() {
   if (!NXC.key.trim() || !NXC.name.trim()) throw new Error("캐릭터 이름과 API 키를 모두 입력해 주세요.");
-  const id = await nxApi("/id?character_name=" + encodeURIComponent(NXC.name.trim()));
+  const nm = NXC.name.trim(); NXC.ocidCache = NXC.ocidCache || {};     // 같은 이름은 페이지를 열어 둔 동안만 기억해 호출을 아낀다
+  if (NXC.ocidCache[nm]) return NXC.ocidCache[nm];
+  const id = await nxApi("/id?character_name=" + encodeURIComponent(nm));
   if (!id.ocid) throw new Error("캐릭터를 찾지 못했어요.");
-  return id.ocid;
+  return (NXC.ocidCache[nm] = id.ocid);
 }
 /* 스탯창(합산 값)을 읽어 스탯창 스펙의 8칸을 채운다. 주스탯/부스탯/공격력은 세부 수치(기본, %, % 미적용)가 API에 없어서 직접 입력하고, 합산 값만 맞는지 확인한다 */
 const NX_STAT = [["damage", "데미지", true], ["bossDamage", "보스 몬스터 데미지", true], ["finalDamage", "최종 데미지", false], ["armorIgnore", "방어율 무시", false],
   ["critDamage", "크리티컬 데미지", false], ["attribResist", "속성 내성 무시", false], ["buffDuration", "버프 지속시간", true], ["cooldown", "재사용 대기시간 감소 (초)", true]];
 const NX_LINK = { "데몬스퓨리": "데슬", "와일드레이지": "데벤져", "인텐시브인썰트": "카데나", "커버넌트": "레테", "판단": "키네시스", "하이브리드로직": "제논",
   "무아": "아크", "소울컨트랙트": "엔버", "시프커닝": "모도", "임피리컬널리지": "모법", "전투의흐름": "일리움", "프라이어프리퍼레이션": "카인" };
+const NX_SKILL = { "매그넘펀치VI": "MF_LVL", "릴리즈파일벙커VI": "RPB_LVL", "해머스매시VI": "HAMM_LVL", "리볼빙캐논VI": "CANNON_LVL", "벙커버스터강화": "BUNK_BUST_LVL",
+  "버닝브레이커강화": "BURN_BRK_LVL", "발칸펀치강화": "VULCAN_LVL", "애프터이미지쇼크강화": "AFT_SHCK_LVL", "레지스탕스라인인팬트리VI": "INFANTRY_LVL",
+  "파이널디스트로이어": "ORIGIN_LVL", "오버히트펀치": "OH_LVL", "솔헤카테": "HECATE_LVL", "뱅가드임팩트": "VANGUARD_LVL" };
 function buildNexonStat() {
   const root = el("details", { class: "nexon" }, el("summary", {}, "넥슨 API로 스탯창 값 불러오기"));
   const [nameIn, keyIn] = nxInputs();
   const go = el("button", { class: "btn", type: "button" }, "스탯 불러오기");
   const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨을 채웁니다. 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
+  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개를 채웁니다. 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
     el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
   const norm = (t) => String(t || "").replace(/\s+/g, "");
   const num = (v) => { const x = Number(String(v).replace(/[,%]/g, "")); return isFinite(x) ? x : null; };
-  function show(st, basic, lk) {
+  function show(st, basic, lk, sk) {
     out.textContent = "";
     const map = new Map((st.final_stat || []).map((x) => [norm(x.stat_name), x.stat_value]));
     const get = (n) => num(map.get(norm(n)));
@@ -861,6 +866,14 @@ function buildNexonStat() {
       if (ok) { linkFill[k] = lv; linkOn[k] = true; } else linkWarn.push(k);
       lt.append(el("tr", {}, el("td", { text: k }), el("td", { class: ok ? "" : "bad", text: String(lv) + (ok ? "" : " (효과표에 없는 레벨)") }), el("td", { class: ok && curLv[k] !== lv ? "bad" : "", text: String(curLv[k]) })));
     }
+    // 스킬 레벨 (6차 스킬 목록에 1~6차 강화 스킬이 모두 들어 있다)
+    const skFill = {}, skSeen = new Set(), skRows = [];
+    const skList = (sk && sk.character_skill) || [];
+    for (const x of skList) { const v = NX_SKILL[norm(x.skill_name)]; if (!v || skSeen.has(v)) continue; const lv = num(x.skill_level); if (lv == null) continue; skSeen.add(v); skFill[v] = Math.round(lv); skRows.push([STAT_KOR[v] || (S.byName[v] && S.byName[v].label) || v, x.skill_name, lv, S.values[v]]); }
+    const st2 = el("table", {}, el("tr", {}, ...["스킬 레벨", "API 스킬 이름", "불러온 레벨", "지금 입력"].map((h) => el("th", { text: h }))));
+    for (const [nm, an, lv, cur] of skRows) st2.append(el("tr", {}, el("td", { text: nm }), el("td", { text: an }), el("td", { text: String(lv) }), el("td", { class: cur !== lv ? "bad" : "", text: String(cur ?? "") })));
+    const skMiss = Object.values(NX_SKILL).filter((v) => !skSeen.has(v));
+    const mast = skList.find((x) => norm(x.skill_name) === "리볼빙캐논마스터리VI"), mastNote = mast && skFill.HAMM_LVL != null && num(mast.skill_level) !== skFill.HAMM_LVL;
     const abnRaw = get("상태이상 추가 데미지"), cl = linkFill["카데나"] ?? curLv["카데나"], cab = CADENA_ABN[cl];
     const curAbn = (S.values.abnormal_status_damage || {}).damage;
     let abn = null;
@@ -873,6 +886,11 @@ function buildNexonStat() {
       if (unknown.length) out.append(el("div", { class: "fnote bad", text: "알 수 없는 링크라서 건너뜀: " + unknown.join(", ") }));
       if (linkWarn.length) out.append(el("div", { class: "fnote bad", text: "채우지 않는 링크: " + linkWarn.join(", ") + " (스탯창에 이미 들어 있는 링크가 빠졌거나 효과표에 없는 레벨입니다. 직접 확인해 주세요)" }));
     } else out.append(el("div", { class: "fnote bad", text: "링크 스킬 정보를 불러오지 못해서 링크는 채우지 않습니다." }));
+ if (sk) {
+      out.append(el("div", { class: "fnote", text: "스킬 레벨" }), st2);
+      if (skMiss.length) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 스킬: " + skMiss.join(", ") + " (그 칸은 채우지 않습니다)" }));
+      if (mastNote) out.append(el("div", { class: "fnote bad", text: "리볼빙 캐논 마스터리 레벨(" + mast.skill_level + ")이 해머 스매시 레벨(" + skFill.HAMM_LVL + ")과 달라요. 시뮬레이터는 둘을 같은 값으로 계산합니다." }));
+    } else out.append(el("div", { class: "fnote bad", text: "스킬 레벨을 불러오지 못해서 스킬 레벨은 채우지 않습니다." }));
     out.append(el("div", { class: "fnote", text: "데이터 기준 시각(date): " + (st.date || "없음") + "  ·  지금 시각: " + new Date().toLocaleString("ko-KR") }), t);
     if (miss) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 항목이 " + miss + "개 있어요. 그 칸은 채우지 않습니다." }));
     // 합산 값 확인: floor(기본 × (1 + %) + % 미적용)
@@ -888,13 +906,13 @@ function buildNexonStat() {
     }
     out.append(el("div", { class: "fnote", text: "주스탯, 부스탯, 공격력 합산 값 확인 (소수는 내림)" }), ct);
     const apply = el("button", { class: "btn small primary", type: "button" }, "위 칸 채우기");
-    apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length;
-    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); syncAll(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
+    apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length && !Object.keys(skFill).length;
+    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); for (const [k, v] of Object.entries(skFill)) setVal(k, v); syncAll(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개, 스킬 레벨 " + Object.keys(skFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
     out.append(apply);
   }
   go.addEventListener("click", async () => {
     go.disabled = true; out.textContent = ""; say("불러오는 중…");
-    try { const ocid = await nxOcid(); const q = encodeURIComponent(ocid); const [st, basic, lk] = await Promise.all([nxApi("/character/stat?ocid=" + q), nxApi("/character/basic?ocid=" + q).catch(() => null), nxApi("/character/link-skill?ocid=" + q).catch(() => null)]); show(st, basic, lk); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
+    try { const ocid = await nxOcid(); const q = encodeURIComponent(ocid); const [st, basic, lk, sk] = await Promise.all([nxApi("/character/stat?ocid=" + q), nxApi("/character/basic?ocid=" + q).catch(() => null), nxApi("/character/link-skill?ocid=" + q).catch(() => null), nxApi("/character/skill?ocid=" + q + "&character_skill_grade=6").catch(() => null)]); show(st, basic, lk, sk); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
     catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
   });
   return root;
