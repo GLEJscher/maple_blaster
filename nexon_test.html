@@ -1,0 +1,69 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>넥슨 API 호출 확인</title>
+<style>
+:root{--bg:#fff;--ink:#1c1c1e;--mut:#6b6b70;--ring:#d0d0d6;--ok:#157f3b;--bad:#c0262d;--pre:#f4f4f6}
+@media (prefers-color-scheme:dark){:root{--bg:#161618;--ink:#ececef;--mut:#9a9aa2;--ring:#3a3a40;--ok:#4cc57a;--bad:#ff7b80;--pre:#222226}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Noto Sans KR",sans-serif}
+main{max-width:720px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:20px;margin:0 0 4px}p.s{color:var(--mut);margin:0 0 16px;font-size:13px}
+label{display:block;margin:10px 0 4px;font-weight:600;font-size:13px}
+input{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid var(--ring);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+button{margin-top:14px;padding:9px 16px;border:0;border-radius:8px;background:#2f7ff0;color:#fff;font:inherit;font-weight:700;cursor:pointer}button:disabled{opacity:.5}
+.step{margin-top:16px;border:1px solid var(--ring);border-radius:10px;padding:10px 12px}
+.step b{display:block}.ok{color:var(--ok)}.bad{color:var(--bad)}
+pre{background:var(--pre);padding:8px;border-radius:8px;overflow:auto;max-height:260px;font-size:12px;white-space:pre-wrap;word-break:break-all}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid var(--ring);padding:4px 6px;text-align:left;vertical-align:top}
+</style></head><body><main>
+<h1>넥슨 오픈 API 호출 확인</h1>
+<p class="s">브라우저에서 바로 호출이 되는지만 확인하는 페이지입니다. API 키와 캐릭터 이름은 넥슨 서버로만 보내고, 어디에도 저장하지 않습니다.</p>
+<label for="k">API 키</label><input id="k" type="password" autocomplete="off" placeholder="넥슨 오픈 API 키">
+<label for="n">캐릭터 이름</label><input id="n" type="text" autocomplete="off" placeholder="캐릭터 이름">
+<button id="go">호출해 보기</button>
+<div id="out"></div>
+<script>
+const BASE = "https://open.api.nexon.com/maplestory/v1";
+const $ = (id) => document.getElementById(id), out = $("out");
+function step(title) { const d = document.createElement("div"); d.className = "step"; const b = document.createElement("b"); b.textContent = title; d.append(b); out.append(d); return d; }
+function line(d, text, cls) { const p = document.createElement("div"); if (cls) p.className = cls; p.textContent = text; d.append(p); }
+function pre(d, obj) { const p = document.createElement("pre"); p.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2); d.append(p); }
+async function call(d, path, key) {
+  let r;
+  try { r = await fetch(BASE + path, { headers: { "x-nxopen-api-key": key } }); }
+  catch (e) {
+    line(d, "응답을 받지 못했습니다 (" + e.message + ")", "bad");
+    line(d, "이 경우 브라우저가 호출을 막았을 가능성(CORS)이 큽니다. F12 → 콘솔/네트워크 탭에 'CORS' 문구가 있는지 확인해 주세요. 광고 차단 확장프로그램이나 네트워크 문제일 수도 있습니다.");
+    return null;
+  }
+  let body; const txt = await r.text(); try { body = JSON.parse(txt); } catch (e) { body = txt; }
+  line(d, "HTTP " + r.status + (r.ok ? " (브라우저에서 응답을 읽을 수 있음)" : ""), r.ok ? "ok" : "bad");
+  if (!r.ok) pre(d, body);
+  return r.ok ? body : null;
+}
+$("go").addEventListener("click", async () => {
+  const key = $("k").value.trim(), name = $("n").value.trim(); out.textContent = "";
+  if (!key || !name) { line(step("입력 확인"), "API 키와 캐릭터 이름을 둘 다 입력해 주세요.", "bad"); return; }
+  $("go").disabled = true;
+  try {
+    const d1 = step("1. 캐릭터 이름 → 식별자(ocid)");
+    const id = await call(d1, "/id?character_name=" + encodeURIComponent(name), key);
+    if (!id || !id.ocid) return;
+    line(d1, "ocid를 받았습니다.", "ok");
+    const d2 = step("2. 장비 정보 (모자, 반지)");
+    const eq = await call(d2, "/character/item-equipment?ocid=" + encodeURIComponent(id.ocid), key);
+    if (!eq) return;
+    const items = (eq.item_equipment || []).filter((x) => /^(모자|반지)/.test(x.item_equipment_slot || ""));
+    line(d2, "전체 " + (eq.item_equipment || []).length + "개 중 모자/반지 " + items.length + "개", "ok");
+    const t = document.createElement("table");
+    t.innerHTML = "<tr><th>부위</th><th>이름</th><th>총 옵션</th><th>잠재</th><th>에디셔널</th></tr>";
+    const sh = (o) => { const x = o || {}; return ["str", "dex", "int", "luk", "all_stat", "attack_power", "magic_power"].filter((k) => +x[k]).map((k) => k + " " + x[k]).join(", "); };
+    const pot = (x, p) => [1, 2, 3].map((i) => x[p + i]).filter(Boolean).join(" / ");
+    for (const x of items) {
+      const tr = document.createElement("tr");
+      for (const v of [x.item_equipment_slot, x.item_name, sh(x.item_total_option), pot(x, "potential_option_"), pot(x, "additional_potential_option_")]) { const td = document.createElement("td"); td.textContent = v || ""; tr.append(td); }
+      t.append(tr);
+    }
+    d2.append(t);
+    const raw = document.createElement("details"); const sm = document.createElement("summary"); sm.textContent = "받은 원본 (첫 번째 모자/반지)"; raw.append(sm); pre(raw, items[0] || {}); d2.append(raw);
+  } finally { $("go").disabled = false; }
+});
+</script></main></body></html>
