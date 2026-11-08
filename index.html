@@ -829,12 +829,12 @@ function buildNexonStat() {
   const [nameIn, keyIn] = nxInputs();
   const go = el("button", { class: "btn", type: "button" }, "불러오기");
   const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨을 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 6건입니다 (개발 단계 키는 하루 1,000건). 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
+  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨을 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 7건입니다 (개발 단계 키는 하루 1,000건). 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
     el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
   const norm = (t) => String(t || "").replace(/\s+/g, "");
   const num = (v) => { const x = Number(String(v).replace(/[,%]/g, "")); return isFinite(x) ? x : null; };
-  function show(st, basic, lk, sk, eq) {
+  function show(st, basic, lk, sk, eq, rs) {
     out.textContent = "";
     const map = new Map((st.final_stat || []).map((x) => [norm(x.stat_name), x.stat_value]));
     const get = (n) => num(map.get(norm(n)));
@@ -899,6 +899,8 @@ function buildNexonStat() {
       if (sk2.length) eqWarn.push("읽지 못한 옵션(직접 확인해 주세요): " + sk2.join(" / "));
       const seedsFound = {};
       for (const x of rings) { const tag = nxSeed(x); if (tag) seedsFound[tag] = x; }
+      // 추가 슬롯(예비 특수 반지)에 낀 시드링
+      if (rs && rs.special_ring_reserve_name) { const tag = nxSeed({ item_name: rs.special_ring_reserve_name }); if (tag && !seedsFound[tag]) seedsFound[tag] = { special_ring_level: rs.special_ring_reserve_level }; }
       for (const [tag, [onK, lvK]] of Object.entries(SEEDV)) {
         const x = seedsFound[tag];
         if (!x) { seedFill[onK] = false; continue; }
@@ -960,7 +962,8 @@ function buildNexonStat() {
       const lk = await call("링크", "/character/link-skill?ocid=" + q);
       const sk = await call("스킬 레벨", "/character/skill?ocid=" + q + "&character_skill_grade=6");
       const eq = await call("장비", "/character/item-equipment?ocid=" + q);
-      show(st, basic, lk, sk, eq); for (const m of errs) out.append(el("div", { class: "fnote bad", text: "불러오기 실패 - " + m })); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
+      const rs = await call("예비 특수 반지", "/character/ring-reserve-skill-equipment?ocid=" + q);
+      show(st, basic, lk, sk, eq, rs); for (const m of errs) out.append(el("div", { class: "fnote bad", text: "불러오기 실패 - " + m })); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
     catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
   });
   return root;
