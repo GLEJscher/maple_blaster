@@ -220,6 +220,7 @@ th.sort:hover{color:var(--ink)}
 .nexon .nxp{border:1px solid var(--ring);border-radius:8px;padding:6px 8px;margin:8px 0}.nexon .nxp.dis{opacity:.55}.nexon .nxp label{font-weight:700;display:flex;gap:6px;align-items:center}
 .nexon table{border-collapse:collapse;width:100%;font-size:12px;margin-top:4px}.nexon td,.nexon th{border-bottom:1px solid var(--ring);padding:3px 5px;text-align:left;vertical-align:top}
 .nexon .bad{color:var(--bad,#c0262d)}.nexon .okc{color:var(--ok,#157f3b)}
+.ico{width:32px;height:32px;flex:none;align-self:center;image-rendering:pixelated;border-radius:4px}.fitem .ico{width:24px;height:24px;vertical-align:middle;margin-right:6px}.tbl td .ico{width:24px;height:24px;vertical-align:middle;margin-right:6px}
 .fitem{font-size:12.5px;font-weight:700;color:var(--accent);margin:0 0 4px;overflow-wrap:anywhere}
 .gearintro{grid-column:1/-1;font-size:12.5px;color:var(--ink2);line-height:1.55;margin:-2px 0 2px}
 </style>
@@ -437,18 +438,28 @@ function syncAscentVis() {          // 어센트를 쓰지 않으면(0회) 어�
   for (const n of ASCENT_ONLY) { const r = S.refs[n]; if (r) r.root.classList.toggle("off", !S.values.ASCENT_USES); }
 }
 const canon = (v) => JSON.stringify(v, (k, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((q) => [q, x[q]])) : x));
+/* 넥슨 API가 주는 아이콘 주소를 저장해 두었다가 장비, 스킬, 링크 칸 옆에 보여 준다 (불러온 적이 없으면 아이콘이 없다) */
+const ICON_OK = (u) => { try { const x = new URL(u); return x.protocol === "https:" && /(^|\.)nexon\.com$/.test(x.hostname); } catch (e) { return false; } };
+function loadIcons() { const v = store.get("blaster-dpm:icons"); return v && typeof v === "object" ? v : {}; }
+function saveIcons(m) { const all = { ...loadIcons() }; for (const [k, u] of Object.entries(m || {})) if (u && ICON_OK(u)) all[k] = u; store.set("blaster-dpm:icons", all); }
+function applyIcon(i, all) { const u = (all || loadIcons())[i.dataset.ik]; if (u && ICON_OK(u)) { if (i.getAttribute("src") !== u) i.src = u; i.hidden = false; } else i.hidden = true; }
+function iconImg(key) { const i = el("img", { class: "ico", alt: "", hidden: true }); i.dataset.ik = key; i.addEventListener("error", () => { i.hidden = true; }); applyIcon(i); return i; }
+function refreshIcons() { const all = loadIcons(); document.querySelectorAll("img.ico[data-ik]").forEach((i) => applyIcon(i, all)); }
 function loadGearNames() { const v = store.get("blaster-dpm:gear-names"); return v && typeof v === "object" ? v : {}; }
 function updateGearName(name, ref) {         // 넥슨에서 불러온 장비 이름을 칸 위에 보여 준다. 값을 고치면 "수정됨"을 붙이고, 기본값으로 돌리면 이름을 지운다
   const box = ref.root.querySelector(".fitem"); if (!box) return;
   const all = loadGearNames(), e = all[name];
   if (e && same(S.values[name], S.defaults[name])) { delete all[name]; store.set("blaster-dpm:gear-names", all); }
   const cur = loadGearNames()[name];
-  box.hidden = !cur;
-  if (cur) box.textContent = "불러온 장비: " + cur.item + (canon(S.values[name]) === cur.snap ? "" : " (이후 값을 수정했어요)");
+  box.hidden = !cur; box.textContent = "";
+  if (cur) {
+    if (cur.icon && ICON_OK(cur.icon)) { const im = el("img", { class: "ico", alt: "", src: cur.icon }); im.addEventListener("error", () => { im.hidden = true; }); box.append(im); }
+    box.append("불러온 장비: " + cur.item + (canon(S.values[name]) === cur.snap ? "" : " (이후 값을 수정했어요)"));
+  }
 }
-function setGearName(name, item) {
+function setGearName(name, item, icon) {
   const all = loadGearNames();
-  if (item) all[name] = { item, snap: canon(S.values[name]) }; else delete all[name];
+  if (item) all[name] = { item, snap: canon(S.values[name]), icon: icon && ICON_OK(icon) ? icon : undefined }; else delete all[name];
   store.set("blaster-dpm:gear-names", all);
 }
 function refreshChanged(name) {
@@ -694,7 +705,8 @@ function applyFilter() {
 function fieldShell(it, control, wide) {
   const isGear = GEAR_NAMES.includes(it.name);
   const root = el("div", { class: "field" + (wide ? " wide" : "") },
-    el("div", { class: "fhead" },
+ el("div", { class: "fhead" },
+      it.sub ? iconImg(it.name) : null,
       it.label ? el("span", { class: "fkor strong", text: it.label }) : null, el("span", { class: "fname" + (it.label ? " dim" : ""), text: it.name }),
       el("span", { class: "fchg", text: "바꿈" }),
       el("button", { class: "freset", onclick: () => { S.values[it.name] = clone(S.defaults[it.name]); S.refs[it.name].sync(); refreshChanged(it.name); store.set("blaster-dpm:current", overrides()); S.dirty = true; scheduleRun(); } }, "되돌리기")),
@@ -854,8 +866,8 @@ function buildNexonStat() {
     // 상태이상 추가 데미지: 스탯창 값에서 카데나 링크의 상추뎀(링크 효과표가 따로 더함)을 뺀 나머지가 어빌리티 등의 값이다
     const CADENA_ABN = { 2: 6, 3: 9 };       // Skills.py 링크 효과표의 카데나 (상추뎀 + 데미지에서 상추뎀 몫)
     // 지금 적용 중인 링크 (API 이름 -> 코드의 링크 이름)
-    const apiLv = {}, unknown = [];
-    for (const x of (lk && lk.character_link_skill) || []) { const k = NX_LINK[norm(x.skill_name)]; if (k) apiLv[k] = num(x.skill_level); else unknown.push(x.skill_name); }
+    const apiLv = {}, unknown = [], iconMap = {};
+    for (const x of (lk && lk.character_link_skill) || []) { const k = NX_LINK[norm(x.skill_name)]; if (k) { apiLv[k] = num(x.skill_level); iconMap["링크:" + k] = x.skill_icon; } else unknown.push(x.skill_name); }
     const LVC = (S.byName.LINK_LVL && S.byName.LINK_LVL.choices) || {}, curLv = S.values.LINK_LVL || {}, curOn = S.values.LINK_ON || {};
     const linkFill = {}, linkOn = {}, linkWarn = [];
     const lt = el("table", {}, el("tr", {}, ...["링크", "불러온 레벨", "지금 입력 레벨"].map((h) => el("th", { text: h }))));
@@ -872,7 +884,7 @@ function buildNexonStat() {
     // 스킬 레벨 (6차 스킬 목록에 1~6차 강화 스킬이 모두 들어 있다)
     const skFill = {}, skSeen = new Set(), skRows = [];
     const skList = (sk && sk.character_skill) || [];
-    for (const x of skList) { const v = NX_SKILL[norm(x.skill_name)]; if (!v || skSeen.has(v)) continue; const lv = num(x.skill_level); if (lv == null) continue; skSeen.add(v); skFill[v] = Math.round(lv); skRows.push([STAT_KOR[v] || (S.byName[v] && S.byName[v].label) || v, x.skill_name, lv, S.values[v]]); }
+    for (const x of skList) { const v = NX_SKILL[norm(x.skill_name)]; if (!v || skSeen.has(v)) continue; const lv = num(x.skill_level); if (lv == null) continue; skSeen.add(v); skFill[v] = Math.round(lv); iconMap[v] = x.skill_icon; skRows.push([STAT_KOR[v] || (S.byName[v] && S.byName[v].label) || v, x.skill_name, lv, S.values[v]]); }
     const st2 = el("table", {}, el("tr", {}, ...["스킬 레벨", "API 스킬 이름", "불러온 레벨", "지금 입력"].map((h) => el("th", { text: h }))));
     for (const [nm, an, lv, cur] of skRows) st2.append(el("tr", {}, el("td", { text: nm }), el("td", { text: an }), el("td", { text: String(lv) }), el("td", { class: cur !== lv ? "bad" : "", text: String(cur ?? "") })));
     const skMiss = Object.values(NX_SKILL).filter((v) => !skSeen.has(v));
@@ -881,7 +893,7 @@ function buildNexonStat() {
     const hpFill = {}, hpRows = [], hpWarn = [];
     if (hp && Array.isArray(hp.character_skill)) {
       const nm2 = (t) => norm(t).replace(/[-‐‑–—－~]/g, ""), seen = {};
-      for (const x of hp.character_skill) { const v = NX_HYPER[nm2(x.skill_name)]; if (v) seen[v] = (num(x.skill_level) || 0) >= 1; }
+      for (const x of hp.character_skill) { const v = NX_HYPER[nm2(x.skill_name)]; if (v) { seen[v] = (num(x.skill_level) || 0) >= 1; iconMap[v] = x.skill_icon; } }
       if (hp.character_skill.length && !Object.keys(seen).length) hpWarn.push("하이퍼 패시브 이름이 하나도 맞지 않아서 채우지 않습니다 (응답 이름 예: " + hp.character_skill.slice(0, 3).map((x) => x.skill_name).join(", ") + ")");
       else {
         for (const v of Object.values(NX_HYPER)) { hpFill[v] = !!seen[v]; hpRows.push([(S.byName[v] && S.byName[v].label) || v, hpFill[v], S.values[v]]); }
@@ -890,7 +902,7 @@ function buildNexonStat() {
     }
     // 장비: 지금 적용 중인 모자와 반지 (시드링은 반지 입력에서 빼고 시드링 사용/레벨로 채운다)
     const SEEDV = { "컨티": ["SEED_CONTI", "CONTI_LVL"], "리레": ["SEED_RESTRAINT", "RESTRAINT_LVL"] };
-    const eqFill = {}, seedFill = {}, eqNames = {}, eqWarn = [];
+    const eqFill = {}, seedFill = {}, eqNames = {}, eqIcons = {}, eqWarn = [];
     let eqTable = null;
     const eqItems = eq && eq.item_equipment;
     if (Array.isArray(eqItems)) {
@@ -905,7 +917,7 @@ function buildNexonStat() {
         eqTable.append(el("tr", {}, el("td", { text: r.lab }), el("td", { text: r.x.item_name || "" }), el("td", { text: String(r.g.main) }), el("td", { text: String(r.g.sub) }), el("td", { text: String(r.g.attack) }), el("td", { text: pr("pot") }), el("td", { text: pr("add") })));
       }
       const zero = { main: 0, sub: 0, all_pct: 0, attack: 0, ignore: 0, pot: [["", null], ["", null], ["", null]], add: [["", null], ["", null], ["", null]] };
-      ["Hat", "Ring_1", "Ring_2", "Ring_3"].forEach((n, i) => { const r = parsed.find((q) => q.lab === (i === 0 ? "모자" : "반지" + i)); eqFill[n] = r ? r.g : zero; eqNames[n] = r ? r.x.item_name : null; });
+      ["Hat", "Ring_1", "Ring_2", "Ring_3"].forEach((n, i) => { const r = parsed.find((q) => q.lab === (i === 0 ? "모자" : "반지" + i)); eqFill[n] = r ? r.g : zero; eqNames[n] = r ? r.x.item_name : null; eqIcons[n] = r ? r.x.item_icon : null; });
       if (!hat) eqWarn.push("모자를 찾지 못했어요. 모자 칸은 0으로 채웁니다.");
       if (others.length < 3) eqWarn.push("시드링을 빼면 반지가 " + others.length + "개라서 남는 반지 칸은 0으로 채웁니다.");
       const sk2 = parsed.flatMap((r) => r.skipped.map((l) => r.lab + ": " + l));
@@ -980,7 +992,7 @@ function buildNexonStat() {
     out.append(el("div", { class: "fnote", text: "주스탯, 부스탯, 공격력 합산 값 확인 (소수는 내림)" }), ct);
     const apply = el("button", { class: "btn small primary", type: "button" }, "위 칸 채우기");
     apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length && !Object.keys(skFill).length && !eqTable && unionLv == null && !Object.keys(hpFill).length;
-    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); for (const [k, v] of Object.entries(skFill)) setVal(k, v); for (const [k, v] of Object.entries(hpFill)) setVal(k, v); if (unionLv != null) setVal("UNION_LVL", unionLv); if (eqTable) { for (const [n, g] of Object.entries(eqFill)) { setVal(n, g); setGearName(n, eqNames[n]); } for (const [k, v] of Object.entries(seedFill)) setVal(k, v); } syncAll(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개, 스킬 레벨 " + Object.keys(skFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
+    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); for (const [k, v] of Object.entries(skFill)) setVal(k, v); for (const [k, v] of Object.entries(hpFill)) setVal(k, v); saveIcons(iconMap); if (unionLv != null) setVal("UNION_LVL", unionLv); if (eqTable) { for (const [n, g] of Object.entries(eqFill)) { setVal(n, g); setGearName(n, eqNames[n], eqIcons[n]); } for (const [k, v] of Object.entries(seedFill)) setVal(k, v); } syncAll(); refreshIcons(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개, 스킬 레벨 " + Object.keys(skFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
     out.append(apply);
   }
   go.addEventListener("click", async () => {
@@ -1110,7 +1122,7 @@ function buildLinks() {
     const cb = el("input", { type: "checkbox", id: "lk-on-" + key, "aria-label": key + " 사용" });
     cb.addEventListener("change", () => setVal("LINK_ON", { ...S.values.LINK_ON, [key]: cb.checked }));
     const lv = selectInput("lk-lv-" + key, (LV.choices && LV.choices[key]) || [], () => S.values.LINK_LVL[key], (v) => setVal("LINK_LVL", { ...S.values.LINK_LVL, [key]: v }), key + " 레벨");
-    const tr = el("tr", {}, el("td", { text: key }), el("td", {}, cb), el("td", {}, lv.input));
+    const tr = el("tr", {}, el("td", {}, iconImg("링크:" + key), key), el("td", {}, cb), el("td", {}, lv.input));
     const mark = () => tr.classList.toggle("rowchg", linkChanged(key));
     cb.addEventListener("change", mark); lv.input.addEventListener("change", mark);
     ins.push({ sync() { cb.checked = !!S.values.LINK_ON[key]; lv.sync(); mark(); } });
