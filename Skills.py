@@ -31,20 +31,20 @@ base_spec_no_link = base_spec + abnormal_status_damage + union_effect      # 링
 base_spec = base_spec_no_link      # 링크 스킬이 더해진 최종 base_spec은 버프 스킬 셀의 '링크 스킬' 부분에서 만들어진다
 # 시드링(컨티, 리레)과 메여축/리버티/엔버링크는 base_spec에 넣지 않고 버프 스킬로 따로 적용한다 (아래 '하이퍼 스킬 및 버프 스킬')
 # 장비 스탯 입력: 장비 툴팁에서 옮겨 적는 값을 CharaInfo로 바꿔 준다 (어센트에 적용되지 않는 장비는 base_spec에서 이만큼 뺀다)
-#  기본 스탯: main(STR), sub(DEX), all_pct(올스탯 %: 주스탯 %와 부스탯 %에 같이 더해진다), attack(공격력), ignore(방어율 무시 %)
-#  잠재옵션: pot_main_pct(STR %), pot_sub_pct(DEX %), pot_all_pct(올스탯 %)
+#  기본 스탯: main(주스탯), sub(부스탯), all_pct(올스탯 %: 주스탯 %와 부스탯 %에 같이 더해진다), attack(공격력), ignore(방어율 무시 %)
+#  잠재옵션: pot_main_pct(주스탯 %), pot_sub_pct(부스탯 %), pot_all_pct(올스탯 %)
 #  에디셔널 잠재옵션: add_main, add_main_pct, add_sub, add_sub_pct, add_all(올스탯), add_all_pct, add_attack,
-#                    add_crit(크리티컬 데미지 %), add_main_per9, add_sub_per9 (캐릭터 기준 9레벨 당 +n: base_spec.level를 9로 나눈 몫 x n)
+#                    add_main_per9, add_sub_per9 (캐릭터 기준 9레벨 당 +n: base_spec.level를 9로 나눈 몫 x n)
 def gear_stat(main=0, sub=0, all_pct=0, attack=0, ignore=0,
               pot_main_pct=0, pot_sub_pct=0, pot_all_pct=0,
               add_main=0, add_main_pct=0, add_sub=0, add_sub_pct=0, add_all=0, add_all_pct=0, add_attack=0,
-              add_main_per9=0, add_sub_per9=0, add_crit=0):
+              add_main_per9=0, add_sub_per9=0):
     per9 = int(base_spec.level) // 9
     return CharaInfo(mainStat=main + add_main + add_all + per9 * add_main_per9,
                      mainStatp=all_pct + pot_main_pct + pot_all_pct + add_main_pct + add_all_pct,
                      subStat=sub + add_sub + add_all + per9 * add_sub_per9,
                      subStatp=all_pct + pot_sub_pct + pot_all_pct + add_sub_pct + add_all_pct,
-                     attack=attack + add_attack, armorIgnore=ignore, critDamage=add_crit)
+                     attack=attack + add_attack, armorIgnore=ignore)
 
 # 어센트에 적용되지 않는 장비: 반지 1~3, 모자 (시드링 스탯에는 포함되지 않는다)
 Ring_1 = gear_stat(main=104, sub=90, attack=75, pot_main_pct=27, pot_sub_pct=9)
@@ -128,12 +128,6 @@ RPB_LVL = 29
 HAMM_LVL = 28
 CANNON_LVL = 29
 MASTERY_LVL = HAMM_LVL
-# 하이퍼 패시브 스킬 (모두 1레벨짜리. 찍었으면 True, 안 찍었으면 False)
-HYPER_PUNCH_REINFORCE = True   # 펀치-리인포스: 매그넘 펀치, 더블 팡, 블래스트 해머 스매시의 데미지 +10%p
-HYPER_PUNCH_IGNORE = True      # 펀치-이그노어 가드: 매그넘 펀치, 더블 팡, 블래스트 해머 스매시의 방어율 무시 +20%p
-HYPER_PUNCH_ATTACK = True      # 펀치-보너스 어택: 블래스트 해머 스매시의 공격 횟수 +2
-HYPER_RPB_REINFORCE = True     # 릴리즈 파일 벙커-리인포스: 릴리즈 파일 벙커, 버스트 파일 벙커의 데미지 +20%p
-HYPER_RPB_SHOCK = True         # 릴리즈 파일 벙커-쇼크 웨이브 리인포스: 릴리즈 파일 벙커 충격파의 데미지 +15%p
 # 5차 스킬 레벨
 BUNK_BUST_LVL = 30
 BURN_BRK_LVL = 10
@@ -220,16 +214,12 @@ AURA_COOLDOWN = 5.25      # 인게임 전투분석(335초 62회)에 맞춘 값: 
 AURA_EXCLUDE = ("인팬트리",)      # 이 스킬로는 오라 웨폰이 발동하지 않는다 (오버히트 펀치는 발동한다)
 
 # 도핑 / 액티브 버프 ON/OFF (True면 사용). 어센트에는 적용되지 않는다. 시뮬레이션 시작(0초)에 쓰고 지속시간이 끝나면 다시 쓰지 않는다
-#  노블(노블레스): 4개 스킬이 각각 독립이다. 크게 한방(크리티컬 데미지), 길드의 이름으로(데미지), 보스 킬링 머신(보스 데미지), 방어력은 숫자일 뿐(방어율 무시). 레벨당 효과 +2%, 지속 2분 (레벨 15 = 30% / 30분)
+#  노블(노블레스): 데미지 +30%, 보스 데미지 +30%, 크리티컬 데미지 +30%, 방어율 무시 +NOBLE_IGNORE% (0~30, 2씩 증가). 지속 시간은 방어율 무시 %와 같은 분(2%면 2분, 10%면 10분, 30%면 30분)
 #  영메(영웅의 메아리, 30분): 공격력 +4%
 #  세이람(15분 도핑): 공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16%
-#  콜렉터(8분 도핑): 공격력 +100, 주스탯 +30, 부스탯 +30, 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 A, B, C 기본 데미지 +3%p), 방어율 무시 38% -> 41% (스탯창의 방무 38%가 41%로 바뀌므로 -38 + 41)
+#  콜렉터(8분 도핑): 공격력 +100, 주스탯 +30, 부스탯 +30, 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 A, B, C 기본 데미지 +3%p)
 DOPING_ON = {"노블": False, "영메": False, "세이람": False, "콜렉터": False}
-# 노블 스킬 4개: 값은 효과 %이고 0~30, 2의 배수(0, 2, 4, ...)이다. 지속 시간(분)도 이 값과 같다 (2%면 2분, 30%면 30분, 0이면 효과 없음)
-NOBLE_CRIT = 0         # 크게 한방: 크리티컬 데미지 %
-NOBLE_DAMAGE = 0       # 길드의 이름으로: 데미지 %
-NOBLE_BOSS = 0         # 보스 킬링 머신: 보스 데미지 %
-NOBLE_IGNORE = 0       # 방어력은 숫자일 뿐: 방어율 무시 %
+NOBLE_IGNORE = 0       # 노블의 방어율 무시 % (0~30, 2의 배수: 0, 2, 4, ...). 노블의 지속 시간(분)도 이 값과 같다 (0이면 효과 없음)
 
 # 시드링 ON/OFF (True면 사용). run_bunker_maxi(conti_on=..., restraint_on=...)로 그때그때 바꿀 수도 있다
 SEED_CONTI = True        # 컨티뉴어스 링: 상시 적용 (이전 시뮬레이션은 base_spec에 컨티가 더해져 있어 ON과 같은 값이었다)
@@ -524,12 +514,6 @@ HECATE_BONUS_TABLE = {10: CharaInfo(armorIgnore=20, bossDamage=20),
 # 버닝 브레이커 폭발 데미지(앺숔 1회)
 # 파이널 디스트로이어(오리진 스킬)(앺숔)
 
-# 하이퍼 패시브 스킬 효과 (위의 HYPER_* 를 켜면 해당 스킬의 bonus에 더해진다)
-punch_hyper = (CharaInfo(damage=10) if HYPER_PUNCH_REINFORCE else CharaInfo()) + (CharaInfo(armorIgnore=20) if HYPER_PUNCH_IGNORE else CharaInfo())    # 펀치-리인포스 + 펀치-이그노어 가드
-rpb_hyper = CharaInfo(damage=20) if HYPER_RPB_REINFORCE else CharaInfo()                                                                                # 릴리즈 파일 벙커-리인포스 (직격, 버스트)
-rpb_shock_hyper = CharaInfo(damage=15) if HYPER_RPB_SHOCK else CharaInfo()                                                                              # 릴리즈 파일 벙커-쇼크 웨이브 리인포스 (충격파)
-HAMMER_HITS = 10 + (2 if HYPER_PUNCH_ATTACK else 0)                                                                                                     # 펀치-보너스 어택
-
 # 리볼빙 캐논
 revolving_cannon = AttackSkill(name="리볼빙 캐논",
                                base_pct=236, pct_per_level=12, skill_level=CANNON_LVL, hit_count=4,
@@ -550,8 +534,8 @@ revolving_mastery = AttackSkill(name="리볼빙 캐논 마스터리",
 
 # 블래스트 해머 스매시
 blast_hammer = AttackSkill(name="해머 스매시",
-                           base_pct=270, pct_per_level=3, skill_level=HAMM_LVL, hit_count=HAMMER_HITS,
-                           bonus=punch_hyper+CharaInfo(armorIgnore=20,finalDamage=120),
+                           base_pct=270, pct_per_level=3, skill_level=HAMM_LVL, hit_count=10+2,
+                           bonus=CharaInfo(damage=10,armorIgnore=20)+CharaInfo(armorIgnore=20,finalDamage=120),
                            triggers=(revolving_mastery,),       # 해머는 리캐 미발동(벙버는 extra_triggers로 발동)
                            tags=("afterimage",))
 # 1~4차 퍼뎀: 150 +130 +136
@@ -564,7 +548,7 @@ blast_hammer = AttackSkill(name="해머 스매시",
 magnum_punch = AttackSkill(name="매그넘 펀치",
                            base_pct=575, pct_per_level=7, skill_level=MF_LVL, hit_count=3,
                            hammer_base_pct=15, hammer_pct_per_level=7, hammer_level=blast_hammer.skill_level,
-                           bonus=punch_hyper+CharaInfo(armorIgnore=20,finalDamage=120),
+                           bonus=CharaInfo(damage=10,armorIgnore=20)+CharaInfo(armorIgnore=20,finalDamage=120),
                            triggers=(revolving_cannon, revolving_mastery),
                            tags=("afterimage",))
 # 1~4차 퍼뎀: 100 +100 +130 +186
@@ -578,7 +562,7 @@ magnum_punch = AttackSkill(name="매그넘 펀치",
 double_fang = AttackSkill(name="더블 팡",
                           base_pct=454, pct_per_level=6, skill_level=MF_LVL, hit_count=4,
                           hammer_base_pct=10, hammer_pct_per_level=6, hammer_level=blast_hammer.skill_level,
-                          bonus=punch_hyper+CharaInfo(armorIgnore=20,finalDamage=120),
+                          bonus=CharaInfo(damage=10,armorIgnore=20)+CharaInfo(armorIgnore=20,finalDamage=120),
                           triggers=(revolving_cannon, revolving_mastery),
                           tags=("afterimage",))
 # 1~4차 퍼뎀: 150 +130 +136
@@ -591,24 +575,24 @@ double_fang = AttackSkill(name="더블 팡",
 
 # 릴리즈 파일 벙커
 shock_a = AttackSkill(name="릴리즈 파일 벙커", base_pct=430+228, pct_per_level=5, skill_level=RPB_LVL, hit_count=6,
-                      bonus=CharaInfo(armorIgnore=20,finalDamage=120)+rpb_shock_hyper, tags=("rpb_up",))
+                      bonus=CharaInfo(armorIgnore=20,finalDamage=120,damage=15), tags=("rpb_up",))
 shock_b = AttackSkill(name="릴리즈 파일 벙커", base_pct=350+188, pct_per_level=6, skill_level=RPB_LVL, hit_count=6,
-                      bonus=CharaInfo(armorIgnore=20,finalDamage=120)+rpb_shock_hyper, tags=("rpb_up",))
+                      bonus=CharaInfo(armorIgnore=20,finalDamage=120,damage=15), tags=("rpb_up",))
 shock_c = AttackSkill(name="릴리즈 파일 벙커", base_pct=360+158, pct_per_level=6, skill_level=RPB_LVL, hit_count=6,
-                      bonus=CharaInfo(armorIgnore=20,finalDamage=120)+rpb_shock_hyper, tags=("rpb_up",))
+                      bonus=CharaInfo(armorIgnore=20,finalDamage=120,damage=15), tags=("rpb_up",))
 shock_d = AttackSkill(name="릴리즈 파일 벙커", base_pct=430, pct_per_level=10, skill_level=RPB_LVL, hit_count=6,
-                      bonus=CharaInfo(armorIgnore=20,finalDamage=120)+rpb_shock_hyper)
+                      bonus=CharaInfo(armorIgnore=20,finalDamage=120,damage=15))
 # 충격파 A, B, C는 4차 스킬의 리캐 업그레이드의 영향을 받는 중
 # 
 
 release_pile_bunker = AttackSkill(name="릴리즈 파일 벙커",
                                   base_pct=710+163, pct_per_level=15, skill_level=RPB_LVL, hit_count=8,
-                                  bonus=CharaInfo(armorIgnore=20,finalDamage=120)+rpb_hyper+CharaInfo(armorIgnore=80),
+                                  bonus=CharaInfo(armorIgnore=20,finalDamage=120,damage=20)+CharaInfo(armorIgnore=80),
                                   triggers=(shock_a, shock_b, shock_c, shock_d),     # 충격파는 앺숔 미발동(직격만)
                                   tags=("afterimage", "rpb_up"))
 burst_pile_bunker = AttackSkill(name="버스트 파일 벙커",
                                 base_pct=490, pct_per_level=10, skill_level=RPB_LVL, hit_count=10,       # 10타짜리 폭발이 6번 발동(burst_action 참고)
-                                bonus=CharaInfo(armorIgnore=20,finalDamage=120)+rpb_hyper+CharaInfo(armorIgnore=80),
+                                bonus=CharaInfo(armorIgnore=20,finalDamage=120,damage=20)+CharaInfo(armorIgnore=80),
                                 tags=("afterimage",))
 # 직격 방무+80%
 # 하이퍼스킬 직격 데미지+20%, 충격파 데미지+15%
@@ -714,20 +698,14 @@ continuous = BuffSkill(name="컨티",
                        effect=CONTI_TABLE[CONTI_LVL])
 
 # 도핑 / 액티브 버프: 시뮬레이션 시작(0초)부터 지속시간 동안 켜진다 (재사용하지 않는다). 어센트는 버프를 받지 않으므로 적용되지 않는다
-noble_buff = (BuffSkill(name="노블(크게 한방)", duration=NOBLE_CRIT * 60, cooldown=0, cooldown_applies=False,
-                        effect=CharaInfo(critDamage=NOBLE_CRIT)),
-              BuffSkill(name="노블(길드의 이름으로)", duration=NOBLE_DAMAGE * 60, cooldown=0, cooldown_applies=False,
-                        effect=CharaInfo(damage=NOBLE_DAMAGE)),
-              BuffSkill(name="노블(보스 킬링 머신)", duration=NOBLE_BOSS * 60, cooldown=0, cooldown_applies=False,
-                        effect=CharaInfo(bossDamage=NOBLE_BOSS)),
-              BuffSkill(name="노블(방어력은 숫자일 뿐)", duration=NOBLE_IGNORE * 60, cooldown=0, cooldown_applies=False,
-                        effect=CharaInfo(armorIgnore=NOBLE_IGNORE)))       # 노블은 4개 스킬 묶음이다
+noble_buff = BuffSkill(name="노블", duration=NOBLE_IGNORE * 60, cooldown=0, cooldown_applies=False,
+                       effect=CharaInfo(damage=30, bossDamage=30, critDamage=30, armorIgnore=NOBLE_IGNORE))
 hero_echo_buff = BuffSkill(name="영메", duration=1800, cooldown=0, cooldown_applies=False,
                            effect=CharaInfo(attackp=4))
 seiram_buff = BuffSkill(name="세이람", duration=900, cooldown=0, cooldown_applies=False,
                         effect=CharaInfo(attackp=10, attack=50, bossDamage=10, critDamage=16))
 collector_buff = BuffSkill(name="콜렉터", duration=480, cooldown=0, cooldown_applies=False,
-                           effect=CharaInfo(attack=100+2, mainStat=30, subStat=30) + CharaInfo(armorIgnore=41) - CharaInfo(armorIgnore=38),
+                           effect=CharaInfo(attack=100+2, mainStat=30, subStat=30),
                            pct_effects={"rpb_up": 3})
 DOPING_BUFFS = {"노블": noble_buff, "영메": hero_echo_buff, "세이람": seiram_buff, "콜렉터": collector_buff}
 
@@ -1484,8 +1462,7 @@ def run_bunker_maxi(spec, duration=60, buff_delay=BUFF_DELAY, breaker=True, vulk
         origin_bigs = {}
         order = [a for a in order if a != "오리진"] if order is not None else order
     dop_on = {**DOPING_ON, **(doping_on or {})}                      # doping_on: 이번 실행만 도핑 ON/OFF를 바꾼다
-    dopings = tuple(x for n, b in DOPING_BUFFS.items() if dop_on.get(n)
-                    for x in (b if isinstance(b, tuple) else (b,)) if x.duration > 0)      # 노블은 4개 묶음, 지속 0인 스킬은 뺀다
+    dopings = tuple(b for n, b in DOPING_BUFFS.items() if dop_on.get(n))
     links = {**LINK_ON, **(link_on or {})}
     if link_on is not None:
         spec = build_link_spec(base_spec_no_link, links)

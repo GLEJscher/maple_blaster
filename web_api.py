@@ -38,15 +38,15 @@ HIDDEN = {
 
 # 어센트에 적용되지 않는 장비 입력칸 (Skills.py의 gear_stat() 인자와 같은 이름). (제목, [(변수, 화면 이름), ...])
 GEAR_ITEMS = ("Hat", "Ring_1", "Ring_2", "Ring_3")
-GEAR_BASE = [("main", "STR"), ("sub", "DEX"), ("all_pct", "올스탯 %"), ("attack", "공격력"), ("ignore", "방어율 무시 %")]
+GEAR_BASE = [("main", "주스탯"), ("sub", "부스탯"), ("all_pct", "올스탯 %"), ("attack", "공격력"), ("ignore", "방어율 무시 %")]
 GEAR_INTRO = ("어센트에 적용되지 않는 장비(모자, 반지1~3)의 스탯을 입력하는 칸입니다. 스탯창 스펙에는 들어 있지만 어센트 데미지에는 빠지는 스탯이라, 어센트 계산에서 이만큼 뺍니다. "
               "장비 툴팁의 값을 그대로 옮겨 적고, 비워 두면 0입니다. 어센트를 쓰지 않으면(0회) 입력하지 않아도 됩니다. "
               "잠재옵션과 에디셔널 잠재옵션은 줄마다 옵션을 고르고 값을 적으며, 같은 옵션을 여러 줄에 고르면 더합니다. "
-              "올스탯 %는 STR %와 DEX %에 같은 값이 더해지고, 9레벨 당 +n은 스탯창 레벨을 9로 나눈 몫에 n을 곱합니다.")
+              "올스탯 %는 주스탯 %와 부스탯 %에 같은 값이 더해지고, 9레벨 당 +n은 스탯창 레벨을 9로 나눈 몫에 n을 곱합니다.")
 # 잠재옵션 / 에디셔널 잠재옵션은 3줄이고, 줄마다 옵션 종류를 고르고 값을 적는다 (같은 옵션을 여러 줄에 고르면 더한다)
-GEAR_POT = [("pot_main_pct", "STR %"), ("pot_sub_pct", "DEX %"), ("pot_all_pct", "올스탯 %")]
-GEAR_ADD = [("add_main", "STR"), ("add_main_pct", "STR %"), ("add_sub", "DEX"), ("add_sub_pct", "DEX %"),
-            ("add_all", "올스탯"), ("add_all_pct", "올스탯 %"), ("add_attack", "공격력"), ("add_crit", "크리티컬 데미지 %"), ("add_main_per9", "9레벨 당 STR +"), ("add_sub_per9", "9레벨 당 DEX +")]
+GEAR_POT = [("pot_main_pct", "주스탯 %"), ("pot_sub_pct", "부스탯 %"), ("pot_all_pct", "올스탯 %")]
+GEAR_ADD = [("add_main", "주스탯"), ("add_main_pct", "주스탯 %"), ("add_sub", "부스탯"), ("add_sub_pct", "부스탯 %"),
+            ("add_all", "올스탯"), ("add_all_pct", "올스탯 %"), ("add_attack", "공격력"), ("add_main_per9", "9레벨 당 주스탯 +"), ("add_sub_per9", "9레벨 당 부스탯 +")]
 GEAR_LINES = 3
 GEAR_KEYS = [k for k, _ in GEAR_BASE + GEAR_POT + GEAR_ADD]
 GEAR_BASE_KEYS = [k for k, _ in GEAR_BASE]
@@ -81,17 +81,12 @@ LABELS = {
     "ORIGIN_LVL": "오리진 레벨", "OH_LVL": "오버히트 펀치 레벨", "HECATE_LVL": "솔 헤카테 레벨",
     "CONTI_LVL": "컨티뉴어스 링 레벨", "RESTRAINT_LVL": "리스트레인트 링 레벨",
     "SEED_CONTI": "컨티뉴어스 링 사용", "SEED_RESTRAINT": "리스트레인트 링 사용",
-    "HYPER_PUNCH_REINFORCE": "펀치-리인포스", "HYPER_PUNCH_IGNORE": "펀치-이그노어 가드", "HYPER_PUNCH_ATTACK": "펀치-보너스 어택",
-    "HYPER_RPB_REINFORCE": "릴리즈 파일 벙커-리인포스", "HYPER_RPB_SHOCK": "릴리즈 파일 벙커-쇼크 웨이브 리인포스",
     "ORIGIN_P2_END": "오리진 후딜(초)", "ATTUNE_STYX": "스틱스를 감응시킬 스킬", "ATTUNE_PHLEG": "플레게톤을 감응시킬 스킬",
-    "BUFF_DELAY": "버프 시퀀스 딜레이", "ASCENT_USES": "어센트 사용 횟수", "DOPING_ON": "도핑 / 액티브 버프 사용", "NOBLE_CRIT": "크게 한방 (크리티컬 데미지 %)", "NOBLE_DAMAGE": "길드의 이름으로 (데미지 %)", "NOBLE_BOSS": "보스 킬링 머신 (보스 데미지 %)", "NOBLE_IGNORE": "방어력은 숫자일 뿐 (방어율 무시 %)", "ASCENT_AFTER_DELAY": "어센트 후딜(초)", "BIG_COUNT": "극딜 사용 횟수", "MINI_COUNT": "준극딜 사용 횟수", "Hat": "모자 (어센트 미적용)", "Ring_1": "반지1 (어센트 미적용)", "Ring_2": "반지2 (어센트 미적용)", "Ring_3": "반지3 (어센트 미적용)",
+    "BUFF_DELAY": "버프 시퀀스 딜레이", "ASCENT_USES": "어센트 사용 횟수", "DOPING_ON": "도핑 / 액티브 버프 사용", "NOBLE_IGNORE": "노블 방어율 무시 %", "ASCENT_AFTER_DELAY": "어센트 후딜(초)", "BIG_COUNT": "극딜 사용 횟수", "MINI_COUNT": "준극딜 사용 횟수", "Hat": "모자 (어센트 미적용)", "Ring_1": "반지1 (어센트 미적용)", "Ring_2": "반지2 (어센트 미적용)", "Ring_3": "반지3 (어센트 미적용)",
     "SEED_RING_STAT": "반지4 (시드링 1개의 스탯, 고정)",
     "VANGUARD_LVL": "뱅가드 임팩트(어센트) 레벨", "LINK_ON": "링크 사용", "LINK_LVL": "링크 레벨",
 }
 # 화면에 보여 줄 설명. 여기에 없는 변수는 Skills.py의 주석을 그대로 보여 주고, ""로 적으면 설명을 보여 주지 않는다
-NOBLE_VARS = ("NOBLE_CRIT", "NOBLE_DAMAGE", "NOBLE_BOSS", "NOBLE_IGNORE")
-NOBLE_NOTE = "노블 스킬 1개의 효과 %입니다. 0~30이고 2씩 오릅니다 (레벨당 2%). 지속 시간도 이 숫자와 같은 분입니다 (2%면 2분, 30%면 30분, 0이면 효과 없음)"
-
 NOTES = {
     "HAMM_LVL": "리볼빙 캐논 마스터리 레벨도 이 값을 따릅니다",
     "SEED_CONTI": "상시 적용되는 패시브 링입니다. 쓰지 않으면 스탯창 스펙에서 주스탯 4, 부스탯 4, 공격력 4를 뺍니다",
@@ -104,7 +99,7 @@ NOTES = {
     "LINK_ON": "데슬, 데벤져, 레테, 키네시스, 제논은 효과가 스탯창 값에 이미 들어 있습니다. 끄면 그 레벨의 효과를 스탯창 값에서 빼고 계산합니다. 레벨을 올렸다면 스탯창 값도 같이 바꿔 주세요. 나머지 링크는 스탯창에 없어서 켜면 효과를 더합니다.",
     "LINK_LVL": "",
     "DOPING_ON": "스탯창 스펙(노도핑)에 더해지는 효과이며 어센트에는 적용되지 않습니다. 켜면 시뮬레이션 시작과 함께 쓰고, 지속시간이 끝나면 다시 쓰지 않습니다. 30분 도핑 아이템은 어센트에도 적용되니 스탯창 스펙에 포함해서 입력하세요. 노블(30분): 데미지, 보스 데미지, 크리티컬 데미지 +30%, 방어율 무시 / 영메(30분): 공격력 +4% / 세이람(15분): 공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16% / 콜렉터(8분): 공격력 +100, 올스탯 +30, 스킬 레벨 +2(공격력 +2, 릴파벙 직격과 충격파 기본 데미지 +3%p)",
-    "NOBLE_CRIT": NOBLE_NOTE, "NOBLE_DAMAGE": NOBLE_NOTE, "NOBLE_BOSS": NOBLE_NOTE, "NOBLE_IGNORE": NOBLE_NOTE,
+    "NOBLE_IGNORE": "0~30%이고 2씩 오릅니다. 노블은 이 숫자와 같은 분만큼 지속됩니다 (2%면 2분, 30%면 30분, 0%면 효과 없음)",
     "BIG_COUNT": "시뮬레이션 시간 동안 쓸 극딜 횟수입니다 (t=0 첫 극딜 포함). 극딜과 준극딜은 번갈아 쓰고, 횟수를 다 쓴 쪽은 건너뜁니다. 모두 쓰고 나면 릴파벙, 오버히트, 매그팡 평딜만 합니다",
     "MINI_COUNT": "시뮬레이션 시간 동안 쓸 준극딜 횟수입니다. 0이면 준극딜을 쓰지 않습니다 (어센트는 준극딜 뒤에만 쓰므로 쓰지 않게 됩니다)",
     "ASCENT_AFTER_DELAY": "어센트 컷신(2.82초)이 끝난 뒤 다음 행동까지의 딜레이입니다",
@@ -121,9 +116,7 @@ SUBGROUPS = {
     "BUNK_BUST_LVL": "5차 스킬", "BURN_BRK_LVL": "5차 스킬", "VULCAN_LVL": "5차 스킬", "AFT_SHCK_LVL": "5차 스킬", "INFANTRY_LVL": "5차 스킬",
     "ORIGIN_LVL": "6차 스킬", "OH_LVL": "6차 스킬", "HECATE_LVL": "6차 스킬", "VANGUARD_LVL": "6차 스킬",
 }
-HYPER_SUBGROUP = "하이퍼 패시브 스킬 (1레벨, 찍었으면 체크)"
-SUBGROUPS.update({n: HYPER_SUBGROUP for n in ("HYPER_PUNCH_REINFORCE", "HYPER_PUNCH_IGNORE", "HYPER_PUNCH_ATTACK", "HYPER_RPB_REINFORCE", "HYPER_RPB_SHOCK")})
-SKILL_LEVELS = {n for n in SUBGROUPS if n.endswith("_LVL")}          # 1~30 범위의 정수만 받는다
+SKILL_LEVELS = set(SUBGROUPS)          # 1~30 범위의 정수만 받는다
 WEB_DEFAULTS.update({n: 30 for n in SKILL_LEVELS})      # 웹은 모든 스킬 레벨을 30(만렙)에서 시작한다
 ATTUNE_LABELS = {"버닝 브레이커": "버닝 브레이커 (버브)", "소울 컨트랙트": "엔버 링크 (소울 컨트랙트)", "애프터이미지 쇼크": "애프터이미지 쇼크 (앺숔)", "벙커 버스터": "벙커 버스터 (벙버)"}
 
@@ -256,10 +249,9 @@ GROUPS = [
     ("시뮬레이션 시간", ["SIM_TIME", "t_0", "t_n"]),
     ("극딜 순서", ["ORIGIN_ON", "ORDER_ORIGIN_LAST", "ORDER_ORIGIN_FIRST", "ORIGIN_BIG_ORDER", "ORIGIN_MAX_WAIT",
                  "ORIGIN_LATE_MODE", "ORDER_BIG", "ORDER_MINI", "BIG_COUNT", "MINI_COUNT", "BUFF_ORDER"]),
-    ("스킬 레벨", ["MF_LVL", "RPB_LVL", "HAMM_LVL", "CANNON_LVL",
-               "HYPER_PUNCH_REINFORCE", "HYPER_PUNCH_IGNORE", "HYPER_PUNCH_ATTACK", "HYPER_RPB_REINFORCE", "HYPER_RPB_SHOCK", "BUNK_BUST_LVL", "BURN_BRK_LVL", "VULCAN_LVL",
+    ("스킬 레벨", ["MF_LVL", "RPB_LVL", "HAMM_LVL", "CANNON_LVL", "BUNK_BUST_LVL", "BURN_BRK_LVL", "VULCAN_LVL",
                "AFT_SHCK_LVL", "INFANTRY_LVL", "ORIGIN_LVL", "OH_LVL", "HECATE_LVL", "VANGUARD_LVL"]),
-    ("도핑", ["DOPING_ON", "NOBLE_CRIT", "NOBLE_DAMAGE", "NOBLE_BOSS", "NOBLE_IGNORE"]),
+    ("도핑", ["DOPING_ON", "NOBLE_IGNORE"]),
     ("시드링", ["SEED_CONTI", "CONTI_LVL", "SEED_RESTRAINT", "RESTRAINT_LVL"]),
     ("링크 스킬", ["LINK_ON", "LINK_LVL"]),
     ("스킬 딜레이", ["BUFF_DELAY", "MAG_FANG_DELAY", "HAMM_MAG_FANG_DELAY", "RELEASE_DELAY", "BURST_DELAY",
@@ -346,7 +338,7 @@ def describe_inputs():
             it["min"], it["max"] = 1, 1200
         if _is_delay(n) and it["kind"] in ("int", "float"):
             it["kind"], it["min"] = "float", DELAY_MIN.get(n, 0)          # 소수 입력 가능 (BREAKER_PRE 등), 음수 불가
-        if n in NOBLE_VARS:
+        if n == "NOBLE_IGNORE":
             it["min"], it["max"], it["step"] = 0, 30, 2
         if n in choices:
             it["choices"] = choices[n]

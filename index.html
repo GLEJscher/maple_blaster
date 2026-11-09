@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>블래스터 DPM 시뮬레이터</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
@@ -30,7 +30,7 @@
   color-scheme:dark}
 
 *{box-sizing:border-box}
-body{background:var(--plane);color:var(--ink);font:calc(14px*var(--fs,1))/1.55 var(--ui);
+body{background:var(--plane);color:var(--ink);font:14px/1.55 var(--ui);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--plane)}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -39,15 +39,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* 상단 바 */
 .bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--plane);padding-block:14px 12px;
   display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;border-bottom:1px solid var(--grid)}
-.brand{font-size:calc(15px*var(--fs,1));font-weight:700;letter-spacing:-.01em;display:flex;flex-direction:column;line-height:1.25;min-width:0}
-.brand small{font:400 calc(11px*var(--fs,1)) var(--mono);color:var(--muted);letter-spacing:0}
+.brand{font-size:15px;font-weight:700;letter-spacing:-.01em;display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.brand small{font:400 11px var(--mono);color:var(--muted);letter-spacing:0}
 .tabs{display:flex;gap:2px;padding:3px;background:var(--surface);border:1px solid var(--ring);border-radius:12px}
 .tab{border:0;background:transparent;color:var(--ink2);padding:7px 22px;border-radius:9px;cursor:pointer;font-weight:600}
 .tab:hover{background:var(--hover)}
 .tab[aria-selected="true"]{background:var(--accent-wash);color:var(--ink);box-shadow:inset 0 0 0 1px var(--ring)}
 .tab:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .grow{flex:1 1 0}
-.status{font:calc(12px*var(--fs,1)) var(--mono);color:var(--ink2);display:flex;align-items:center;gap:8px}
+.status{font:12px var(--mono);color:var(--ink2);display:flex;align-items:center;gap:8px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .dot.busy{background:var(--s4);animation:pulse 1s ease-in-out infinite}
 .dot.ok{background:var(--good)}
@@ -59,30 +59,30 @@ button,input,select,textarea{font:inherit;color:inherit}
 .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn[disabled]{opacity:.5;cursor:default}
-.btn.small{padding:4px 10px;font-size:calc(12.5px*var(--fs,1))}
-.themesel{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:calc(12.5px*var(--fs,1));white-space:nowrap}
-.themesel select{padding:5px 8px;font-size:calc(12.5px*var(--fs,1));width:auto}
-.autorun{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:calc(12.5px*var(--fs,1));white-space:nowrap}
+.btn.small{padding:4px 10px;font-size:12.5px}
+.themesel{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:12.5px;white-space:nowrap}
+.themesel select{padding:5px 8px;font-size:12.5px;width:auto}
+.autorun{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:12.5px;white-space:nowrap}
 
 main{padding-block:20px}
 .view[hidden]{display:none!important}
-.banner{border:1px solid var(--bad);background:var(--bad-wash);color:var(--ink);padding:10px 14px;border-radius:10px;margin-bottom:16px;white-space:pre-wrap;font:calc(12.5px*var(--fs,1))/1.5 var(--mono);overflow-x:auto}
+.banner{border:1px solid var(--bad);background:var(--bad-wash);color:var(--ink);padding:10px 14px;border-radius:10px;margin-bottom:16px;white-space:pre-wrap;font:12.5px/1.5 var(--mono);overflow-x:auto}
 .loading{color:var(--ink2);padding:40px 0;text-align:center}
 
 /* 입력 탭 */
 .toolbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-bottom:14px}
 .search{flex:1 1 220px;min-width:0;padding:8px 12px;border-radius:9px;border:1px solid var(--ring);background:var(--surface)}
-.chk{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:calc(13px*var(--fs,1));white-space:nowrap}
+.chk{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:13px;white-space:nowrap}
 .presets{margin:0 0 14px;padding:10px 12px;border:1px solid var(--grid);border-radius:12px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
 .prow{display:flex;gap:6px;align-items:center}.plabel{font-weight:700;margin-right:4px}
 .pslot{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:78px;padding:6px 12px;border:1px solid var(--ring);border-radius:10px;background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
-.pslot b{font-size:calc(15px*var(--fs,1));max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pslot b{font-size:15px;max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pnames{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.pname{width:9.5em;padding:5px 8px;border-radius:9px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);font:inherit;font-size:calc(13px*var(--fs,1))}.pslot .pst{font-size:calc(11px*var(--fs,1));color:var(--ink2)}
+.pname{width:9.5em;padding:5px 8px;border-radius:9px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);font:inherit;font-size:13px}.pslot .pst{font-size:11px;color:var(--ink2)}
 .pslot.on{border-color:var(--accent);background:var(--accent-wash);box-shadow:inset 0 0 0 1px var(--accent)}
 .pslot.mod .pst{color:var(--accent);font-weight:700}
 .pacts{display:flex;gap:6px;flex-wrap:wrap}.pacts [hidden]{display:none}
-.pmsg{flex-basis:100%;font-size:calc(12.5px*var(--fs,1));color:var(--ink2);min-height:1.3em}.pmsg.warn{color:var(--ink)}
+.pmsg{flex-basis:100%;font-size:12.5px;color:var(--ink2);min-height:1.3em}.pmsg.warn{color:var(--ink)}
 .preset{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .preset select{padding:7px 10px;border-radius:9px;border:1px solid var(--ring);background:var(--surface);max-width:180px}
 details.group{background:var(--surface);border:1px solid var(--ring);border-radius:12px;margin-bottom:10px}
@@ -90,31 +90,31 @@ details.group>summary{list-style:none;cursor:pointer;padding:12px 16px;display:f
 details.group>summary::-webkit-details-marker{display:none}
 details.group>summary::before{content:"";width:7px;height:7px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:rotate(-45deg);transition:transform .15s}
 details.group[open]>summary::before{transform:rotate(45deg)}
-.gcount{font:400 calc(12px*var(--fs,1)) var(--mono);color:var(--muted)}
-.gchg{font:600 calc(11px*var(--fs,1)) var(--ui);color:var(--changed);margin-left:auto}
+.gcount{font:400 12px var(--mono);color:var(--muted)}
+.gchg{font:600 11px var(--ui);color:var(--changed);margin-left:auto}
 .fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px 18px;padding:4px 16px 16px}
 .field{min-width:0}
 .field.wide{grid-column:1/-1}
 .field[hidden]{display:none!important}
 .fhead{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
-.fname{font:600 calc(12.5px*var(--fs,1)) var(--mono);overflow-wrap:anywhere}
-.fkor{color:var(--ink2);font-size:calc(12.5px*var(--fs,1))}
-.fkor.strong{color:var(--ink);font-weight:700;font-size:calc(13px*var(--fs,1))}
-.fname.dim{font-weight:400;color:var(--muted);font-size:calc(11.5px*var(--fs,1))}
-.subhead{grid-column:1/-1;font-weight:700;font-size:calc(12.5px*var(--fs,1));color:var(--ink2);border-bottom:1px solid var(--grid);padding-bottom:4px;margin-top:6px}
+.fname{font:600 12.5px var(--mono);overflow-wrap:anywhere}
+.fkor{color:var(--ink2);font-size:12.5px}
+.fkor.strong{color:var(--ink);font-weight:700;font-size:13px}
+.fname.dim{font-weight:400;color:var(--muted);font-size:11.5px}
+.subhead{grid-column:1/-1;font-weight:700;font-size:12.5px;color:var(--ink2);border-bottom:1px solid var(--grid);padding-bottom:4px;margin-top:6px}
 .simhelp{grid-column:1/-1}
 .simchips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}
-.simchip{font:inherit;font-size:calc(12.5px*var(--fs,1));padding:5px 10px;border:1px solid var(--grid);border-radius:999px;background:var(--surface,transparent);color:var(--ink);cursor:pointer}
+.simchip{font:inherit;font-size:12.5px;padding:5px 10px;border:1px solid var(--grid);border-radius:999px;background:var(--surface,transparent);color:var(--ink);cursor:pointer}
 .simchip:hover{border-color:var(--ink2)}
 .simchip.on{border-color:var(--accent,currentColor);font-weight:600}
 .simchip .k{color:var(--ink2)}
 .subhead:first-child{margin-top:0}
 .subhead[hidden]{display:none!important}
-.fchg{font:600 calc(10.5px*var(--fs,1)) var(--ui);color:var(--changed);border:1px solid currentColor;border-radius:99px;padding:0 6px;display:none}
+.fchg{font:600 10.5px var(--ui);color:var(--changed);border:1px solid currentColor;border-radius:99px;padding:0 6px;display:none}
 .field.changed .fchg{display:inline-block}
-.freset{display:none;border:0;background:transparent;color:var(--accent);cursor:pointer;font-size:calc(12px*var(--fs,1));padding:0 2px;text-decoration:underline}
+.freset{display:none;border:0;background:transparent;color:var(--accent);cursor:pointer;font-size:12px;padding:0 2px;text-decoration:underline}
 .field.changed .freset{display:inline}
-.fnote{color:var(--ink2);font-size:calc(12px*var(--fs,1));line-height:1.45;margin:2px 0 6px;overflow-wrap:anywhere}
+.fnote{color:var(--ink2);font-size:12px;line-height:1.45;margin:2px 0 6px;overflow-wrap:anywhere}
 .ctl{display:flex;flex-wrap:wrap;gap:8px}
 .num,.txt,.sel{padding:6px 9px;border-radius:8px;border:1px solid var(--ring);background:var(--plane);width:100%;min-width:0;font-variant-numeric:tabular-nums}
 .field.changed .num,.field.changed .txt,.field.changed .sel{border-color:var(--changed)}
@@ -122,53 +122,53 @@ details.group[open]>summary::before{transform:rotate(45deg)}
 /* "변경값 하이라이트"를 끄면 바뀐 입력창의 주황 테두리만 평소 색으로 돌린다 ("바꾼 값 n개" 표시 · 변경 표시 · 되돌리기 버튼은 그대로) */
 html.no-hl .field.changed .num,html.no-hl .field.changed .txt,html.no-hl .field.changed .sel,html.no-hl .field.links .rowchg .sel{border-color:var(--ring)}
 .sub{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 12px;width:100%}
-.sub label{display:flex;flex-direction:column;gap:2px;font-size:calc(12px*var(--fs,1));color:var(--ink2);min-width:0}
-.sub label span b{font:600 calc(11px*var(--fs,1)) var(--mono);color:var(--muted);margin-left:4px}
+.sub label{display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--ink2);min-width:0}
+.sub label span b{font:600 11px var(--mono);color:var(--muted);margin-left:4px}
 .tbl{width:100%;border-collapse:collapse}
-.tbl th,.tbl td{padding:5px 8px;text-align:left;border-bottom:1px solid var(--grid);font-size:calc(13px*var(--fs,1));vertical-align:middle}
-.tbl th{font-weight:600;color:var(--ink2);font-size:calc(12px*var(--fs,1))}
+.tbl th,.tbl td{padding:5px 8px;text-align:left;border-bottom:1px solid var(--grid);font-size:13px;vertical-align:middle}
+.tbl th{font-weight:600;color:var(--ink2);font-size:12px}
 .tbl td.r,.tbl th.r{text-align:right;font-variant-numeric:tabular-nums}
 .tbl.wide{min-width:540px}
 .tbl.wide td:first-child{white-space:nowrap}
 .tbl .num{width:96px}
 .scroll{overflow-x:auto;max-width:100%}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.chip{background:var(--accent-wash);border-radius:99px;padding:1px 10px;font-size:calc(12px*var(--fs,1))}
+.chip{background:var(--accent-wash);border-radius:99px;padding:1px 10px;font-size:12px}
 .sw{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
 .row-actions{display:flex;gap:8px;margin-top:8px}
-.calc{color:var(--ink2);font:calc(12px*var(--fs,1)) var(--mono);padding:2px 0;overflow-wrap:anywhere}
+.calc{color:var(--ink2);font:12px var(--mono);padding:2px 0;overflow-wrap:anywhere}
 .io{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:12px 16px;margin-bottom:12px}
-.io textarea{width:100%;min-height:90px;font:calc(12px*var(--fs,1)) var(--mono);background:var(--plane);border:1px solid var(--ring);border-radius:8px;padding:8px}
+.io textarea{width:100%;min-height:90px;font:12px var(--mono);background:var(--plane);border:1px solid var(--ring);border-radius:8px;padding:8px}
 .io summary{cursor:pointer;font-weight:600}
 
 /* 분석 탭 */
 .kpis{display:grid;grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
 .kpi{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:14px 16px;min-width:0}
-.kpi .l{color:var(--ink2);font-size:calc(12.5px*var(--fs,1))}
-.kpi .v{font-size:calc(22px*var(--fs,1));font-weight:700;margin-top:2px}
-.kpi.hero .v{font-size:calc(56px*var(--fs,1));line-height:1.05;letter-spacing:-.02em;font-weight:700}
-.kpi.hero .v small{font-size:calc(22px*var(--fs,1));font-weight:600;margin-left:4px;color:var(--ink2)}
-.kpi .d{font-size:calc(12.5px*var(--fs,1));margin-top:4px;color:var(--ink2)}
+.kpi .l{color:var(--ink2);font-size:12.5px}
+.kpi .v{font-size:22px;font-weight:700;margin-top:2px}
+.kpi.hero .v{font-size:56px;line-height:1.05;letter-spacing:-.02em;font-weight:700}
+.kpi.hero .v small{font-size:22px;font-weight:600;margin-left:4px;color:var(--ink2)}
+.kpi .d{font-size:12.5px;margin-top:4px;color:var(--ink2)}
 .kpi .d.up{color:var(--good)} .kpi .d.down{color:var(--bad)}
 .card{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:16px;margin-bottom:16px;min-width:0}
-.card h2{font-size:calc(15px*var(--fs,1));margin:0}
-.card .sub2{color:var(--ink2);font-size:calc(12.5px*var(--fs,1));margin:2px 0 12px}
+.card h2{font-size:15px;margin:0}
+.card .sub2{color:var(--ink2);font-size:12.5px;margin:2px 0 12px}
 .cardhead{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
 .share{display:grid;grid-template-columns:minmax(90px,170px) minmax(0,1fr);gap:7px 12px;align-items:center}
-.share .nm{font-size:calc(13px*var(--fs,1));overflow-wrap:anywhere}
-.share .nm .lv{color:var(--ink2);font-size:calc(11.5px*var(--fs,1));white-space:nowrap}
+.share .nm{font-size:13px;overflow-wrap:anywhere}
+.share .nm .lv{color:var(--ink2);font-size:11.5px;white-space:nowrap}
 .share .track{display:flex;align-items:center;gap:10px;min-width:0}
 .share .barx{height:14px;border-radius:0 4px 4px 0;min-width:2px;flex:0 0 auto}
-.share .val{font-size:calc(12.5px*var(--fs,1));color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.share .val{font-size:12.5px;color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .share .val b{color:var(--ink);font-weight:700}
-.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:8px;font-size:calc(12.5px*var(--fs,1));color:var(--ink2)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:8px;font-size:12.5px;color:var(--ink2)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .chart{position:relative;width:100%}
 .chart svg{display:block;width:100%;height:auto;overflow:visible}
-.axis text{fill:var(--muted);font:calc(11px*var(--fs,1)) var(--ui)}
+.axis text{fill:var(--muted);font:11px var(--ui)}
 .axis line,.gridl{stroke:var(--grid);stroke-width:1}
 .base{stroke:var(--axis);stroke-width:1}
-.tip{position:fixed;z-index:50;pointer-events:none;background:var(--surface);border:1px solid var(--ring);box-shadow:0 6px 24px rgba(0,0,0,.25);border-radius:10px;padding:8px 10px;font-size:calc(12.5px*var(--fs,1));max-width:260px;display:none}
+.tip{position:fixed;z-index:50;pointer-events:none;background:var(--surface);border:1px solid var(--ring);box-shadow:0 6px 24px rgba(0,0,0,.25);border-radius:10px;padding:8px 10px;font-size:12.5px;max-width:260px;display:none}
 .tip .t{color:var(--ink2);margin-bottom:4px}
 .tip .r{display:flex;align-items:center;gap:8px;justify-content:space-between}
 .tip .r span{display:flex;align-items:center;gap:6px;color:var(--ink2);min-width:0}
@@ -178,51 +178,44 @@ html.no-hl .field.changed .num,html.no-hl .field.changed .txt,html.no-hl .field.
 .ordrow{display:flex;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--grid);border-radius:10px}
 .ordrow .no{width:20px;color:var(--muted);font-variant-numeric:tabular-nums}.ordrow .nm{flex:1;font-weight:600}.ordrow .nm small{font-weight:400;color:var(--ink2);margin-left:8px}
 .pconf{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-wash)}
-.pconf[hidden]{display:none}.pconf .ct{flex:1 1 220px;font-size:calc(12.5px*var(--fs,1))}
+.pconf[hidden]{display:none}.pconf .ct{flex:1 1 220px;font-size:12.5px}
 .simlist{margin:4px 0 0;padding-left:18px}
-.card.extra{padding:12px 16px}.card.extra summary{cursor:pointer;font-weight:700;font-size:calc(15px*var(--fs,1))}.card.extra .sub{margin-bottom:8px}
-.card.extra .gcount{margin-left:8px;font-weight:400;font-size:calc(12.5px*var(--fs,1));color:var(--ink2)}
-.kpi .d2{font-size:calc(12px*var(--fs,1));color:var(--ink2);margin-top:2px;font-weight:400}
+.card.extra{padding:12px 16px}.card.extra summary{cursor:pointer;font-weight:700;font-size:15px}.card.extra .sub{margin-bottom:8px}
+.card.extra .gcount{margin-left:8px;font-weight:400;font-size:12.5px;color:var(--ink2)}
+.kpi .d2{font-size:12px;color:var(--ink2);margin-top:2px;font-weight:400}
 .selinfo{margin-top:10px}.selgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.selgrid .st{border:1px solid var(--grid);border-radius:10px;padding:8px 10px;min-width:0}.selgrid .l{font-size:calc(12px*var(--fs,1));color:var(--ink2)}
-.selgrid .v{font-size:calc(18px*var(--fs,1));font-weight:700;font-variant-numeric:tabular-nums}.selgrid .s{font-size:calc(11.5px*var(--fs,1));color:var(--ink2);overflow-wrap:anywhere}
-.skpick{margin-bottom:12px}.skpick-top{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-bottom:8px}.skpick-top .lb{font-size:calc(13px*var(--fs,1))}
-.skpill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 10px;font:inherit;font-size:calc(12.5px*var(--fs,1));cursor:pointer}
+.selgrid .st{border:1px solid var(--grid);border-radius:10px;padding:8px 10px;min-width:0}.selgrid .l{font-size:12px;color:var(--ink2)}
+.selgrid .v{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}.selgrid .s{font-size:11.5px;color:var(--ink2);overflow-wrap:anywhere}
+.skpick{margin-bottom:12px}.skpick-top{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-bottom:8px}.skpick-top .lb{font-size:13px}
+.skpill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 10px;font:inherit;font-size:12.5px;cursor:pointer}
 .skpill i{width:10px;height:10px;border-radius:2px}
 .seg{display:inline-flex;gap:4px}.seg .btn[aria-pressed="true"]{background:var(--accent-wash);border-color:var(--accent)}
 .skchips{display:flex;flex-wrap:wrap;gap:6px;max-height:132px;overflow:auto;margin-top:8px;padding:2px}
-.skchip{font:inherit;font-size:calc(12.5px*var(--fs,1));border:1px solid var(--grid);background:transparent;color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer}
+.skchip{font:inherit;font-size:12.5px;border:1px solid var(--grid);background:transparent;color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer}
 .skchip small{margin-left:6px;color:var(--ink2)}.skchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-wash);font-weight:600}
 .skchip[disabled]{opacity:.45;cursor:default}
 .legend .unit{margin-left:auto}
 @media (max-width:760px){.selgrid{grid-template-columns:1fr 1fr}}
 .tv{margin-top:10px}
-.tv summary{cursor:pointer;color:var(--ink2);font-size:calc(12.5px*var(--fs,1))}
+.tv summary{cursor:pointer;color:var(--ink2);font-size:12.5px}
 .tv .scroll{max-height:320px;overflow:auto;margin-top:8px}
 th.sort{cursor:pointer;user-select:none}
 th.sort:hover{color:var(--ink)}
-.foot{color:var(--muted);font-size:calc(12px*var(--fs,1));margin-top:24px}
+.foot{color:var(--muted);font-size:12px;margin-top:24px}
 .foot a{color:var(--ink2)}
 @media (max-width:760px){
-  .kpis{grid-template-columns:1fr 1fr}.kpi.hero{grid-column:1/-1}.kpi.hero .v{font-size:calc(44px*var(--fs,1))}
+  .kpis{grid-template-columns:1fr 1fr}.kpi.hero{grid-column:1/-1}.kpi.hero .v{font-size:44px}
   .tab{padding:7px 16px}
   .share{grid-template-columns:minmax(80px,120px) minmax(0,1fr)}
 }
-.field.off,.subhead.off,.gearintro.off,.nexon.off{display:none!important}
-.ascnote{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#ddd);border-radius:10px;font-size:calc(13px*var(--fs,1));line-height:1.5}
-.ascnote .d2{font-size:calc(12px*var(--fs,1));opacity:.7;margin-top:2px}
-.gearhead{margin:10px 0 4px;font-size:calc(12px*var(--fs,1));font-weight:700;opacity:.75}
+.field.off,.subhead.off,.gearintro.off{display:none!important}
+.ascnote{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line,#ddd);border-radius:10px;font-size:13px;line-height:1.5}
+.ascnote .d2{font-size:12px;opacity:.7;margin-top:2px}
+.gearhead{margin:10px 0 4px;font-size:12px;font-weight:700;opacity:.75}
 .gear .sub{margin-top:0}
-.amulti{grid-column:1/-1;font-size:calc(13px*var(--fs,1));border-left:3px solid var(--changed,#4a8cf0);padding:6px 10px;border-radius:6px;background:var(--plane)}.amulti summary{font-weight:700}.amopen{margin-top:4px;align-self:flex-start;font-size:calc(12px*var(--fs,1))}.amulti summary{cursor:pointer;color:var(--muted,inherit)}.amulti .gline{margin-top:6px;max-width:260px}.amulti .row-actions{margin-top:6px}
+.amulti{grid-column:1/-1;font-size:13px;border-left:3px solid var(--changed,#4a8cf0);padding:6px 10px;border-radius:6px;background:var(--plane)}.amulti summary{font-weight:700}.amopen{margin-top:4px;align-self:flex-start;font-size:12px}.amulti summary{cursor:pointer;color:var(--muted,inherit)}.amulti .gline{margin-top:6px;max-width:260px}.amulti .row-actions{margin-top:6px}
 .gline{display:flex;gap:8px;margin-bottom:6px}.gline .sel{flex:1 1 55%;min-width:0}.gline .num{flex:1 1 40%;min-width:0}
-.nexon{grid-column:1/-1;border:1px solid var(--ring);border-radius:10px;padding:10px 12px;font-size:calc(13px*var(--fs,1))}.nexon summary{cursor:pointer;font-weight:700}
-.nexon .nxrow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.nexon .nxrow .txt{flex:1 1 180px;min-width:0}
-.nexon .nxp{border:1px solid var(--ring);border-radius:8px;padding:6px 8px;margin:8px 0}.nexon .nxp.dis{opacity:.55}.nexon .nxp label{font-weight:700;display:flex;gap:6px;align-items:center}
-.nexon table{border-collapse:collapse;width:100%;font-size:calc(12px*var(--fs,1));margin-top:4px}.nexon td,.nexon th{border-bottom:1px solid var(--ring);padding:3px 5px;text-align:left;vertical-align:top}
-.nexon .bad{color:var(--bad,#c0262d)}.nexon .okc{color:var(--ok,#157f3b)}
-.ico{width:calc(32px*var(--fs,1));height:calc(32px*var(--fs,1));flex:none;align-self:center;image-rendering:pixelated;border-radius:4px}.fitem .ico{width:calc(24px*var(--fs,1));height:calc(24px*var(--fs,1));vertical-align:middle;margin-right:6px}.tbl td .ico{width:calc(24px*var(--fs,1));height:calc(24px*var(--fs,1));vertical-align:middle;margin-right:6px}
-.fitem{font-size:calc(12.5px*var(--fs,1));font-weight:700;color:var(--accent);margin:0 0 4px;overflow-wrap:anywhere}
-.gearintro{grid-column:1/-1;font-size:calc(12.5px*var(--fs,1));color:var(--ink2);line-height:1.55;margin:-2px 0 2px}
+.gearintro{grid-column:1/-1;font-size:12.5px;color:var(--ink2);line-height:1.55;margin:-2px 0 2px}
 </style>
 <script>
 /* 화면 색: 자동(브라우저 설정을 따름) / 밝게 / 어둡게. 깜빡임을 막으려고 맨 처음에 적용한다 */
@@ -239,7 +232,6 @@ th.sort:hover{color:var(--ink)}
       <button class="tab" role="tab" id="tab-analysis" aria-controls="view-analysis" aria-selected="false" data-view="analysis">분석</button>
     </nav>
     <div class="grow"></div>
-    <label class="themesel" for="fontsize">글자 크기 <select id="fontsize" class="sel" aria-label="글자 크기"><option value="0.9">작게</option><option value="1">보통</option><option value="1.15">크게</option><option value="1.3">더 크게</option><option value="1.5">가장 크게</option></select></label>
     <label class="themesel" for="theme">화면 색 <select id="theme" class="sel" aria-label="화면 색"><option value="auto">자동</option><option value="light">밝게</option><option value="dark">어둡게</option></select></label>
     <label class="autorun" for="auto"><input type="checkbox" id="auto" checked> 입력하면 바로 계산</label>
     <label class="autorun" for="hl"><input type="checkbox" id="hl" checked> 변경값 하이라이트</label>
@@ -297,15 +289,6 @@ const store = {
   get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
-
-(function () {            // 글자 크기 (CSS의 모든 글자 크기에 --fs 배율을 곱한다)
-  const sel = document.getElementById("fontsize"); if (!sel) return;
-  const ok = ["0.9", "1", "1.15", "1.3", "1.5"], cur = String(store.get("blaster-dpm:fontsize"));
-  sel.value = ok.includes(cur) ? cur : "1";
-  const apply = () => document.documentElement.style.setProperty("--fs", sel.value);
-  apply();
-  sel.addEventListener("change", () => { apply(); store.set("blaster-dpm:fontsize", sel.value); });
-})();
 
 (function () {            // 화면 색 선택
   const sel = document.getElementById("theme"); if (!sel) return;
@@ -447,43 +430,9 @@ function syncAscentVis() {          // 어센트를 쓰지 않으면(0회) 어�
   for (const h of S.gearHead || []) h.classList.toggle("off", !S.values.ASCENT_USES);
   for (const n of ASCENT_ONLY) { const r = S.refs[n]; if (r) r.root.classList.toggle("off", !S.values.ASCENT_USES); }
 }
-const canon = (v) => JSON.stringify(v, (k, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((q) => [q, x[q]])) : x));
-/* 넥슨 API가 주는 아이콘 주소를 저장해 두었다가 장비, 스킬, 링크 칸 옆에 보여 준다 (불러온 적이 없으면 아이콘이 없다) */
-const ICON_OK = (u) => { try { const x = new URL(u); return x.protocol === "https:" && /(^|\.)nexon\.com$/.test(x.hostname); } catch (e) { return false; } };
-// 스킬 아이콘 기본 주소 (넥슨 서버의 이미지를 그대로 불러온다. 불러오기를 하면 받은 주소로 덮어쓴다)
-const ICON_BASE = "https://open.api.nexon.com/static/maplestory/skill/icon/";
-const ICON_DEFAULT = Object.fromEntries(Object.entries({"링크:데슬": "KFHCLHOBMB", "링크:아크": "KFHCLHOENE", "링크:엔버": "KFHCLHPAJF", "링크:모도": "KFHCLHMGLA", "링크:데벤져": "KFHCLHOBJA", "링크:카데나": "KFHCLHODKB", "링크:모법": "KFHCLHMGKC", "링크:일리움": "KFHCLHODKI", "링크:레테": "KFHCLHKAKA", "링크:키네시스": "KFHCLHOAEI", "링크:카인": "KFHCLHNBNF", "링크:제논": "KFHCLHOBIH", "MF_LVL": "KFMFKDPBMA", "RPB_LVL": "KFMFKDPBMC", "HAMM_LVL": "KFMFKDPBMJ", "CANNON_LVL": "KFMFKDPBNC", "ORIGIN_LVL": "KFMFKDPEMA", "VANGUARD_LVL": "KFMFKDPEMC", "OH_LVL": "KFMFKDPEME", "HECATE_LVL": "KAPCLHPBMF", "INFANTRY_LVL": "KAPCLHPBKD", "BUNK_BUST_LVL": "KAPCLHKAOI", "VULCAN_LVL": "KAPCLHKAOJ", "BURN_BRK_LVL": "KAPCLHKAPA", "AFT_SHCK_LVL": "KAPCLHKAPB", "HYPER_PUNCH_ATTACK": "KFMFKFOBIF", "HYPER_PUNCH_REINFORCE": "KFMFKFOBID", "HYPER_PUNCH_IGNORE": "KFMFKFOBIE", "HYPER_RPB_REINFORCE": "KFMFKFOBIG", "HYPER_RPB_SHOCK": "KFMFKFOBIH"}).map(([k, v]) => [k, ICON_BASE + v]));
-const NOBLE_ICON = { NOBLE_CRIT: "노블:크게 한방", NOBLE_DAMAGE: "노블:길드의 이름으로", NOBLE_BOSS: "노블:보스 킬링 머신", NOBLE_IGNORE: "노블:방어력은 숫자일 뿐" };
-// 노블 스킬(길드 스킬)과 시드링 아이콘
-Object.assign(ICON_DEFAULT, {
-  "노블:크게 한방": ICON_BASE + "KFGDLHPBOF", "노블:길드의 이름으로": ICON_BASE + "KFGDLHPBOE", "노블:보스 킬링 머신": ICON_BASE + "KFGDLHPBOC", "노블:방어력은 숫자일 뿐": ICON_BASE + "KFGDLHPBOD",
-  "SEED_CONTI": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIEMI", "SEED_RESTRAINT": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIHHJ" });
-function loadIcons() { const v = store.get("blaster-dpm:icons"); return { ...ICON_DEFAULT, ...(v && typeof v === "object" ? v : {}) }; }
-function saveIcons(m) { const cur = store.get("blaster-dpm:icons"), all = { ...(cur && typeof cur === "object" ? cur : {}) }; for (const [k, u] of Object.entries(m || {})) if (u && ICON_OK(u)) all[k] = u; store.set("blaster-dpm:icons", all); }
-function applyIcon(i, all) { const u = (all || loadIcons())[i.dataset.ik]; if (u && ICON_OK(u)) { if (i.getAttribute("src") !== u) i.src = u; i.hidden = false; } else i.hidden = true; }
-function iconImg(key) { const i = el("img", { class: "ico", alt: "", hidden: true }); i.dataset.ik = key; i.addEventListener("error", () => { i.hidden = true; }); applyIcon(i); return i; }
-function refreshIcons() { const all = loadIcons(); document.querySelectorAll("img.ico[data-ik]").forEach((i) => applyIcon(i, all)); }
-function loadGearNames() { const v = store.get("blaster-dpm:gear-names"); return v && typeof v === "object" ? v : {}; }
-function updateGearName(name, ref) {         // 넥슨에서 불러온 장비 이름을 칸 위에 보여 준다. 값을 고치면 "수정됨"을 붙이고, 기본값으로 돌리면 이름을 지운다
-  const box = ref.root.querySelector(".fitem"); if (!box) return;
-  const all = loadGearNames(), e = all[name];
-  if (e && same(S.values[name], S.defaults[name])) { delete all[name]; store.set("blaster-dpm:gear-names", all); }
-  const cur = loadGearNames()[name];
-  box.hidden = !cur; box.textContent = "";
-  if (cur) {
-    if (cur.icon && ICON_OK(cur.icon)) { const im = el("img", { class: "ico", alt: "", src: cur.icon }); im.addEventListener("error", () => { im.hidden = true; }); box.append(im); }
-    box.append("불러온 장비: " + cur.item + (canon(S.values[name]) === cur.snap ? "" : " (이후 값을 수정했어요)"));
-  }
-}
-function setGearName(name, item, icon) {
-  const all = loadGearNames();
-  if (item) all[name] = { item, snap: canon(S.values[name]), icon: icon && ICON_OK(icon) ? icon : undefined }; else delete all[name];
-  store.set("blaster-dpm:gear-names", all);
-}
 function refreshChanged(name) {
   syncAscentVis();
   const ref = S.refs[name]; if (!ref) return;
-  if (GEAR_NAMES.includes(name)) updateGearName(name, ref);
   const ch = !same(S.values[name], S.defaults[name]);
   ref.root.classList.toggle("changed", ch);
   updateGroupCounts();
@@ -642,9 +591,8 @@ function buildInputs() {
         grid.append(buildLinks());
         continue;
       }
-      if (it.name === "base_spec") grid.append(buildNexonStat());
       if (it.name === "Hat") {
-        S.gearHead = [el("div", { class: "subhead", text: "어센트에 적용되지 않는 장비" }), el("div", { class: "gearintro", text: S.gearIntro }), el("div", { class: "fnote", text: "모자와 반지는 위쪽 스탯창 스펙의 '넥슨 API로 불러오기'에서 스탯, 링크, 스킬 레벨과 한꺼번에 불러옵니다." })];
+        S.gearHead = [el("div", { class: "subhead", text: "어센트에 적용되지 않는 장비" }), el("div", { class: "gearintro", text: S.gearIntro })];
         grid.append(...S.gearHead);
       }
       grid.append(buildField(it));
@@ -721,14 +669,11 @@ function applyFilter() {
 }
 
 function fieldShell(it, control, wide) {
-  const isGear = GEAR_NAMES.includes(it.name);
   const root = el("div", { class: "field" + (wide ? " wide" : "") },
- el("div", { class: "fhead" },
-      it.sub || it.name === "SEED_CONTI" || it.name === "SEED_RESTRAINT" || NOBLE_ICON[it.name] ? iconImg(NOBLE_ICON[it.name] || it.name) : null,
+    el("div", { class: "fhead" },
       it.label ? el("span", { class: "fkor strong", text: it.label }) : null, el("span", { class: "fname" + (it.label ? " dim" : ""), text: it.name }),
       el("span", { class: "fchg", text: "바꿈" }),
       el("button", { class: "freset", onclick: () => { S.values[it.name] = clone(S.defaults[it.name]); S.refs[it.name].sync(); refreshChanged(it.name); store.set("blaster-dpm:current", overrides()); S.dirty = true; scheduleRun(); } }, "되돌리기")),
-    isGear ? el("div", { class: "fitem", hidden: true }) : null,
     (it.note !== undefined ? it.note : it.comment) ? el("div", { class: "fnote", text: it.note !== undefined ? it.note : it.comment }) : null, control);
   return root;
 }
@@ -796,273 +741,6 @@ function armorMulti(storeKey, c, setV) {
     clear() { list = []; save(); draw(); c.input.disabled = false; out.textContent = ""; },
     active: () => list.length > 0,
   };
-}
-/* 넥슨 오픈 API로 어센트 미적용 장비(모자, 반지) 채우기. 키와 캐릭터 이름은 넥슨 서버로만 보내고 저장하지 않는다 */
-const NX_BASE = "https://open.api.nexon.com/maplestory/v1";
-const NX_SEED = [["컨티뉴어스", "컨티"], ["리스트레인트", "리레"]];
-const nxSeed = (x) => { const f = NX_SEED.find(([k]) => (x.item_name || "").includes(k)); return f ? f[1] : null; };
-function nxParse(item) {
-  const o = item.item_total_option || {}, n = (v) => { const x = Number(v); return isFinite(x) ? x : 0; };
-  const g = { main: n(o.str), sub: n(o.dex), all_pct: n(o.all_stat), attack: n(o.attack_power), ignore: n(o.ignore_monster_armor), pot: [], add: [] };
-  const sums = { pot: {}, add: {} }, skipped = [];
-  const norm = (t) => String(t || "").replace(/\s+/g, "").replace(/:/g, "");
-  const POT = [[/^STR\+(\d+)%$/, "pot_main_pct"], [/^DEX\+(\d+)%$/, "pot_sub_pct"], [/^올스탯\+(\d+)%$/, "pot_all_pct"]];
-  const ADD = [[/^STR\+(\d+)$/, "add_main"], [/^DEX\+(\d+)$/, "add_sub"], [/^STR\+(\d+)%$/, "add_main_pct"], [/^DEX\+(\d+)%$/, "add_sub_pct"],
-    [/^올스탯\+(\d+)$/, "add_all"], [/^올스탯\+(\d+)%$/, "add_all_pct"], [/^공격력\+(\d+)$/, "add_attack"], [/^크리티컬데미지\+(\d+)%$/, "add_crit"],
-    [/^캐릭터기준9레벨당STR\+(\d+)$/, "add_main_per9"], [/^캐릭터기준9레벨당DEX\+(\d+)$/, "add_sub_per9"]];
-  const RELEVANT = /방어율무시|보스|데미지|크리티컬|공격력\+\d+%|올스탯|STR|DEX/;
-  for (const [part, pre, table] of [["pot", "potential_option_", POT], ["add", "additional_potential_option_", ADD]]) {
-    for (const i of [1, 2, 3]) {
-      const raw = item[pre + i]; if (!raw) continue;
-      const t = norm(raw); const m = table.map(([re, key]) => [re.exec(t), key]).find(([r]) => r);
-      if (m) sums[part][m[1]] = (sums[part][m[1]] || 0) + Number(m[0][1]);
-      else if (RELEVANT.test(t) && !/LUK|INT/.test(t)) skipped.push(String(raw));
-    }
-    g[part] = Object.entries(sums[part]).slice(0, 3).map(([k, v]) => [k, v]);
-    while (g[part].length < 3) g[part].push(["", null]);
-  }
-  return { g, skipped };
-}
-const NXC = { name: "", key: "", ins: [] };          // 장비/스탯 불러오기가 이름과 키를 같이 쓴다 (저장하지 않는다)
-function nxInputs() {
-  const nameIn = el("input", { class: "txt", type: "text", autocomplete: "off", placeholder: "캐릭터 이름", "aria-label": "캐릭터 이름" });
-  const keyIn = el("input", { class: "txt", type: "password", autocomplete: "off", placeholder: "넥슨 오픈 API 키", "aria-label": "API 키" });
-  nameIn.value = NXC.name; keyIn.value = NXC.key; NXC.ins.push([nameIn, keyIn]);
-  nameIn.addEventListener("input", () => { NXC.name = nameIn.value; for (const [n] of NXC.ins) if (n !== nameIn) n.value = NXC.name; });
-  keyIn.addEventListener("input", () => { NXC.key = keyIn.value; for (const [, k] of NXC.ins) if (k !== keyIn) k.value = NXC.key; });
-  return [nameIn, keyIn];
-}
-async function nxApi(path) {
-  let r; try { r = await fetch(NX_BASE + path, { headers: { "x-nxopen-api-key": NXC.key.trim() } }); } catch (e) { throw new Error("넥슨 서버에 연결하지 못했어요. 네트워크나 광고 차단 확장프로그램을 확인해 주세요."); }
-  if (r.status === 429) throw new Error("넥슨 API 호출 한도를 넘었어요. 개발 단계 키는 초당 5건, 하루 1,000건까지입니다. 잠시 뒤나 내일 다시 시도해 주세요.");
-  if (!r.ok) { let m = ""; try { m = (await r.json()).error.message || ""; } catch (e) {} throw new Error("넥슨 API 오류 (HTTP " + r.status + ")" + (m ? ": " + m : "")); }
-  return r.json();
-}
-async function nxOcid() {
-  if (!NXC.key.trim() || !NXC.name.trim()) throw new Error("캐릭터 이름과 API 키를 모두 입력해 주세요.");
-  const nm = NXC.name.trim(); NXC.ocidCache = NXC.ocidCache || {};     // 같은 이름은 페이지를 열어 둔 동안만 기억해 호출을 아낀다
-  if (NXC.ocidCache[nm]) return NXC.ocidCache[nm];
-  const id = await nxApi("/id?character_name=" + encodeURIComponent(nm));
-  if (!id.ocid) throw new Error("캐릭터를 찾지 못했어요.");
-  return (NXC.ocidCache[nm] = id.ocid);
-}
-/* 스탯창(합산 값)을 읽어 스탯창 스펙의 8칸을 채운다. 주스탯/부스탯/공격력은 세부 수치(기본, %, % 미적용)가 API에 없어서 직접 입력하고, 합산 값만 맞는지 확인한다 */
-const NX_STAT = [["damage", "데미지", true], ["bossDamage", "보스 몬스터 데미지", true], ["finalDamage", "최종 데미지", false], ["armorIgnore", "방어율 무시", false],
-  ["critDamage", "크리티컬 데미지", false], ["attribResist", "속성 내성 무시", false], ["buffDuration", "버프 지속시간", true], ["cooldown", "재사용 대기시간 감소 (초)", true]];
-const NX_LINK = { "데몬스퓨리": "데슬", "와일드레이지": "데벤져", "인텐시브인썰트": "카데나", "커버넌트": "레테", "판단": "키네시스", "하이브리드로직": "제논",
-  "무아": "아크", "소울컨트랙트": "엔버", "시프커닝": "모도", "임피리컬널리지": "모법", "전투의흐름": "일리움", "프라이어프리퍼레이션": "카인" };
-const NX_SKILL = { "매그넘펀치VI": "MF_LVL", "릴리즈파일벙커VI": "RPB_LVL", "해머스매시VI": "HAMM_LVL", "리볼빙캐논VI": "CANNON_LVL", "벙커버스터강화": "BUNK_BUST_LVL",
-  "버닝브레이커강화": "BURN_BRK_LVL", "발칸펀치강화": "VULCAN_LVL", "애프터이미지쇼크강화": "AFT_SHCK_LVL", "레지스탕스라인인팬트리VI": "INFANTRY_LVL",
-  "파이널디스트로이어": "ORIGIN_LVL", "오버히트펀치": "OH_LVL", "솔헤카테": "HECATE_LVL", "뱅가드임팩트": "VANGUARD_LVL" };
-const NX_HYPER = { "펀치리인포스": "HYPER_PUNCH_REINFORCE", "펀치이그노어가드": "HYPER_PUNCH_IGNORE", "펀치보너스어택": "HYPER_PUNCH_ATTACK",
-  "릴리즈파일벙커리인포스": "HYPER_RPB_REINFORCE", "릴리즈파일벙커쇼크웨이브리인포스": "HYPER_RPB_SHOCK" };
-function buildNexonStat() {
-  const root = el("details", { class: "nexon" }, el("summary", {}, "넥슨 API로 한꺼번에 불러오기 (스탯, 장비, 링크, 스킬 레벨, 시드링)"));
-  const [nameIn, keyIn] = nxInputs();
-  const go = el("button", { class: "btn", type: "button" }, "불러오기");
-  const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨, 와헌 유니온 레벨, 하이퍼 패시브 5개를 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 9건입니다 (개발 단계 키는 하루 1,000건). 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
-    el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
-  const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
-  const norm = (t) => String(t || "").replace(/\s+/g, "");
-  const num = (v) => { const x = Number(String(v).replace(/[,%]/g, "")); return isFinite(x) ? x : null; };
-  function show(st, basic, lk, sk, eq, rs, ur, hp, gd, gdMsg) {
-    out.textContent = "";
-    const map = new Map((st.final_stat || []).map((x) => [norm(x.stat_name), x.stat_value]));
-    const get = (n) => num(map.get(norm(n)));
-    const bs = S.values.base_spec || {}, fills = {};
-    const t = el("table", {}, el("tr", {}, ...["항목", "불러온 값", "채울 값", "지금 입력"].map((h) => el("th", { text: h }))));
-    let miss = 0;
-    for (const [key, nm, isInt] of [["level", "레벨", true], ...NX_STAT]) {
-      const raw = key === "level" ? (basic ? num(basic.character_level) : null) : get(nm); let v = raw, note = "";
-      if (raw == null) { miss++; t.append(el("tr", {}, el("td", { text: STAT_KOR[key] || nm }), el("td", { class: "bad", text: "없음" }), el("td", { text: "-" }), el("td", { text: String(bs[key] ?? "") }))); continue; }
-      if (key === "critDamage" && typeof bs.critDamage === "number" && Math.abs(raw - 35 - bs.critDamage) < 0.051) { v = Math.round((raw - 35) * 100) / 100; note = " (35% 기본을 뺌)"; }
-      if (isInt) v = Math.round(v); else v = Math.round(v * 100) / 100;
-      fills[key] = v;
-      t.append(el("tr", {}, el("td", { text: STAT_KOR[key] || nm }), el("td", { text: String(raw) }), el("td", { text: String(v) + note }), el("td", { class: typeof bs[key] === "number" && Math.abs(bs[key] - v) > 1e-9 ? "bad" : "", text: String(bs[key] ?? "") })));
-    }
-    // 상태이상 추가 데미지: 스탯창 값에서 카데나 링크의 상추뎀(링크 효과표가 따로 더함)을 뺀 나머지가 어빌리티 등의 값이다
-    const CADENA_ABN = { 2: 6, 3: 9 };       // Skills.py 링크 효과표의 카데나 (상추뎀 + 데미지에서 상추뎀 몫)
-    // 지금 적용 중인 링크 (API 이름 -> 코드의 링크 이름)
-    const apiLv = {}, unknown = [], iconMap = {};
-    for (const x of (lk && lk.character_link_skill) || []) { const k = NX_LINK[norm(x.skill_name)]; if (k) { apiLv[k] = num(x.skill_level); iconMap["링크:" + k] = x.skill_icon; } else unknown.push(x.skill_name); }
-    const LVC = (S.byName.LINK_LVL && S.byName.LINK_LVL.choices) || {}, curLv = S.values.LINK_LVL || {}, curOn = S.values.LINK_ON || {};
-    const linkFill = {}, linkOn = {}, linkWarn = [];
-    const lt = el("table", {}, el("tr", {}, ...["링크", "불러온 레벨", "지금 입력 레벨"].map((h) => el("th", { text: h }))));
-    if (lk) for (const k of Object.keys(curLv)) {
-      const lv = apiLv[k], ok = lv != null && (LVC[k] || []).some((c) => c.value === lv);
-      if (lv == null) {
-        if (!["데슬", "데벤져", "레테", "키네시스", "제논"].includes(k)) linkOn[k] = false; else linkWarn.push(k);
-        lt.append(el("tr", {}, el("td", { text: k }), el("td", { class: "bad", text: "적용 중이 아님" }), el("td", { text: String(curLv[k]) })));
-        continue;
-      }
-      if (ok) { linkFill[k] = lv; linkOn[k] = true; } else linkWarn.push(k);
-      lt.append(el("tr", {}, el("td", { text: k }), el("td", { class: ok ? "" : "bad", text: String(lv) + (ok ? "" : " (효과표에 없는 레벨)") }), el("td", { class: ok && curLv[k] !== lv ? "bad" : "", text: String(curLv[k]) })));
-    }
-    // 스킬 레벨 (6차 스킬 목록에 1~6차 강화 스킬이 모두 들어 있다)
-    const skFill = {}, skSeen = new Set(), skRows = [];
-    const skList = (sk && sk.character_skill) || [];
-    for (const x of skList) { const v = NX_SKILL[norm(x.skill_name)]; if (!v || skSeen.has(v)) continue; const lv = num(x.skill_level); if (lv == null) continue; skSeen.add(v); skFill[v] = Math.round(lv); iconMap[v] = x.skill_icon; skRows.push([STAT_KOR[v] || (S.byName[v] && S.byName[v].label) || v, x.skill_name, lv, S.values[v]]); }
-    const st2 = el("table", {}, el("tr", {}, ...["스킬 레벨", "API 스킬 이름", "불러온 레벨", "지금 입력"].map((h) => el("th", { text: h }))));
-    for (const [nm, an, lv, cur] of skRows) st2.append(el("tr", {}, el("td", { text: nm }), el("td", { text: an }), el("td", { text: String(lv) }), el("td", { class: cur !== lv ? "bad" : "", text: String(cur ?? "") })));
-    const skMiss = Object.values(NX_SKILL).filter((v) => !skSeen.has(v));
-    const mast = skList.find((x) => norm(x.skill_name) === "리볼빙캐논마스터리VI"), mastNote = mast && skFill.HAMM_LVL != null && num(mast.skill_level) !== skFill.HAMM_LVL;
-    // 하이퍼 패시브: 목록에 레벨 1 이상으로 있으면 찍은 것, 없으면 안 찍은 것 (이름이 하나도 안 맞으면 채우지 않는다)
-    const NOBLE_MAP = { "크게 한방": "NOBLE_CRIT", "길드의 이름으로": "NOBLE_DAMAGE", "보스 킬링 머신": "NOBLE_BOSS", "방어력은 숫자일 뿐": "NOBLE_IGNORE" };
-    const NOBLE_BY_NORM = Object.fromEntries(Object.entries(NOBLE_MAP).map(([k, v]) => [norm(k), v]));
-    const nobleFill = {}, nobleRows = [], nobleWarn = [];
-    if (gd) {
-      const list = Array.isArray(gd.guild_noblesse_skill) ? gd.guild_noblesse_skill : null, found = {};
-      if (!list) nobleWarn.push("길드 응답에 guild_noblesse_skill이 없어요(응답 항목: " + Object.keys(gd).join(", ") + "). 노블은 채우지 않습니다.");
-      else {
-        for (const x of list) { const v = NOBLE_BY_NORM[norm(x.skill_name)] || null; if (v) { found[v] = Math.min(15, num(x.skill_level) || 0); iconMap["노블:" + (Object.keys(NOBLE_MAP).find((k) => norm(k) === norm(x.skill_name)))] = x.skill_icon; } }
-        if (!Object.keys(found).length) nobleWarn.push("노블 스킬 이름이 하나도 맞지 않아서 채우지 않습니다 (응답 이름 예: " + list.slice(0, 4).map((x) => x.skill_name).join(", ") + ")");
-        else for (const [nm, v] of Object.entries(NOBLE_MAP)) { const lv = found[v] || 0; nobleFill[v] = lv * 2; nobleRows.push([nm, lv, lv * 2, S.values[v]]); }
-      }
-    }
-    const hpFill = {}, hpRows = [], hpWarn = [];
-    if (hp && Array.isArray(hp.character_skill)) {
-      const nm2 = (t) => norm(t).replace(/[-‐‑–—－~]/g, ""), seen = {};
-      for (const x of hp.character_skill) { const v = NX_HYPER[nm2(x.skill_name)]; if (v) { seen[v] = (num(x.skill_level) || 0) >= 1; iconMap[v] = x.skill_icon; } }
-      if (hp.character_skill.length && !Object.keys(seen).length) hpWarn.push("하이퍼 패시브 이름이 하나도 맞지 않아서 채우지 않습니다 (응답 이름 예: " + hp.character_skill.slice(0, 3).map((x) => x.skill_name).join(", ") + ")");
-      else {
-        for (const v of Object.values(NX_HYPER)) { hpFill[v] = !!seen[v]; hpRows.push([(S.byName[v] && S.byName[v].label) || v, hpFill[v], S.values[v]]); }
-        if (!hp.character_skill.length) hpWarn.push("찍은 하이퍼 패시브가 없는 것으로 읽혔어요 (목록이 비어 있음)");
-      }
-    }
-    // 장비: 지금 적용 중인 모자와 반지 (시드링은 반지 입력에서 빼고 시드링 사용/레벨로 채운다)
-    const SEEDV = { "컨티": ["SEED_CONTI", "CONTI_LVL"], "리레": ["SEED_RESTRAINT", "RESTRAINT_LVL"] };
-    const eqFill = {}, seedFill = {}, eqNames = {}, eqIcons = {}, eqWarn = [];
-    let eqTable = null;
-    const eqItems = eq && eq.item_equipment;
-    if (Array.isArray(eqItems)) {
-      const hat = eqItems.find((x) => x.item_equipment_slot === "모자");
-      const rings = [1, 2, 3, 4].map((i) => eqItems.find((x) => x.item_equipment_slot === "반지" + i)).filter(Boolean);
-      const others = rings.filter((x) => !nxSeed(x)).slice(0, 3);
-      const rows = [["모자", hat], ...others.map((x, i) => ["반지" + (i + 1), x])].filter(([, x]) => x);
-      const parsed = rows.map(([lab, x]) => ({ lab, x, ...nxParse(x) }));
-      eqTable = el("table", {}, el("tr", {}, ...["", "이름", "STR", "DEX", "공격력", "잠재", "에디셔널"].map((h) => el("th", { text: h }))));
-      for (const r of parsed) {
-        const pr = (part) => r.g[part].filter(([k]) => k).map(([k, v]) => (GEAR_KOR[k] || k) + " " + v).join(", ");
-        eqTable.append(el("tr", {}, el("td", { text: r.lab }), el("td", { text: r.x.item_name || "" }), el("td", { text: String(r.g.main) }), el("td", { text: String(r.g.sub) }), el("td", { text: String(r.g.attack) }), el("td", { text: pr("pot") }), el("td", { text: pr("add") })));
-      }
-      const zero = { main: 0, sub: 0, all_pct: 0, attack: 0, ignore: 0, pot: [["", null], ["", null], ["", null]], add: [["", null], ["", null], ["", null]] };
-      ["Hat", "Ring_1", "Ring_2", "Ring_3"].forEach((n, i) => { const r = parsed.find((q) => q.lab === (i === 0 ? "모자" : "반지" + i)); eqFill[n] = r ? r.g : zero; eqNames[n] = r ? r.x.item_name : null; eqIcons[n] = r ? r.x.item_icon : null; });
-      if (!hat) eqWarn.push("모자를 찾지 못했어요. 모자 칸은 0으로 채웁니다.");
-      if (others.length < 3) eqWarn.push("시드링을 빼면 반지가 " + others.length + "개라서 남는 반지 칸은 0으로 채웁니다.");
-      const sk2 = parsed.flatMap((r) => r.skipped.map((l) => r.lab + ": " + l));
-      if (sk2.length) eqWarn.push("읽지 못한 옵션(직접 확인해 주세요): " + sk2.join(" / "));
-      const seedsFound = {};
-      for (const x of rings) { const tag = nxSeed(x); if (tag) seedsFound[tag] = x; }
-      // 추가 슬롯(예비 특수 반지)에 낀 시드링
-      if (rs && rs.special_ring_reserve_name) { const tag = nxSeed({ item_name: rs.special_ring_reserve_name }); if (tag && !seedsFound[tag]) seedsFound[tag] = { special_ring_level: rs.special_ring_reserve_level }; }
-      for (const [tag, [onK, lvK]] of Object.entries(SEEDV)) {
-        const x = seedsFound[tag];
-        if (!x) { seedFill[onK] = false; continue; }
-        seedFill[onK] = true;
-        const lv = num(x.special_ring_level), ch = (S.byName[lvK] && S.byName[lvK].choices) || [];
-        if (lv == null) eqWarn.push(tag + " 시드링 레벨을 응답에서 찾지 못했어요. 시드링 레벨은 직접 입력해 주세요.");
-        else if (ch.length && !ch.some((c) => c.value === lv)) eqWarn.push(tag + " 시드링 " + lv + "레벨은 효과표에 없어요. 시드링 레벨은 직접 입력해 주세요.");
-        else seedFill[lvK] = lv;
-      }
-    }
-    // 와헌 유니온: 공격대원 효과 문구 "공격 시 20%의 확률로 데미지 N% 증가[와일드헌터]"의 N으로 레벨을 정한다 (16 -> 4레벨, 20 -> 5레벨)
-    let unionLv = null, unionMsg = "";
-    if (ur) {
-      const lines = Array.isArray(ur.union_raider_stat) ? ur.union_raider_stat : [];
-      const hit = lines.map((t) => norm(t)).find((t) => /공격시\d+%의확률로데미지\d+%증가/.test(t) && !/크리티컬/.test(t));
-      const m = hit && hit.match(/공격시(\d+)%의확률로데미지(\d+)%증가/);
-      if (m) { const ev = Math.round(Number(m[1]) * Number(m[2])) / 100; unionLv = { 3.2: 4, 4: 5 }[ev] ?? null; unionMsg = "공격 시 " + m[1] + "%의 확률로 데미지 " + m[2] + "% 증가 (기댓값 " + ev + "%)"; }
-      else unionMsg = lines.length ? "와일드헌터 효과 문구를 찾지 못했어요" : "공격대원 효과 목록이 비어 있어요";
-    }
-    const abnRaw = get("상태이상 추가 데미지"), cl = linkFill["카데나"] ?? curLv["카데나"], cab = CADENA_ABN[cl];
-    const curAbn = (S.values.abnormal_status_damage || {}).damage;
-    let abn = null;
-    if (abnRaw != null && cab != null) abn = Math.max(0, Math.round((abnRaw - cab) * 100) / 100);
-    t.append(el("tr", {}, el("td", { text: "상태이상 추가 데미지 %" }), el("td", { text: abnRaw == null ? "없음" : String(abnRaw) }),
-      el("td", { text: abn == null ? "-" : String(abn) + " (카데나 링크 레벨 " + cl + "의 " + cab + " 제외)" }), el("td", { class: abn != null && typeof curAbn === "number" && Math.abs(curAbn - abn) > 1e-9 ? "bad" : "", text: String(curAbn ?? "") })));
-    if (abnRaw != null && cab == null) out.append(el("div", { class: "fnote bad", text: "카데나 링크 레벨(" + cl + ")을 몰라서 상태이상 추가 데미지는 채우지 않습니다." }));
- if (lk) {
-      out.append(el("div", { class: "fnote", text: "링크 스킬 (지금 적용 중인 링크)" }), lt);
-      if (unknown.length) out.append(el("div", { class: "fnote bad", text: "알 수 없는 링크라서 건너뜀: " + unknown.join(", ") }));
-      if (linkWarn.length) out.append(el("div", { class: "fnote bad", text: "채우지 않는 링크: " + linkWarn.join(", ") + " (스탯창에 이미 들어 있는 링크가 빠졌거나 효과표에 없는 레벨입니다. 직접 확인해 주세요)" }));
-    } else out.append(el("div", { class: "fnote bad", text: "링크 스킬 정보를 불러오지 못해서 링크는 채우지 않습니다." }));
- if (gd || gdMsg) {
-      if (nobleRows.length) {
-        const nt = el("table", {}, el("tr", {}, ...["노블 스킬", "레벨", "채울 값(효과 %, 지속 분)", "지금 입력"].map((h) => el("th", { text: h }))));
-        for (const [nm, lv, v, cur] of nobleRows) nt.append(el("tr", {}, el("td", { text: nm }), el("td", { text: String(lv) }), el("td", { text: String(v) }), el("td", { class: cur !== v ? "bad" : "", text: String(cur) })));
-        out.append(el("div", { class: "fnote", text: "노블 스킬 (길드 스킬, 레벨당 2%와 2분)" }), nt);
-      }
-      if (gdMsg) out.append(el("div", { class: "fnote bad", text: gdMsg + ". 노블은 채우지 않습니다." }));
-      for (const w of nobleWarn) out.append(el("div", { class: "fnote bad", text: w }));
-    }
- if (hp) {
-      const ht = el("table", {}, el("tr", {}, ...["하이퍼 패시브", "불러온 값", "지금 입력"].map((h) => el("th", { text: h }))));
-      for (const [nm, v, cur] of hpRows) ht.append(el("tr", {}, el("td", { text: nm }), el("td", { text: v ? "찍음" : "안 찍음" }), el("td", { class: cur !== v ? "bad" : "", text: cur ? "찍음" : "안 찍음" })));
-      out.append(el("div", { class: "fnote", text: "하이퍼 패시브 스킬" }), hpRows.length ? ht : el("div"));
-      for (const w of hpWarn) out.append(el("div", { class: "fnote bad", text: w }));
-    }
-    if (sk) {
-      out.append(el("div", { class: "fnote", text: "스킬 레벨" }), st2);
-      if (skMiss.length) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 스킬: " + skMiss.join(", ") + " (그 칸은 채우지 않습니다)" }));
-      if (mastNote) out.append(el("div", { class: "fnote bad", text: "리볼빙 캐논 마스터리 레벨(" + mast.skill_level + ")이 해머 스매시 레벨(" + skFill.HAMM_LVL + ")과 달라요. 시뮬레이터는 둘을 같은 값으로 계산합니다." }));
-    } else out.append(el("div", { class: "fnote bad", text: "스킬 레벨을 불러오지 못해서 스킬 레벨은 채우지 않습니다." }));
- if (eqTable) {
-      out.append(el("div", { class: "fnote", text: "장비 (지금 적용 중인 모자와 반지, 시드링 제외)" }), eqTable);
-      out.append(el("div", { class: "fnote", text: "시드링: " + Object.entries(SEEDV).map(([tag, [onK, lvK]]) => tag + " " + (seedFill[onK] ? "사용" + (seedFill[lvK] != null ? " " + seedFill[lvK] + "레벨" : "") : "미착용(사용 끔)")).join(", ") }));
-      for (const w of eqWarn) out.append(el("div", { class: "fnote bad", text: w }));
-    } else out.append(el("div", { class: "fnote bad", text: eq ? "장비 응답에 item_equipment가 없어요(응답 항목: " + Object.keys(eq).join(", ") + "). 모자, 반지, 시드링은 채우지 않습니다." : "장비 정보를 불러오지 못해서 모자, 반지, 시드링은 채우지 않습니다." }));
- if (ur) {
-      out.append(el("div", { class: unionLv == null ? "fnote bad" : "fnote", text: "와헌 유니온: " + unionMsg + (unionLv != null ? " -> " + unionLv + "레벨 (지금 입력 " + S.values.UNION_LVL + ")" : " (직접 골라 주세요)") }));
-    }
- {
-      // 아이콘: 불러온 즉시 저장해 칸 옆에 보여 준다 (장비 아이콘은 채우기를 눌러야 장비 이름과 함께 저장된다)
-      const urls = Object.values(iconMap).filter(Boolean), good = urls.filter(ICON_OK);
-      saveIcons(iconMap); refreshIcons();
-      const eqUrls = Object.values(eqIcons).filter(Boolean);
-      out.append(el("div", { class: urls.length && good.length === urls.length ? "fnote" : "fnote bad", text: "아이콘: 스킬, 링크 " + urls.length + "개 받음, 사용 가능 " + good.length + "개 · 장비 " + eqUrls.length + "개 받음" + ((urls[0] || eqUrls[0]) ? " · 주소 예: " + (urls[0] || eqUrls[0]) : "") }));
-    }
-    out.append(el("div", { class: "fnote", text: "데이터 기준 시각(date): " + (st.date || "없음") + "  ·  지금 시각: " + new Date().toLocaleString("ko-KR") }), t);
-    if (miss) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 항목이 " + miss + "개 있어요. 그 칸은 채우지 않습니다." }));
-    // 합산 값 확인: floor(기본 × (1 + %) + % 미적용)
-    const chk = [["STR", "mainStat", "mainStatp", "fixedMainStat"], ["DEX", "subStat", "subStatp", "fixedSubStat"], ["공격력", "attack", "attackp", null]];
-    const ct = el("table", {}, el("tr", {}, ...["합산 값", "API", "지금 입력으로 계산", "결과"].map((h) => el("th", { text: h }))));
-    for (const [nm, b, p, f] of chk) {
-      const api = get(nm), vals = [bs[b], bs[p], f ? bs[f] : 0];
-      const ok = vals.every((x) => typeof x === "number");
-      const calc = ok ? Math.floor(vals[0] * (1 + vals[1] / 100) + vals[2] + 1e-9) : null;
-      const same = api != null && calc != null && Math.abs(api - calc) < 1;
-      ct.append(el("tr", {}, el("td", { text: nm }), el("td", { text: api == null ? "없음" : String(api) }), el("td", { text: calc == null ? "입력 칸이 비어 있어요" : String(calc) }),
-        el("td", { class: calc == null ? "" : same ? "okc" : "bad", text: calc == null ? "-" : same ? "일치" : "다름: 세부 수치를 확인해 주세요" })));
-    }
-    out.append(el("div", { class: "fnote", text: "주스탯, 부스탯, 공격력 합산 값 확인 (소수는 내림)" }), ct);
-    const apply = el("button", { class: "btn small primary", type: "button" }, "위 칸 채우기");
-    apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length && !Object.keys(skFill).length && !eqTable && unionLv == null && !Object.keys(hpFill).length && !Object.keys(nobleFill).length;
-    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); for (const [k, v] of Object.entries(skFill)) setVal(k, v); for (const [k, v] of Object.entries(hpFill)) setVal(k, v); for (const [k, v] of Object.entries(nobleFill)) setVal(k, v); saveIcons(iconMap); if (unionLv != null) setVal("UNION_LVL", unionLv); if (eqTable) { for (const [n, g] of Object.entries(eqFill)) { setVal(n, g); setGearName(n, eqNames[n], eqIcons[n]); } for (const [k, v] of Object.entries(seedFill)) setVal(k, v); } syncAll(); refreshIcons(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개, 스킬 레벨 " + Object.keys(skFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
-    out.append(apply);
-  }
-  go.addEventListener("click", async () => {
-    go.disabled = true; out.textContent = ""; say("불러오는 중…");
-    try { const ocid = await nxOcid(); const q = encodeURIComponent(ocid), slp = (ms) => new Promise((r) => setTimeout(r, ms)), errs = [];
-      // 초당 5건 제한을 넘지 않게 0.25초 간격으로 하나씩 부른다 (식별자 포함 6건이 1초에 몰리지 않게)
-      const call = async (label, path, must) => { await slp(250); try { return await nxApi(path); } catch (e) { if (must) throw e; errs.push(label + ": " + e.message); return null; } };
-      const st = await call("스탯", "/character/stat?ocid=" + q, true);
-      const basic = await call("레벨", "/character/basic?ocid=" + q);
-      const lk = await call("링크", "/character/link-skill?ocid=" + q);
-      const sk = await call("스킬 레벨", "/character/skill?ocid=" + q + "&character_skill_grade=6");
-      const eq = await call("장비", "/character/item-equipment?ocid=" + q);
-      const rs = await call("예비 특수 반지", "/character/ring-reserve-skill-equipment?ocid=" + q);
-      const ur = await call("유니온", "/user/union-raider?ocid=" + q);
-      const hp = await call("하이퍼 패시브", "/character/skill?ocid=" + q + "&character_skill_grade=hyperpassive");
-      let gd = null, gdMsg = "";
-      const gname = basic && basic.character_guild_name, wname = basic && basic.world_name;
-      if (!basic) gdMsg = "레벨 정보를 못 불러와서 길드를 알 수 없습니다";
-      else if (!gname) gdMsg = "길드에 가입하지 않은 캐릭터입니다";
-      else { const gid = await call("길드 식별자", "/guild/id?guild_name=" + encodeURIComponent(gname) + "&world_name=" + encodeURIComponent(wname)); if (gid && gid.oguild_id) gd = await call("길드 정보", "/guild/basic?oguild_id=" + encodeURIComponent(gid.oguild_id)); else gdMsg = "길드 식별자를 못 찾았습니다"; if (!gd && !gdMsg) gdMsg = "길드 정보를 불러오지 못했습니다"; }
-      show(st, basic, lk, sk, eq, rs, ur, hp, gd, gdMsg); for (const m of errs) out.append(el("div", { class: "fnote bad", text: "불러오기 실패 - " + m })); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
-    catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
-  });
-  return root;
 }
 function buildField(it) {
   const n = it.name, k = it.kind; let control, sync;
@@ -1140,9 +818,7 @@ function buildField(it) {
         const cb = el("input", { type: "checkbox", id: idb + "-" + key, "aria-label": key });
         cb.addEventListener("change", () => setVal(n, { ...S.values[n], [key]: cb.checked })); c = { input: cb, sync() { cb.checked = !!S.values[n][key]; } };
       } else c = numInput(idb + "-" + key, () => S.values[n][key], (v) => setVal(n, { ...S.values[n], [key]: v }));
-      ins[key] = c;
-      const nobles = [];
-      body.append(el("tr", {}, el("td", {}, ...nobles, key), el("td", {}, c.input)));
+      ins[key] = c; body.append(el("tr", {}, el("td", { text: key }), el("td", {}, c.input)));
     }
     control = el("div", { class: "scroll" }, el("table", { class: "tbl" }, body)); sync = () => Object.values(ins).forEach((c) => c.sync());
   } else if (k === "refmap") {
@@ -1175,7 +851,7 @@ function buildLinks() {
     const cb = el("input", { type: "checkbox", id: "lk-on-" + key, "aria-label": key + " 사용" });
     cb.addEventListener("change", () => setVal("LINK_ON", { ...S.values.LINK_ON, [key]: cb.checked }));
     const lv = selectInput("lk-lv-" + key, (LV.choices && LV.choices[key]) || [], () => S.values.LINK_LVL[key], (v) => setVal("LINK_LVL", { ...S.values.LINK_LVL, [key]: v }), key + " 레벨");
-    const tr = el("tr", {}, el("td", {}, iconImg("링크:" + key), key), el("td", {}, cb), el("td", {}, lv.input));
+    const tr = el("tr", {}, el("td", { text: key }), el("td", {}, cb), el("td", {}, lv.input));
     const mark = () => tr.classList.toggle("rowchg", linkChanged(key));
     cb.addEventListener("change", mark); lv.input.addEventListener("change", mark);
     ins.push({ sync() { cb.checked = !!S.values.LINK_ON[key]; lv.sync(); mark(); } });
@@ -1339,7 +1015,7 @@ function renderCum(card, r) {
   sv("path", { d: "M" + pts.map((p) => p[0].toFixed(1) + "," + p[1].toFixed(1)).join("L"), fill: "none", stroke: "var(--s1)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
   const e = pts[pts.length - 1];
   sv("circle", { cx: e[0], cy: e[1], r: 5, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2 }, svg);
-  const lab = sv("text", { x: e[0] + 10, y: e[1] + 4, fill: "var(--ink)", style: "font:600 calc(12px*var(--fs,1)) var(--ui)" }, svg); lab.textContent = fmt(ymax, 1) + "조";
+  const lab = sv("text", { x: e[0] + 10, y: e[1] + 4, fill: "var(--ink)", style: "font:600 12px var(--ui)" }, svg); lab.textContent = fmt(ymax, 1) + "조";
   // 드래그로 고른 구간
   const selRect = sv("rect", { y: m.t, height: H - m.t - m.b, fill: "var(--s2)", opacity: .2, visibility: "hidden" }, svg);
   const selL = sv("line", { y1: m.t, y2: H - m.b, stroke: "var(--s2)", "stroke-width": 2, visibility: "hidden" }, svg);
