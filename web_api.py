@@ -81,6 +81,8 @@ LABELS = {
     "ORIGIN_LVL": "오리진 레벨", "OH_LVL": "오버히트 펀치 레벨", "HECATE_LVL": "솔 헤카테 레벨",
     "CONTI_LVL": "컨티뉴어스 링 레벨", "RESTRAINT_LVL": "리스트레인트 링 레벨",
     "SEED_CONTI": "컨티뉴어스 링 사용", "SEED_RESTRAINT": "리스트레인트 링 사용",
+    "HYPER_PUNCH_REINFORCE": "펀치-리인포스", "HYPER_PUNCH_IGNORE": "펀치-이그노어 가드", "HYPER_PUNCH_ATTACK": "펀치-보너스 어택",
+    "HYPER_RPB_REINFORCE": "릴리즈 파일 벙커-리인포스", "HYPER_RPB_SHOCK": "릴리즈 파일 벙커-쇼크 웨이브 리인포스",
     "ORIGIN_P2_END": "오리진 후딜(초)", "ATTUNE_STYX": "스틱스를 감응시킬 스킬", "ATTUNE_PHLEG": "플레게톤을 감응시킬 스킬",
     "BUFF_DELAY": "버프 시퀀스 딜레이", "ASCENT_USES": "어센트 사용 횟수", "DOPING_ON": "도핑 / 액티브 버프 사용", "NOBLE_IGNORE": "노블 방어율 무시 %", "ASCENT_AFTER_DELAY": "어센트 후딜(초)", "BIG_COUNT": "극딜 사용 횟수", "MINI_COUNT": "준극딜 사용 횟수", "Hat": "모자 (어센트 미적용)", "Ring_1": "반지1 (어센트 미적용)", "Ring_2": "반지2 (어센트 미적용)", "Ring_3": "반지3 (어센트 미적용)",
     "SEED_RING_STAT": "반지4 (시드링 1개의 스탯, 고정)",
@@ -116,7 +118,9 @@ SUBGROUPS = {
     "BUNK_BUST_LVL": "5차 스킬", "BURN_BRK_LVL": "5차 스킬", "VULCAN_LVL": "5차 스킬", "AFT_SHCK_LVL": "5차 스킬", "INFANTRY_LVL": "5차 스킬",
     "ORIGIN_LVL": "6차 스킬", "OH_LVL": "6차 스킬", "HECATE_LVL": "6차 스킬", "VANGUARD_LVL": "6차 스킬",
 }
-SKILL_LEVELS = set(SUBGROUPS)          # 1~30 범위의 정수만 받는다
+HYPER_SUBGROUP = "하이퍼 패시브 스킬 (1레벨, 찍었으면 체크)"
+SUBGROUPS.update({n: HYPER_SUBGROUP for n in ("HYPER_PUNCH_REINFORCE", "HYPER_PUNCH_IGNORE", "HYPER_PUNCH_ATTACK", "HYPER_RPB_REINFORCE", "HYPER_RPB_SHOCK")})
+SKILL_LEVELS = {n for n in SUBGROUPS if n.endswith("_LVL")}          # 1~30 범위의 정수만 받는다
 WEB_DEFAULTS.update({n: 30 for n in SKILL_LEVELS})      # 웹은 모든 스킬 레벨을 30(만렙)에서 시작한다
 ATTUNE_LABELS = {"버닝 브레이커": "버닝 브레이커 (버브)", "소울 컨트랙트": "엔버 링크 (소울 컨트랙트)", "애프터이미지 쇼크": "애프터이미지 쇼크 (앺숔)", "벙커 버스터": "벙커 버스터 (벙버)"}
 
@@ -249,7 +253,8 @@ GROUPS = [
     ("시뮬레이션 시간", ["SIM_TIME", "t_0", "t_n"]),
     ("극딜 순서", ["ORIGIN_ON", "ORDER_ORIGIN_LAST", "ORDER_ORIGIN_FIRST", "ORIGIN_BIG_ORDER", "ORIGIN_MAX_WAIT",
                  "ORIGIN_LATE_MODE", "ORDER_BIG", "ORDER_MINI", "BIG_COUNT", "MINI_COUNT", "BUFF_ORDER"]),
-    ("스킬 레벨", ["MF_LVL", "RPB_LVL", "HAMM_LVL", "CANNON_LVL", "BUNK_BUST_LVL", "BURN_BRK_LVL", "VULCAN_LVL",
+    ("스킬 레벨", ["MF_LVL", "RPB_LVL", "HAMM_LVL", "CANNON_LVL",
+               "HYPER_PUNCH_REINFORCE", "HYPER_PUNCH_IGNORE", "HYPER_PUNCH_ATTACK", "HYPER_RPB_REINFORCE", "HYPER_RPB_SHOCK", "BUNK_BUST_LVL", "BURN_BRK_LVL", "VULCAN_LVL",
                "AFT_SHCK_LVL", "INFANTRY_LVL", "ORIGIN_LVL", "OH_LVL", "HECATE_LVL", "VANGUARD_LVL"]),
     ("도핑", ["DOPING_ON", "NOBLE_IGNORE"]),
     ("시드링", ["SEED_CONTI", "CONTI_LVL", "SEED_RESTRAINT", "RESTRAINT_LVL"]),
