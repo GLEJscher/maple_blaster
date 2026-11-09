@@ -468,4 +468,4 @@ print(origin_plan_candidates(base_spec, ORDER_ORIGIN_FIRST, top=5))
 
 ## 데이터 출처
 
-웹페이지의 넥슨 API 불러오기 기능은 NEXON Open API를 사용하며, 페이지 하단에 `Data based on NEXON Open API` 문구를 표기합니다. 입력한 캐릭터 이름과 API 키는 넥슨 서버로만 전송하며 저장하지 않는다는 안내도 같은 곳에 있습니다.
+웹페이지의 넥슨 API 불러오기 기능은 NEXON Open API를 사용하며, 페이지 하단에 `Data based on NEXON Open API` 문구를 표기합니다. 입력한 캐릭터 이름과 API 키는 넥슨 서버로만 전송하며 사이트 서버에는 저장하지 않습니다. API 키는 어디에도 저장하지 않고, 캐릭터 이름만 입력값처럼 사용자의 브라우저(localStorage)에 저장합니다. 이 안내도 같은 곳에 있습니다.

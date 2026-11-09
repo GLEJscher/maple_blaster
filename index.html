@@ -264,7 +264,7 @@ th.sort:hover{color:var(--ink)}
     <p class="foot">입력값의 이름과 설명은 <code>Skills.py</code>의 변수와 주석에서 읽어 옵니다. 코드를 바꾸면 이 화면의 입력창도 같이 바뀝니다.
       코드: <a href="https://github.com/GLEJscher/maple_blaster" target="_blank" rel="noopener">github.com/GLEJscher/maple_blaster</a></p>
     <p class="foot nxcredit">Data based on NEXON Open API</p>
-    <p class="foot nxcredit">넥슨 API를 쓰기 위해 입력한 캐릭터 이름과 API 키는 넥슨 서버로만 전송하며, 이 사이트에는 저장하지 않습니다.</p>
+    <p class="foot nxcredit">넥슨 API를 쓰기 위해 입력한 캐릭터 이름과 API 키는 넥슨 서버로만 전송하며, 이 사이트의 서버에는 저장하지 않습니다. API 키는 어디에도 저장하지 않습니다. 캐릭터 이름은 입력값처럼 사용자의 브라우저에만 저장됩니다.</p>
   </main>
 </div>
 <div class="tip" id="tip"></div>
@@ -827,12 +827,14 @@ function nxParse(item) {
   }
   return { g, skipped };
 }
-const NXC = { name: "", key: "", ins: [] };          // 장비/스탯 불러오기가 이름과 키를 같이 쓴다 (저장하지 않는다)
+const NXC = { name: "", key: "", ins: [] };          // 장비/스탯 불러오기가 이름과 키를 같이 쓴다. 닉네임은 이 브라우저(localStorage)에 저장하고, API 키는 저장하지 않는다
+(function () { const v = store.get("blaster-dpm:nx"); if (v && typeof v.name === "string") { NXC.name = v.name; if ("key" in v || "remember" in v) store.set("blaster-dpm:nx", { name: v.name }); } })();     // 이전 버전이 저장해 둔 키와 체크 표시는 지운다
+function nxSave() { store.set("blaster-dpm:nx", { name: NXC.name }); }
 function nxInputs() {
   const nameIn = el("input", { class: "txt", type: "text", autocomplete: "off", placeholder: "캐릭터 이름", "aria-label": "캐릭터 이름" });
   const keyIn = el("input", { class: "txt", type: "password", autocomplete: "off", placeholder: "넥슨 오픈 API 키", "aria-label": "API 키" });
   nameIn.value = NXC.name; keyIn.value = NXC.key; NXC.ins.push([nameIn, keyIn]);
-  nameIn.addEventListener("input", () => { NXC.name = nameIn.value; for (const [n] of NXC.ins) if (n !== nameIn) n.value = NXC.name; });
+  nameIn.addEventListener("input", () => { NXC.name = nameIn.value; nxSave(); for (const [n] of NXC.ins) if (n !== nameIn) n.value = NXC.name; });
   keyIn.addEventListener("input", () => { NXC.key = keyIn.value; for (const [, k] of NXC.ins) if (k !== keyIn) k.value = NXC.key; });
   return [nameIn, keyIn];
 }
@@ -865,7 +867,7 @@ function buildNexonStat() {
   const [nameIn, keyIn] = nxInputs();
   const go = el("button", { class: "btn", type: "button" }, "불러오기");
   const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨, 와헌 유니온 레벨, 하이퍼 패시브 5개, 노블 스킬 4개(길드 스킬)의 레벨을 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 11건입니다 (길드가 없으면 9건). 서비스 단계 API 키가 필요하고, 한꺼번에 호출합니다. 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
+  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨, 와헌 유니온 레벨, 하이퍼 패시브 5개, 노블 스킬 4개(길드 스킬)의 레벨을 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 11건입니다 (길드가 없으면 9건). 서비스 단계 API 키가 필요하고, 한꺼번에 호출합니다. 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고, 키는 저장하지 않으며 이름은 입력값처럼 이 브라우저에만 저장합니다." }),
     el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
   const norm = (t) => String(t || "").replace(/\s+/g, "");
