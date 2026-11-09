@@ -622,7 +622,7 @@ function buildInputs() {
   // 구역별 카드
   const byGroup = {};
   for (const it of S.items) (byGroup[it.group] = byGroup[it.group] || []).push(it);
-  const openDefault = new Set(["스탯", "시뮬레이션 시간", "극딜 순서"]);
+  const openDefault = new Set();      // 처음에는 모든 구역을 닫아 둔다
   S.groupEls = [];
   for (const g of S.groups) {
     const its = byGroup[g]; if (!its) continue;
