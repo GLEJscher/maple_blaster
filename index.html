@@ -838,7 +838,7 @@ function nxInputs() {
 }
 async function nxApi(path) {
   let r; try { r = await fetch(NX_BASE + path, { headers: { "x-nxopen-api-key": NXC.key.trim() } }); } catch (e) { throw new Error("넥슨 서버에 연결하지 못했어요. 네트워크나 광고 차단 확장프로그램을 확인해 주세요."); }
-  if (r.status === 429) throw new Error("넥슨 API 호출 한도를 넘었어요. 개발 단계 키는 초당 5건, 하루 1,000건까지입니다. 잠시 뒤나 내일 다시 시도해 주세요.");
+  if (r.status === 429) throw new Error("넥슨 API 호출 한도를 넘었어요. 개발 단계 키는 초당 5건, 하루 1,000건까지라서 한꺼번에 불러오면 이 오류가 납니다. 서비스 단계 API 키로 발급받아 사용해 주세요.");
   if (!r.ok) { let m = ""; try { m = (await r.json()).error.message || ""; } catch (e) {} throw new Error("넥슨 API 오류 (HTTP " + r.status + ")" + (m ? ": " + m : "")); }
   return r.json();
 }
@@ -865,7 +865,7 @@ function buildNexonStat() {
   const [nameIn, keyIn] = nxInputs();
   const go = el("button", { class: "btn", type: "button" }, "불러오기");
   const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨, 와헌 유니온 레벨, 하이퍼 패시브 5개, 노블 스킬 4개(길드 스킬)의 레벨을 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 11건입니다 (길드가 없으면 9건). 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
+  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨, 와헌 유니온 레벨, 하이퍼 패시브 5개, 노블 스킬 4개(길드 스킬)의 레벨을 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 11건입니다 (길드가 없으면 9건). 서비스 단계 API 키가 필요하고, 한꺼번에 호출합니다. 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
     el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
   const norm = (t) => String(t || "").replace(/\s+/g, "");
@@ -1047,17 +1047,19 @@ function buildNexonStat() {
   }
   go.addEventListener("click", async () => {
     go.disabled = true; out.textContent = ""; say("불러오는 중…");
-    try { const ocid = await nxOcid(); const q = encodeURIComponent(ocid), slp = (ms) => new Promise((r) => setTimeout(r, ms)), errs = [];
-      // 초당 5건 제한을 넘지 않게 0.25초 간격으로 하나씩 부른다 (식별자 포함 6건이 1초에 몰리지 않게)
-      const call = async (label, path, must) => { await slp(250); try { return await nxApi(path); } catch (e) { if (must) throw e; errs.push(label + ": " + e.message); return null; } };
-      const st = await call("스탯", "/character/stat?ocid=" + q, true);
-      const basic = await call("레벨", "/character/basic?ocid=" + q);
-      const lk = await call("링크", "/character/link-skill?ocid=" + q);
-      const sk = await call("스킬 레벨", "/character/skill?ocid=" + q + "&character_skill_grade=6");
-      const eq = await call("장비", "/character/item-equipment?ocid=" + q);
-      const rs = await call("예비 특수 반지", "/character/ring-reserve-skill-equipment?ocid=" + q);
-      const ur = await call("유니온", "/user/union-raider?ocid=" + q);
-      const hp = await call("하이퍼 패시브", "/character/skill?ocid=" + q + "&character_skill_grade=hyperpassive");
+    try { const ocid = await nxOcid(); const q = encodeURIComponent(ocid), errs = []; let fatal = null;
+      // 서비스 단계 키는 호출 한도가 넉넉해서 한꺼번에 부른다 (길드는 레벨 응답의 길드 이름이 필요해서 그 뒤에 부른다)
+      const call = async (label, path, must) => { try { return await nxApi(path); } catch (e) { if (must) fatal = e; else errs.push(label + ": " + e.message); return null; } };
+      const [st, basic, lk, sk, eq, rs, ur, hp] = await Promise.all([
+        call("스탯", "/character/stat?ocid=" + q, true),
+        call("레벨", "/character/basic?ocid=" + q),
+        call("링크", "/character/link-skill?ocid=" + q),
+        call("스킬 레벨", "/character/skill?ocid=" + q + "&character_skill_grade=6"),
+        call("장비", "/character/item-equipment?ocid=" + q),
+        call("예비 특수 반지", "/character/ring-reserve-skill-equipment?ocid=" + q),
+        call("유니온", "/user/union-raider?ocid=" + q),
+        call("하이퍼 패시브", "/character/skill?ocid=" + q + "&character_skill_grade=hyperpassive")]);
+      if (fatal) throw fatal;
       let gd = null, gdMsg = "";
       const gname = basic && basic.character_guild_name, wname = basic && basic.world_name;
       if (!basic) gdMsg = "레벨 정보를 못 불러와서 길드를 알 수 없습니다";
