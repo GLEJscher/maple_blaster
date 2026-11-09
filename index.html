@@ -829,12 +829,12 @@ function buildNexonStat() {
   const [nameIn, keyIn] = nxInputs();
   const go = el("button", { class: "btn", type: "button" }, "불러오기");
   const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨을 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 7건입니다 (개발 단계 키는 하루 1,000건). 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
+  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨, 와헌 유니온 레벨을 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 8건입니다 (개발 단계 키는 하루 1,000건). 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고 저장하지 않습니다." }),
     el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
   const norm = (t) => String(t || "").replace(/\s+/g, "");
   const num = (v) => { const x = Number(String(v).replace(/[,%]/g, "")); return isFinite(x) ? x : null; };
-  function show(st, basic, lk, sk, eq, rs) {
+  function show(st, basic, lk, sk, eq, rs, ur) {
     out.textContent = "";
     const map = new Map((st.final_stat || []).map((x) => [norm(x.stat_name), x.stat_value]));
     const get = (n) => num(map.get(norm(n)));
@@ -911,6 +911,15 @@ function buildNexonStat() {
         else seedFill[lvK] = lv;
       }
     }
+    // 와헌 유니온: 공격대원 효과 문구 "공격 시 20%의 확률로 데미지 N% 증가[와일드헌터]"의 N으로 레벨을 정한다 (16 -> 4레벨, 20 -> 5레벨)
+    let unionLv = null, unionMsg = "";
+    if (ur) {
+      const lines = Array.isArray(ur.union_raider_stat) ? ur.union_raider_stat : [];
+      const hit = lines.map((t) => norm(t)).find((t) => /공격시\d+%의확률로데미지\d+%증가/.test(t) && !/크리티컬/.test(t));
+      const m = hit && hit.match(/공격시(\d+)%의확률로데미지(\d+)%증가/);
+      if (m) { const ev = Math.round(Number(m[1]) * Number(m[2])) / 100; unionLv = { 3.2: 4, 4: 5 }[ev] ?? null; unionMsg = "공격 시 " + m[1] + "%의 확률로 데미지 " + m[2] + "% 증가 (기댓값 " + ev + "%)"; }
+      else unionMsg = lines.length ? "와일드헌터 효과 문구를 찾지 못했어요" : "공격대원 효과 목록이 비어 있어요";
+    }
     const abnRaw = get("상태이상 추가 데미지"), cl = linkFill["카데나"] ?? curLv["카데나"], cab = CADENA_ABN[cl];
     const curAbn = (S.values.abnormal_status_damage || {}).damage;
     let abn = null;
@@ -933,6 +942,9 @@ function buildNexonStat() {
       out.append(el("div", { class: "fnote", text: "시드링: " + Object.entries(SEEDV).map(([tag, [onK, lvK]]) => tag + " " + (seedFill[onK] ? "사용" + (seedFill[lvK] != null ? " " + seedFill[lvK] + "레벨" : "") : "미착용(사용 끔)")).join(", ") }));
       for (const w of eqWarn) out.append(el("div", { class: "fnote bad", text: w }));
     } else out.append(el("div", { class: "fnote bad", text: eq ? "장비 응답에 item_equipment가 없어요(응답 항목: " + Object.keys(eq).join(", ") + "). 모자, 반지, 시드링은 채우지 않습니다." : "장비 정보를 불러오지 못해서 모자, 반지, 시드링은 채우지 않습니다." }));
+ if (ur) {
+      out.append(el("div", { class: unionLv == null ? "fnote bad" : "fnote", text: "와헌 유니온: " + unionMsg + (unionLv != null ? " -> " + unionLv + "레벨 (지금 입력 " + S.values.UNION_LVL + ")" : " (직접 골라 주세요)") }));
+    }
     out.append(el("div", { class: "fnote", text: "데이터 기준 시각(date): " + (st.date || "없음") + "  ·  지금 시각: " + new Date().toLocaleString("ko-KR") }), t);
     if (miss) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 항목이 " + miss + "개 있어요. 그 칸은 채우지 않습니다." }));
     // 합산 값 확인: floor(기본 × (1 + %) + % 미적용)
@@ -948,8 +960,8 @@ function buildNexonStat() {
     }
     out.append(el("div", { class: "fnote", text: "주스탯, 부스탯, 공격력 합산 값 확인 (소수는 내림)" }), ct);
     const apply = el("button", { class: "btn small primary", type: "button" }, "위 칸 채우기");
-    apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length && !Object.keys(skFill).length && !eqTable;
-    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); for (const [k, v] of Object.entries(skFill)) setVal(k, v); if (eqTable) { for (const [n, g] of Object.entries(eqFill)) { setVal(n, g); setGearName(n, eqNames[n]); } for (const [k, v] of Object.entries(seedFill)) setVal(k, v); } syncAll(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개, 스킬 레벨 " + Object.keys(skFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
+    apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length && !Object.keys(skFill).length && !eqTable && unionLv == null;
+    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); for (const [k, v] of Object.entries(skFill)) setVal(k, v); if (unionLv != null) setVal("UNION_LVL", unionLv); if (eqTable) { for (const [n, g] of Object.entries(eqFill)) { setVal(n, g); setGearName(n, eqNames[n]); } for (const [k, v] of Object.entries(seedFill)) setVal(k, v); } syncAll(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개, 스킬 레벨 " + Object.keys(skFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
     out.append(apply);
   }
   go.addEventListener("click", async () => {
@@ -963,7 +975,8 @@ function buildNexonStat() {
       const sk = await call("스킬 레벨", "/character/skill?ocid=" + q + "&character_skill_grade=6");
       const eq = await call("장비", "/character/item-equipment?ocid=" + q);
       const rs = await call("예비 특수 반지", "/character/ring-reserve-skill-equipment?ocid=" + q);
-      show(st, basic, lk, sk, eq, rs); for (const m of errs) out.append(el("div", { class: "fnote bad", text: "불러오기 실패 - " + m })); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
+      const ur = await call("유니온", "/user/union-raider?ocid=" + q);
+      show(st, basic, lk, sk, eq, rs, ur); for (const m of errs) out.append(el("div", { class: "fnote bad", text: "불러오기 실패 - " + m })); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
     catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
   });
   return root;
