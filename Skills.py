@@ -220,12 +220,16 @@ AURA_COOLDOWN = 5.25      # 인게임 전투분석(335초 62회)에 맞춘 값: 
 AURA_EXCLUDE = ("인팬트리",)      # 이 스킬로는 오라 웨폰이 발동하지 않는다 (오버히트 펀치는 발동한다)
 
 # 도핑 / 액티브 버프 ON/OFF (True면 사용). 어센트에는 적용되지 않는다. 시뮬레이션 시작(0초)에 쓰고 지속시간이 끝나면 다시 쓰지 않는다
-#  노블(노블레스): 데미지 +30%, 보스 데미지 +30%, 크리티컬 데미지 +30%, 방어율 무시 +NOBLE_IGNORE% (0~30, 2씩 증가). 지속 시간은 방어율 무시 %와 같은 분(2%면 2분, 10%면 10분, 30%면 30분)
+#  노블(노블레스): 4개 스킬이 각각 독립이다. 크게 한방(크리티컬 데미지), 길드의 이름으로(데미지), 보스 킬링 머신(보스 데미지), 방어력은 숫자일 뿐(방어율 무시). 레벨당 효과 +2%, 지속 2분 (레벨 15 = 30% / 30분)
 #  영메(영웅의 메아리, 30분): 공격력 +4%
 #  세이람(15분 도핑): 공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16%
 #  콜렉터(8분 도핑): 공격력 +100, 주스탯 +30, 부스탯 +30, 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 A, B, C 기본 데미지 +3%p), 방어율 무시 38% -> 41% (스탯창의 방무 38%가 41%로 바뀌므로 -38 + 41)
 DOPING_ON = {"노블": False, "영메": False, "세이람": False, "콜렉터": False}
-NOBLE_IGNORE = 0       # 노블의 방어율 무시 % (0~30, 2의 배수: 0, 2, 4, ...). 노블의 지속 시간(분)도 이 값과 같다 (0이면 효과 없음)
+# 노블 스킬 4개: 값은 효과 %이고 0~30, 2의 배수(0, 2, 4, ...)이다. 지속 시간(분)도 이 값과 같다 (2%면 2분, 30%면 30분, 0이면 효과 없음)
+NOBLE_CRIT = 0         # 크게 한방: 크리티컬 데미지 %
+NOBLE_DAMAGE = 0       # 길드의 이름으로: 데미지 %
+NOBLE_BOSS = 0         # 보스 킬링 머신: 보스 데미지 %
+NOBLE_IGNORE = 0       # 방어력은 숫자일 뿐: 방어율 무시 %
 
 # 시드링 ON/OFF (True면 사용). run_bunker_maxi(conti_on=..., restraint_on=...)로 그때그때 바꿀 수도 있다
 SEED_CONTI = True        # 컨티뉴어스 링: 상시 적용 (이전 시뮬레이션은 base_spec에 컨티가 더해져 있어 ON과 같은 값이었다)
@@ -710,8 +714,14 @@ continuous = BuffSkill(name="컨티",
                        effect=CONTI_TABLE[CONTI_LVL])
 
 # 도핑 / 액티브 버프: 시뮬레이션 시작(0초)부터 지속시간 동안 켜진다 (재사용하지 않는다). 어센트는 버프를 받지 않으므로 적용되지 않는다
-noble_buff = BuffSkill(name="노블", duration=NOBLE_IGNORE * 60, cooldown=0, cooldown_applies=False,
-                       effect=CharaInfo(damage=30, bossDamage=30, critDamage=30, armorIgnore=NOBLE_IGNORE))
+noble_buff = (BuffSkill(name="노블(크게 한방)", duration=NOBLE_CRIT * 60, cooldown=0, cooldown_applies=False,
+                        effect=CharaInfo(critDamage=NOBLE_CRIT)),
+              BuffSkill(name="노블(길드의 이름으로)", duration=NOBLE_DAMAGE * 60, cooldown=0, cooldown_applies=False,
+                        effect=CharaInfo(damage=NOBLE_DAMAGE)),
+              BuffSkill(name="노블(보스 킬링 머신)", duration=NOBLE_BOSS * 60, cooldown=0, cooldown_applies=False,
+                        effect=CharaInfo(bossDamage=NOBLE_BOSS)),
+              BuffSkill(name="노블(방어력은 숫자일 뿐)", duration=NOBLE_IGNORE * 60, cooldown=0, cooldown_applies=False,
+                        effect=CharaInfo(armorIgnore=NOBLE_IGNORE)))       # 노블은 4개 스킬 묶음이다
 hero_echo_buff = BuffSkill(name="영메", duration=1800, cooldown=0, cooldown_applies=False,
                            effect=CharaInfo(attackp=4))
 seiram_buff = BuffSkill(name="세이람", duration=900, cooldown=0, cooldown_applies=False,
@@ -1474,7 +1484,8 @@ def run_bunker_maxi(spec, duration=60, buff_delay=BUFF_DELAY, breaker=True, vulk
         origin_bigs = {}
         order = [a for a in order if a != "오리진"] if order is not None else order
     dop_on = {**DOPING_ON, **(doping_on or {})}                      # doping_on: 이번 실행만 도핑 ON/OFF를 바꾼다
-    dopings = tuple(b for n, b in DOPING_BUFFS.items() if dop_on.get(n))
+    dopings = tuple(x for n, b in DOPING_BUFFS.items() if dop_on.get(n)
+                    for x in (b if isinstance(b, tuple) else (b,)) if x.duration > 0)      # 노블은 4개 묶음, 지속 0인 스킬은 뺀다
     links = {**LINK_ON, **(link_on or {})}
     if link_on is not None:
         spec = build_link_spec(base_spec_no_link, links)

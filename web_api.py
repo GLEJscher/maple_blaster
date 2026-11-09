@@ -84,11 +84,14 @@ LABELS = {
     "HYPER_PUNCH_REINFORCE": "펀치-리인포스", "HYPER_PUNCH_IGNORE": "펀치-이그노어 가드", "HYPER_PUNCH_ATTACK": "펀치-보너스 어택",
     "HYPER_RPB_REINFORCE": "릴리즈 파일 벙커-리인포스", "HYPER_RPB_SHOCK": "릴리즈 파일 벙커-쇼크 웨이브 리인포스",
     "ORIGIN_P2_END": "오리진 후딜(초)", "ATTUNE_STYX": "스틱스를 감응시킬 스킬", "ATTUNE_PHLEG": "플레게톤을 감응시킬 스킬",
-    "BUFF_DELAY": "버프 시퀀스 딜레이", "ASCENT_USES": "어센트 사용 횟수", "DOPING_ON": "도핑 / 액티브 버프 사용", "NOBLE_IGNORE": "노블 방어율 무시 %", "ASCENT_AFTER_DELAY": "어센트 후딜(초)", "BIG_COUNT": "극딜 사용 횟수", "MINI_COUNT": "준극딜 사용 횟수", "Hat": "모자 (어센트 미적용)", "Ring_1": "반지1 (어센트 미적용)", "Ring_2": "반지2 (어센트 미적용)", "Ring_3": "반지3 (어센트 미적용)",
+    "BUFF_DELAY": "버프 시퀀스 딜레이", "ASCENT_USES": "어센트 사용 횟수", "DOPING_ON": "도핑 / 액티브 버프 사용", "NOBLE_CRIT": "크게 한방 (크리티컬 데미지 %)", "NOBLE_DAMAGE": "길드의 이름으로 (데미지 %)", "NOBLE_BOSS": "보스 킬링 머신 (보스 데미지 %)", "NOBLE_IGNORE": "방어력은 숫자일 뿐 (방어율 무시 %)", "ASCENT_AFTER_DELAY": "어센트 후딜(초)", "BIG_COUNT": "극딜 사용 횟수", "MINI_COUNT": "준극딜 사용 횟수", "Hat": "모자 (어센트 미적용)", "Ring_1": "반지1 (어센트 미적용)", "Ring_2": "반지2 (어센트 미적용)", "Ring_3": "반지3 (어센트 미적용)",
     "SEED_RING_STAT": "반지4 (시드링 1개의 스탯, 고정)",
     "VANGUARD_LVL": "뱅가드 임팩트(어센트) 레벨", "LINK_ON": "링크 사용", "LINK_LVL": "링크 레벨",
 }
 # 화면에 보여 줄 설명. 여기에 없는 변수는 Skills.py의 주석을 그대로 보여 주고, ""로 적으면 설명을 보여 주지 않는다
+NOBLE_VARS = ("NOBLE_CRIT", "NOBLE_DAMAGE", "NOBLE_BOSS", "NOBLE_IGNORE")
+NOBLE_NOTE = "노블 스킬 1개의 효과 %입니다. 0~30이고 2씩 오릅니다 (레벨당 2%). 지속 시간도 이 숫자와 같은 분입니다 (2%면 2분, 30%면 30분, 0이면 효과 없음)"
+
 NOTES = {
     "HAMM_LVL": "리볼빙 캐논 마스터리 레벨도 이 값을 따릅니다",
     "SEED_CONTI": "상시 적용되는 패시브 링입니다. 쓰지 않으면 스탯창 스펙에서 주스탯 4, 부스탯 4, 공격력 4를 뺍니다",
@@ -101,7 +104,7 @@ NOTES = {
     "LINK_ON": "데슬, 데벤져, 레테, 키네시스, 제논은 효과가 스탯창 값에 이미 들어 있습니다. 끄면 그 레벨의 효과를 스탯창 값에서 빼고 계산합니다. 레벨을 올렸다면 스탯창 값도 같이 바꿔 주세요. 나머지 링크는 스탯창에 없어서 켜면 효과를 더합니다.",
     "LINK_LVL": "",
     "DOPING_ON": "스탯창 스펙(노도핑)에 더해지는 효과이며 어센트에는 적용되지 않습니다. 켜면 시뮬레이션 시작과 함께 쓰고, 지속시간이 끝나면 다시 쓰지 않습니다. 30분 도핑 아이템은 어센트에도 적용되니 스탯창 스펙에 포함해서 입력하세요. 노블(30분): 데미지, 보스 데미지, 크리티컬 데미지 +30%, 방어율 무시 / 영메(30분): 공격력 +4% / 세이람(15분): 공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16% / 콜렉터(8분): 공격력 +100, 올스탯 +30, 스킬 레벨 +2(공격력 +2, 릴파벙 직격과 충격파 기본 데미지 +3%p)",
-    "NOBLE_IGNORE": "0~30%이고 2씩 오릅니다. 노블은 이 숫자와 같은 분만큼 지속됩니다 (2%면 2분, 30%면 30분, 0%면 효과 없음)",
+    "NOBLE_CRIT": NOBLE_NOTE, "NOBLE_DAMAGE": NOBLE_NOTE, "NOBLE_BOSS": NOBLE_NOTE, "NOBLE_IGNORE": NOBLE_NOTE,
     "BIG_COUNT": "시뮬레이션 시간 동안 쓸 극딜 횟수입니다 (t=0 첫 극딜 포함). 극딜과 준극딜은 번갈아 쓰고, 횟수를 다 쓴 쪽은 건너뜁니다. 모두 쓰고 나면 릴파벙, 오버히트, 매그팡 평딜만 합니다",
     "MINI_COUNT": "시뮬레이션 시간 동안 쓸 준극딜 횟수입니다. 0이면 준극딜을 쓰지 않습니다 (어센트는 준극딜 뒤에만 쓰므로 쓰지 않게 됩니다)",
     "ASCENT_AFTER_DELAY": "어센트 컷신(2.82초)이 끝난 뒤 다음 행동까지의 딜레이입니다",
@@ -256,7 +259,7 @@ GROUPS = [
     ("스킬 레벨", ["MF_LVL", "RPB_LVL", "HAMM_LVL", "CANNON_LVL",
                "HYPER_PUNCH_REINFORCE", "HYPER_PUNCH_IGNORE", "HYPER_PUNCH_ATTACK", "HYPER_RPB_REINFORCE", "HYPER_RPB_SHOCK", "BUNK_BUST_LVL", "BURN_BRK_LVL", "VULCAN_LVL",
                "AFT_SHCK_LVL", "INFANTRY_LVL", "ORIGIN_LVL", "OH_LVL", "HECATE_LVL", "VANGUARD_LVL"]),
-    ("도핑", ["DOPING_ON", "NOBLE_IGNORE"]),
+    ("도핑", ["DOPING_ON", "NOBLE_CRIT", "NOBLE_DAMAGE", "NOBLE_BOSS", "NOBLE_IGNORE"]),
     ("시드링", ["SEED_CONTI", "CONTI_LVL", "SEED_RESTRAINT", "RESTRAINT_LVL"]),
     ("링크 스킬", ["LINK_ON", "LINK_LVL"]),
     ("스킬 딜레이", ["BUFF_DELAY", "MAG_FANG_DELAY", "HAMM_MAG_FANG_DELAY", "RELEASE_DELAY", "BURST_DELAY",
@@ -343,7 +346,7 @@ def describe_inputs():
             it["min"], it["max"] = 1, 1200
         if _is_delay(n) and it["kind"] in ("int", "float"):
             it["kind"], it["min"] = "float", DELAY_MIN.get(n, 0)          # 소수 입력 가능 (BREAKER_PRE 등), 음수 불가
-        if n == "NOBLE_IGNORE":
+        if n in NOBLE_VARS:
             it["min"], it["max"], it["step"] = 0, 30, 2
         if n in choices:
             it["choices"] = choices[n]

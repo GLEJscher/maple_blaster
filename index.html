@@ -453,6 +453,7 @@ const ICON_OK = (u) => { try { const x = new URL(u); return x.protocol === "http
 // 스킬 아이콘 기본 주소 (넥슨 서버의 이미지를 그대로 불러온다. 불러오기를 하면 받은 주소로 덮어쓴다)
 const ICON_BASE = "https://open.api.nexon.com/static/maplestory/skill/icon/";
 const ICON_DEFAULT = Object.fromEntries(Object.entries({"링크:데슬": "KFHCLHOBMB", "링크:아크": "KFHCLHOENE", "링크:엔버": "KFHCLHPAJF", "링크:모도": "KFHCLHMGLA", "링크:데벤져": "KFHCLHOBJA", "링크:카데나": "KFHCLHODKB", "링크:모법": "KFHCLHMGKC", "링크:일리움": "KFHCLHODKI", "링크:레테": "KFHCLHKAKA", "링크:키네시스": "KFHCLHOAEI", "링크:카인": "KFHCLHNBNF", "링크:제논": "KFHCLHOBIH", "MF_LVL": "KFMFKDPBMA", "RPB_LVL": "KFMFKDPBMC", "HAMM_LVL": "KFMFKDPBMJ", "CANNON_LVL": "KFMFKDPBNC", "ORIGIN_LVL": "KFMFKDPEMA", "VANGUARD_LVL": "KFMFKDPEMC", "OH_LVL": "KFMFKDPEME", "HECATE_LVL": "KAPCLHPBMF", "INFANTRY_LVL": "KAPCLHPBKD", "BUNK_BUST_LVL": "KAPCLHKAOI", "VULCAN_LVL": "KAPCLHKAOJ", "BURN_BRK_LVL": "KAPCLHKAPA", "AFT_SHCK_LVL": "KAPCLHKAPB", "HYPER_PUNCH_ATTACK": "KFMFKFOBIF", "HYPER_PUNCH_REINFORCE": "KFMFKFOBID", "HYPER_PUNCH_IGNORE": "KFMFKFOBIE", "HYPER_RPB_REINFORCE": "KFMFKFOBIG", "HYPER_RPB_SHOCK": "KFMFKFOBIH"}).map(([k, v]) => [k, ICON_BASE + v]));
+const NOBLE_ICON = { NOBLE_CRIT: "노블:크게 한방", NOBLE_DAMAGE: "노블:길드의 이름으로", NOBLE_BOSS: "노블:보스 킬링 머신", NOBLE_IGNORE: "노블:방어력은 숫자일 뿐" };
 // 노블 스킬(길드 스킬)과 시드링 아이콘
 Object.assign(ICON_DEFAULT, {
   "노블:크게 한방": ICON_BASE + "KFGDLHPBOF", "노블:길드의 이름으로": ICON_BASE + "KFGDLHPBOE", "노블:보스 킬링 머신": ICON_BASE + "KFGDLHPBOC", "노블:방어력은 숫자일 뿐": ICON_BASE + "KFGDLHPBOD",
@@ -723,7 +724,7 @@ function fieldShell(it, control, wide) {
   const isGear = GEAR_NAMES.includes(it.name);
   const root = el("div", { class: "field" + (wide ? " wide" : "") },
  el("div", { class: "fhead" },
-      it.sub || it.name === "SEED_CONTI" || it.name === "SEED_RESTRAINT" || it.name === "NOBLE_IGNORE" ? iconImg(it.name === "NOBLE_IGNORE" ? "노블:방어력은 숫자일 뿐" : it.name) : null,
+      it.sub || it.name === "SEED_CONTI" || it.name === "SEED_RESTRAINT" || NOBLE_ICON[it.name] ? iconImg(NOBLE_ICON[it.name] || it.name) : null,
       it.label ? el("span", { class: "fkor strong", text: it.label }) : null, el("span", { class: "fname" + (it.label ? " dim" : ""), text: it.name }),
       el("span", { class: "fchg", text: "바꿈" }),
       el("button", { class: "freset", onclick: () => { S.values[it.name] = clone(S.defaults[it.name]); S.refs[it.name].sync(); refreshChanged(it.name); store.set("blaster-dpm:current", overrides()); S.dirty = true; scheduleRun(); } }, "되돌리기")),
@@ -865,7 +866,7 @@ function buildNexonStat() {
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
   const norm = (t) => String(t || "").replace(/\s+/g, "");
   const num = (v) => { const x = Number(String(v).replace(/[,%]/g, "")); return isFinite(x) ? x : null; };
-  function show(st, basic, lk, sk, eq, rs, ur, hp) {
+  function show(st, basic, lk, sk, eq, rs, ur, hp, gd, gdMsg) {
     out.textContent = "";
     const map = new Map((st.final_stat || []).map((x) => [norm(x.stat_name), x.stat_value]));
     const get = (n) => num(map.get(norm(n)));
@@ -907,6 +908,18 @@ function buildNexonStat() {
     const skMiss = Object.values(NX_SKILL).filter((v) => !skSeen.has(v));
     const mast = skList.find((x) => norm(x.skill_name) === "리볼빙캐논마스터리VI"), mastNote = mast && skFill.HAMM_LVL != null && num(mast.skill_level) !== skFill.HAMM_LVL;
     // 하이퍼 패시브: 목록에 레벨 1 이상으로 있으면 찍은 것, 없으면 안 찍은 것 (이름이 하나도 안 맞으면 채우지 않는다)
+    const NOBLE_MAP = { "크게 한방": "NOBLE_CRIT", "길드의 이름으로": "NOBLE_DAMAGE", "보스 킬링 머신": "NOBLE_BOSS", "방어력은 숫자일 뿐": "NOBLE_IGNORE" };
+    const NOBLE_BY_NORM = Object.fromEntries(Object.entries(NOBLE_MAP).map(([k, v]) => [norm(k), v]));
+    const nobleFill = {}, nobleRows = [], nobleWarn = [];
+    if (gd) {
+      const list = Array.isArray(gd.guild_noblesse_skill) ? gd.guild_noblesse_skill : null, found = {};
+      if (!list) nobleWarn.push("길드 응답에 guild_noblesse_skill이 없어요(응답 항목: " + Object.keys(gd).join(", ") + "). 노블은 채우지 않습니다.");
+      else {
+        for (const x of list) { const v = NOBLE_BY_NORM[norm(x.skill_name)] || null; if (v) { found[v] = Math.min(15, num(x.skill_level) || 0); iconMap["노블:" + (Object.keys(NOBLE_MAP).find((k) => norm(k) === norm(x.skill_name)))] = x.skill_icon; } }
+        if (!Object.keys(found).length) nobleWarn.push("노블 스킬 이름이 하나도 맞지 않아서 채우지 않습니다 (응답 이름 예: " + list.slice(0, 4).map((x) => x.skill_name).join(", ") + ")");
+        else for (const [nm, v] of Object.entries(NOBLE_MAP)) { const lv = found[v] || 0; nobleFill[v] = lv * 2; nobleRows.push([nm, lv, lv * 2, S.values[v]]); }
+      }
+    }
     const hpFill = {}, hpRows = [], hpWarn = [];
     if (hp && Array.isArray(hp.character_skill)) {
       const nm2 = (t) => norm(t).replace(/[-‐‑–—－~]/g, ""), seen = {};
@@ -974,6 +987,15 @@ function buildNexonStat() {
       if (unknown.length) out.append(el("div", { class: "fnote bad", text: "알 수 없는 링크라서 건너뜀: " + unknown.join(", ") }));
       if (linkWarn.length) out.append(el("div", { class: "fnote bad", text: "채우지 않는 링크: " + linkWarn.join(", ") + " (스탯창에 이미 들어 있는 링크가 빠졌거나 효과표에 없는 레벨입니다. 직접 확인해 주세요)" }));
     } else out.append(el("div", { class: "fnote bad", text: "링크 스킬 정보를 불러오지 못해서 링크는 채우지 않습니다." }));
+ if (gd || gdMsg) {
+      if (nobleRows.length) {
+        const nt = el("table", {}, el("tr", {}, ...["노블 스킬", "레벨", "채울 값(효과 %, 지속 분)", "지금 입력"].map((h) => el("th", { text: h }))));
+        for (const [nm, lv, v, cur] of nobleRows) nt.append(el("tr", {}, el("td", { text: nm }), el("td", { text: String(lv) }), el("td", { text: String(v) }), el("td", { class: cur !== v ? "bad" : "", text: String(cur) })));
+        out.append(el("div", { class: "fnote", text: "노블 스킬 (길드 스킬, 레벨당 2%와 2분)" }), nt);
+      }
+      if (gdMsg) out.append(el("div", { class: "fnote bad", text: gdMsg + ". 노블은 채우지 않습니다." }));
+      for (const w of nobleWarn) out.append(el("div", { class: "fnote bad", text: w }));
+    }
  if (hp) {
       const ht = el("table", {}, el("tr", {}, ...["하이퍼 패시브", "불러온 값", "지금 입력"].map((h) => el("th", { text: h }))));
       for (const [nm, v, cur] of hpRows) ht.append(el("tr", {}, el("td", { text: nm }), el("td", { text: v ? "찍음" : "안 찍음" }), el("td", { class: cur !== v ? "bad" : "", text: cur ? "찍음" : "안 찍음" })));
@@ -1015,8 +1037,8 @@ function buildNexonStat() {
     }
     out.append(el("div", { class: "fnote", text: "주스탯, 부스탯, 공격력 합산 값 확인 (소수는 내림)" }), ct);
     const apply = el("button", { class: "btn small primary", type: "button" }, "위 칸 채우기");
-    apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length && !Object.keys(skFill).length && !eqTable && unionLv == null && !Object.keys(hpFill).length;
-    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); for (const [k, v] of Object.entries(skFill)) setVal(k, v); for (const [k, v] of Object.entries(hpFill)) setVal(k, v); saveIcons(iconMap); if (unionLv != null) setVal("UNION_LVL", unionLv); if (eqTable) { for (const [n, g] of Object.entries(eqFill)) { setVal(n, g); setGearName(n, eqNames[n], eqIcons[n]); } for (const [k, v] of Object.entries(seedFill)) setVal(k, v); } syncAll(); refreshIcons(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개, 스킬 레벨 " + Object.keys(skFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
+    apply.disabled = !Object.keys(fills).length && abn == null && !Object.keys(linkFill).length && !Object.keys(skFill).length && !eqTable && unionLv == null && !Object.keys(hpFill).length && !Object.keys(nobleFill).length;
+    apply.addEventListener("click", () => { setVal("base_spec", { ...S.values.base_spec, ...fills }); if (Object.keys(linkFill).length) { setVal("LINK_LVL", { ...S.values.LINK_LVL, ...linkFill }); setVal("LINK_ON", { ...S.values.LINK_ON, ...linkOn }); } if (abn != null) setVal("abnormal_status_damage", { ...S.values.abnormal_status_damage, damage: abn }); for (const [k, v] of Object.entries(skFill)) setVal(k, v); for (const [k, v] of Object.entries(hpFill)) setVal(k, v); for (const [k, v] of Object.entries(nobleFill)) setVal(k, v); saveIcons(iconMap); if (unionLv != null) setVal("UNION_LVL", unionLv); if (eqTable) { for (const [n, g] of Object.entries(eqFill)) { setVal(n, g); setGearName(n, eqNames[n], eqIcons[n]); } for (const [k, v] of Object.entries(seedFill)) setVal(k, v); } syncAll(); refreshIcons(); say("스탯창 스펙 " + (Object.keys(fills).length + (abn != null ? 1 : 0)) + "칸과 링크 " + Object.keys(linkFill).length + "개, 스킬 레벨 " + Object.keys(skFill).length + "개를 채웠어요. 값이 맞는지 아래 칸에서 확인해 주세요.", "okc"); });
     out.append(apply);
   }
   go.addEventListener("click", async () => {
@@ -1032,7 +1054,12 @@ function buildNexonStat() {
       const rs = await call("예비 특수 반지", "/character/ring-reserve-skill-equipment?ocid=" + q);
       const ur = await call("유니온", "/user/union-raider?ocid=" + q);
       const hp = await call("하이퍼 패시브", "/character/skill?ocid=" + q + "&character_skill_grade=hyperpassive");
-      show(st, basic, lk, sk, eq, rs, ur, hp); for (const m of errs) out.append(el("div", { class: "fnote bad", text: "불러오기 실패 - " + m })); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
+      let gd = null, gdMsg = "";
+      const gname = basic && basic.character_guild_name, wname = basic && basic.world_name;
+      if (!basic) gdMsg = "레벨 정보를 못 불러와서 길드를 알 수 없습니다";
+      else if (!gname) gdMsg = "길드에 가입하지 않은 캐릭터입니다";
+      else { const gid = await call("길드 식별자", "/guild/id?guild_name=" + encodeURIComponent(gname) + "&world_name=" + encodeURIComponent(wname)); if (gid && gid.oguild_id) gd = await call("길드 정보", "/guild/basic?oguild_id=" + encodeURIComponent(gid.oguild_id)); else gdMsg = "길드 식별자를 못 찾았습니다"; if (!gd && !gdMsg) gdMsg = "길드 정보를 불러오지 못했습니다"; }
+      show(st, basic, lk, sk, eq, rs, ur, hp, gd, gdMsg); for (const m of errs) out.append(el("div", { class: "fnote bad", text: "불러오기 실패 - " + m })); say("불러온 값을 확인하고 채우기를 눌러 주세요."); }
     catch (e) { say(e.message, "bad"); } finally { go.disabled = false; }
   });
   return root;
@@ -1114,7 +1141,7 @@ function buildField(it) {
         cb.addEventListener("change", () => setVal(n, { ...S.values[n], [key]: cb.checked })); c = { input: cb, sync() { cb.checked = !!S.values[n][key]; } };
       } else c = numInput(idb + "-" + key, () => S.values[n][key], (v) => setVal(n, { ...S.values[n], [key]: v }));
       ins[key] = c;
-      const nobles = n === "DOPING_ON" && key === "노블" ? ["크게 한방", "길드의 이름으로", "보스 킬링 머신", "방어력은 숫자일 뿐"].map((x) => iconImg("노블:" + x)) : [];     // 노블은 스킬 4개의 효과를 합친 것이라 아이콘 4개를 보여 준다
+      const nobles = [];
       body.append(el("tr", {}, el("td", {}, ...nobles, key), el("td", {}, c.input)));
     }
     control = el("div", { class: "scroll" }, el("table", { class: "tbl" }, body)); sync = () => Object.values(ins).forEach((c) => c.sync());
