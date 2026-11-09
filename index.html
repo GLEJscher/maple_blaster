@@ -440,8 +440,11 @@ function syncAscentVis() {          // 어센트를 쓰지 않으면(0회) 어�
 const canon = (v) => JSON.stringify(v, (k, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((q) => [q, x[q]])) : x));
 /* 넥슨 API가 주는 아이콘 주소를 저장해 두었다가 장비, 스킬, 링크 칸 옆에 보여 준다 (불러온 적이 없으면 아이콘이 없다) */
 const ICON_OK = (u) => { try { const x = new URL(u); return x.protocol === "https:" && /(^|\.)nexon\.com$/.test(x.hostname); } catch (e) { return false; } };
-function loadIcons() { const v = store.get("blaster-dpm:icons"); return v && typeof v === "object" ? v : {}; }
-function saveIcons(m) { const all = { ...loadIcons() }; for (const [k, u] of Object.entries(m || {})) if (u && ICON_OK(u)) all[k] = u; store.set("blaster-dpm:icons", all); }
+// 스킬 아이콘 기본 주소 (넥슨 서버의 이미지를 그대로 불러온다. 불러오기를 하면 받은 주소로 덮어쓴다)
+const ICON_BASE = "https://open.api.nexon.com/static/maplestory/skill/icon/";
+const ICON_DEFAULT = Object.fromEntries(Object.entries({"링크:데슬": "KFHCLHOBMB", "링크:아크": "KFHCLHOENE", "링크:엔버": "KFHCLHPAJF", "링크:모도": "KFHCLHMGLA", "링크:데벤져": "KFHCLHOBJA", "링크:카데나": "KFHCLHODKB", "링크:모법": "KFHCLHMGKC", "링크:일리움": "KFHCLHODKI", "링크:레테": "KFHCLHKAKA", "링크:키네시스": "KFHCLHOAEI", "링크:카인": "KFHCLHNBNF", "링크:제논": "KFHCLHOBIH", "MF_LVL": "KFMFKDPBMA", "RPB_LVL": "KFMFKDPBMC", "HAMM_LVL": "KFMFKDPBMJ", "CANNON_LVL": "KFMFKDPBNC", "ORIGIN_LVL": "KFMFKDPEMA", "VANGUARD_LVL": "KFMFKDPEMC", "OH_LVL": "KFMFKDPEME", "HECATE_LVL": "KAPCLHPBMF", "INFANTRY_LVL": "KAPCLHPBKD", "BUNK_BUST_LVL": "KAPCLHKAOI", "VULCAN_LVL": "KAPCLHKAOJ", "BURN_BRK_LVL": "KAPCLHKAPA", "AFT_SHCK_LVL": "KAPCLHKAPB", "HYPER_PUNCH_ATTACK": "KFMFKFOBIF", "HYPER_PUNCH_REINFORCE": "KFMFKFOBID", "HYPER_PUNCH_IGNORE": "KFMFKFOBIE", "HYPER_RPB_REINFORCE": "KFMFKFOBIG", "HYPER_RPB_SHOCK": "KFMFKFOBIH"}).map(([k, v]) => [k, ICON_BASE + v]));
+function loadIcons() { const v = store.get("blaster-dpm:icons"); return { ...ICON_DEFAULT, ...(v && typeof v === "object" ? v : {}) }; }
+function saveIcons(m) { const cur = store.get("blaster-dpm:icons"), all = { ...(cur && typeof cur === "object" ? cur : {}) }; for (const [k, u] of Object.entries(m || {})) if (u && ICON_OK(u)) all[k] = u; store.set("blaster-dpm:icons", all); }
 function applyIcon(i, all) { const u = (all || loadIcons())[i.dataset.ik]; if (u && ICON_OK(u)) { if (i.getAttribute("src") !== u) i.src = u; i.hidden = false; } else i.hidden = true; }
 function iconImg(key) { const i = el("img", { class: "ico", alt: "", hidden: true }); i.dataset.ik = key; i.addEventListener("error", () => { i.hidden = true; }); applyIcon(i); return i; }
 function refreshIcons() { const all = loadIcons(); document.querySelectorAll("img.ico[data-ik]").forEach((i) => applyIcon(i, all)); }
@@ -975,6 +978,13 @@ function buildNexonStat() {
     } else out.append(el("div", { class: "fnote bad", text: eq ? "장비 응답에 item_equipment가 없어요(응답 항목: " + Object.keys(eq).join(", ") + "). 모자, 반지, 시드링은 채우지 않습니다." : "장비 정보를 불러오지 못해서 모자, 반지, 시드링은 채우지 않습니다." }));
  if (ur) {
       out.append(el("div", { class: unionLv == null ? "fnote bad" : "fnote", text: "와헌 유니온: " + unionMsg + (unionLv != null ? " -> " + unionLv + "레벨 (지금 입력 " + S.values.UNION_LVL + ")" : " (직접 골라 주세요)") }));
+    }
+ {
+      // 아이콘: 불러온 즉시 저장해 칸 옆에 보여 준다 (장비 아이콘은 채우기를 눌러야 장비 이름과 함께 저장된다)
+      const urls = Object.values(iconMap).filter(Boolean), good = urls.filter(ICON_OK);
+      saveIcons(iconMap); refreshIcons();
+      const eqUrls = Object.values(eqIcons).filter(Boolean);
+      out.append(el("div", { class: urls.length && good.length === urls.length ? "fnote" : "fnote bad", text: "아이콘: 스킬, 링크 " + urls.length + "개 받음, 사용 가능 " + good.length + "개 · 장비 " + eqUrls.length + "개 받음" + ((urls[0] || eqUrls[0]) ? " · 주소 예: " + (urls[0] || eqUrls[0]) : "") }));
     }
     out.append(el("div", { class: "fnote", text: "데이터 기준 시각(date): " + (st.date || "없음") + "  ·  지금 시각: " + new Date().toLocaleString("ko-KR") }), t);
     if (miss) out.append(el("div", { class: "fnote bad", text: "응답에서 찾지 못한 항목이 " + miss + "개 있어요. 그 칸은 채우지 않습니다." }));
