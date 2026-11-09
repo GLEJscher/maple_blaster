@@ -221,7 +221,7 @@ AURA_EXCLUDE = ("인팬트리",)      # 이 스킬로는 오라 웨폰이 발동
 
 # 도핑 / 액티브 버프 ON/OFF (True면 사용). 어센트에는 적용되지 않는다. 시뮬레이션 시작(0초)에 쓰고 지속시간이 끝나면 다시 쓰지 않는다
 #  노블(노블레스): 4개 스킬이 각각 독립이다. 크게 한방(크리티컬 데미지), 길드의 이름으로(데미지), 보스 킬링 머신(보스 데미지), 방어력은 숫자일 뿐(방어율 무시). 레벨당 효과 +2%, 지속 2분 (레벨 15 = 30% / 30분)
-#  영메(영웅의 메아리, 30분): 공격력 +4%
+#  영메(영웅의 메아리, 40분): 공격력 +4%
 #  세이람(15분 도핑): 공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16%
 #  콜렉터(8분 도핑): 공격력 +100, 주스탯 +30, 부스탯 +30, 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 A, B, C 기본 데미지 +3%p), 방어율 무시 38% -> 41% (스탯창의 방무 38%가 41%로 바뀌므로 -38 + 41)
 DOPING_ON = {"노블": False, "영메": False, "세이람": False, "콜렉터": False}
@@ -722,7 +722,7 @@ noble_buff = (BuffSkill(name="노블(크게 한방)", duration=NOBLE_CRIT * 60, 
                         effect=CharaInfo(bossDamage=NOBLE_BOSS)),
               BuffSkill(name="노블(방어력은 숫자일 뿐)", duration=NOBLE_IGNORE * 60, cooldown=0, cooldown_applies=False,
                         effect=CharaInfo(armorIgnore=NOBLE_IGNORE)))       # 노블은 4개 스킬 묶음이다
-hero_echo_buff = BuffSkill(name="영메", duration=1800, cooldown=0, cooldown_applies=False,
+hero_echo_buff = BuffSkill(name="영메", duration=2400, cooldown=0, cooldown_applies=False,
                            effect=CharaInfo(attackp=4))
 seiram_buff = BuffSkill(name="세이람", duration=900, cooldown=0, cooldown_applies=False,
                         effect=CharaInfo(attackp=10, attack=50, bossDamage=10, critDamage=16))

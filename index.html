@@ -203,6 +203,7 @@ th.sort{cursor:pointer;user-select:none}
 th.sort:hover{color:var(--ink)}
 .foot{color:var(--muted);font-size:calc(12px*var(--fs,1));margin-top:24px}
 .foot a{color:var(--ink2)}
+.nxcredit{margin-top:6px}
 @media (max-width:760px){
   .kpis{grid-template-columns:1fr 1fr}.kpi.hero{grid-column:1/-1}.kpi.hero .v{font-size:calc(44px*var(--fs,1))}
   .tab{padding:7px 16px}
@@ -262,6 +263,7 @@ th.sort:hover{color:var(--ink)}
 
     <p class="foot">입력값의 이름과 설명은 <code>Skills.py</code>의 변수와 주석에서 읽어 옵니다. 코드를 바꾸면 이 화면의 입력창도 같이 바뀝니다.
       코드: <a href="https://github.com/GLEJscher/maple_blaster" target="_blank" rel="noopener">github.com/GLEJscher/maple_blaster</a></p>
+    <p class="foot nxcredit">Data based on NEXON Open API</p>
   </main>
 </div>
 <div class="tip" id="tip"></div>
@@ -458,7 +460,7 @@ const NOBLE_ICON = { NOBLE_CRIT: "노블:크게 한방", NOBLE_DAMAGE: "노블:�
 // 노블 스킬(길드 스킬)과 시드링 아이콘
 Object.assign(ICON_DEFAULT, {
   "노블:크게 한방": ICON_BASE + "KFGDLHPBOF", "노블:길드의 이름으로": ICON_BASE + "KFGDLHPBOE", "노블:보스 킬링 머신": ICON_BASE + "KFGDLHPBOC", "노블:방어력은 숫자일 뿐": ICON_BASE + "KFGDLHPBOD",
-  "SEED_CONTI": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIEMI", "SEED_RESTRAINT": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIHHJ" });
+  "도핑:영메": ICON_BASE + "KFMCLHPBMF", "SEED_CONTI": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIEMI", "SEED_RESTRAINT": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIHHJ" });
 function loadIcons() { const v = store.get("blaster-dpm:icons"); return { ...ICON_DEFAULT, ...(v && typeof v === "object" ? v : {}) }; }
 function saveIcons(m) { const cur = store.get("blaster-dpm:icons"), all = { ...(cur && typeof cur === "object" ? cur : {}) }; for (const [k, u] of Object.entries(m || {})) if (u && ICON_OK(u)) all[k] = u; store.set("blaster-dpm:icons", all); }
 function applyIcon(i, all) { const u = (all || loadIcons())[i.dataset.ik]; if (u && ICON_OK(u)) { if (i.getAttribute("src") !== u) i.src = u; i.hidden = false; } else i.hidden = true; }
@@ -1142,7 +1144,7 @@ function buildField(it) {
         cb.addEventListener("change", () => setVal(n, { ...S.values[n], [key]: cb.checked })); c = { input: cb, sync() { cb.checked = !!S.values[n][key]; } };
       } else c = numInput(idb + "-" + key, () => S.values[n][key], (v) => setVal(n, { ...S.values[n], [key]: v }));
       ins[key] = c;
-      const nobles = [];
+      const nobles = n === "DOPING_ON" && key === "영메" ? [iconImg("도핑:영메")] : [];
       body.append(el("tr", {}, el("td", {}, ...nobles, key), el("td", {}, c.input)));
     }
     control = el("div", { class: "scroll" }, el("table", { class: "tbl" }, body)); sync = () => Object.values(ins).forEach((c) => c.sync());
