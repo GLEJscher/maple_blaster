@@ -48,9 +48,19 @@ $("go").addEventListener("click", async () => {
     const id = await call(d1, "/id?character_name=" + encodeURIComponent(name), key);
     if (!id || !id.ocid) return;
     line(d1, "ocid를 받았습니다.", "ok");
-    const d6 = step("2. 예비 특수 반지 (추가 슬롯)");
-    const rx = await call(d6, "/character/ring-reserve-skill-equipment?ocid=" + encodeURIComponent(id.ocid), key);
-    if (rx) { line(d6, "응답 항목: " + Object.keys(rx).join(", "), "ok"); line(d6, "반지: " + rx.special_ring_reserve_name + " / 레벨 " + rx.special_ring_reserve_level + " / date " + rx.date, "ok"); const r2 = Object.assign({}, rx); delete r2.special_ring_reserve_icon; pre(d6, r2); }
+    const d6 = step("2. 유니온 공격대원 (와일드헌터)");
+    const ur = await call(d6, "/user/union-raider?ocid=" + encodeURIComponent(id.ocid), key);
+    if (ur) {
+      line(d6, "응답 항목: " + Object.keys(ur).join(", "), "ok");
+      const bl = ur.union_block || [];
+      line(d6, "공격대원(블록) " + bl.length + "개 · 첫 블록 항목: " + Object.keys(bl[0] || {}).join(", "));
+      const wh = bl.filter((b) => /와일드|헌터/.test(String(b.block_class)));
+      line(d6, "와일드헌터 후보 " + wh.length + "개", wh.length ? "ok" : "bad");
+      for (const b of wh) { const c = Object.assign({}, b); line(d6, JSON.stringify(c)); }
+      const t = document.createElement("table"); t.innerHTML = "<tr><th>직업</th><th>레벨</th></tr>";
+      for (const b of bl) { const tr = document.createElement("tr"); for (const v of [b.block_class, b.block_level]) { const td = document.createElement("td"); td.textContent = v == null ? "" : v; tr.append(td); } t.append(tr); }
+      d6.append(t);
+    }
   } finally { $("go").disabled = false; }
 });
 </script></main></body></html>
