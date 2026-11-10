@@ -781,9 +781,9 @@ function armorMulti(storeKey, c, setV) {
   function draw() {
     rows.textContent = "";
     list.forEach((x, idx) => {
-      const i = el("input", { class: "num", type: "number", step: "any", min: 0, max: 100, inputmode: "decimal", "aria-label": "방어율 무시 " + (idx + 1) });
+      const i = el("input", { class: "num", type: "number", step: "any", min: -1e9, max: 100, inputmode: "decimal", "aria-label": "방어율 무시 " + (idx + 1) });
       i.value = x === 0 ? "" : x;
-      i.addEventListener("input", () => { let v = i.value === "" ? 0 : Number(i.value); if (!isFinite(v)) return; list[idx] = Math.min(100, Math.max(0, v)); commit(); });
+      i.addEventListener("input", () => { let v = i.value === "" ? 0 : Number(i.value); if (!isFinite(v)) return; list[idx] = Math.min(100, Math.max(-1e9, v)); commit(); });
       i.addEventListener("change", () => { i.value = list[idx] === 0 ? "" : list[idx]; });
       const del = el("button", { class: "btn small", type: "button", "aria-label": "삭제", onclick: () => { list.splice(idx, 1); draw(); commit(); } }, "×");
       rows.append(el("div", { class: "gline" }, i, del));
