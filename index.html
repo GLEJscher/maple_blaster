@@ -687,7 +687,7 @@ function buildSimHelper() {
     clearTimeout(tm);
     tm = setTimeout(() => {
       if (!S.py) return;
-      try { S.recRows = JSON.parse(S.py.runPython("w.recommend_times(" + JSON.stringify(JSON.stringify(overrides())) + "," + JSON.stringify(JSON.stringify(extraClean())) + ")")); render(S.recRows); }
+      try { S.recRows = JSON.parse(S.py.runPython("w.recommend_times(" + JSON.stringify(JSON.stringify(overrides())) + "," + JSON.stringify(JSON.stringify(extraForPy(extraClean()))) + ")")); render(S.recRows); }
       catch (e) { note.textContent = "추천 시간을 계산하지 못했습니다"; }
     }, 500);
   };
@@ -767,9 +767,19 @@ function selectInput(id, choices, get, set, label) {
   return { input: sel, sync() { sel.value = String(get() ?? ""); } };
 }
 /* 방어율 무시는 곱적용이라 30%, 40%를 더하면 70%가 아니라 58%다. 여러 값을 따로 넣으면 1 − Π(1 − xᵢ/100)로 합쳐서 칸에 넣는다. */
-const armorCombine = (list) => { let p = 1; for (const x of list) p *= 1 - (Number(x) || 0) / 100; return Math.round((1 - p) * 1e6) / 1e4; };
+/* 방어율 무시 한 값의 곱 계수. 양수는 (1 − x/100)를 곱하고, 음수는 그만큼 방무를 빼므로(Attribute.py의 base − CharaInfo(armorIgnore=|x|)) (1 − |x|/100)로 나눈다.
+   그래서 +30과 −30은 서로 상쇄된다. 추가 스펙의 모든 방무 계산(단일 칸 · 여러 값)이 이 규칙 하나를 쓴다. */
+const ARMOR_MIN = -99.99;
+const armorFactor = (x) => { x = Number(x) || 0; return x >= 0 ? 1 - Math.min(100, x) / 100 : 1 / (1 - Math.min(-ARMOR_MIN, -x) / 100); };
+/* 칸에 적힌 방무 값 → 파이썬의 base_spec + CharaInfo(armorIgnore=v)에 넣을 v. 음수는 base_spec − CharaInfo(armorIgnore=|x|)와 같은 결과가 되는 v로 바꾼다. */
+const armorToAdd = (x) => (Number(x) >= 0 ? Number(x) : 100 - 100 * armorFactor(x));
+const armorCombine = (list) => {
+  let p = 1; for (const x of list) p *= armorFactor(x);
+  const v = p <= 1 ? 100 * (1 - p) : -100 * (1 - 1 / p);        // 합친 계수 p를 단일 칸에 적는 값으로 되돌린다 (단일 칸에서 armorFactor(v) = p)
+  return (Math.round(Math.max(ARMOR_MIN, v) * 1e4) / 1e4) || 0;
+};
 function armorMulti(storeKey, c, setV) {
-  let list = []; try { const v = store.get(storeKey); if (Array.isArray(v)) list = v.map(Number).filter(isFinite); } catch (e) {}
+  let list = []; try { const v = store.get(storeKey); if (Array.isArray(v)) list = v.map(Number).filter(isFinite).map((x) => Math.min(100, Math.max(ARMOR_MIN, x))); } catch (e) {}
   const rows = el("div", { class: "amrows" }), out = el("span", { class: "fnote" });
   const det = el("details", { class: "amulti" });
   const save = () => store.set(storeKey, list);
@@ -781,16 +791,16 @@ function armorMulti(storeKey, c, setV) {
   function draw() {
     rows.textContent = "";
     list.forEach((x, idx) => {
-      const i = el("input", { class: "num", type: "number", step: "any", min: -1e9, max: 100, inputmode: "decimal", "aria-label": "방어율 무시 " + (idx + 1) });
+      const i = el("input", { class: "num", type: "number", step: "any", min: ARMOR_MIN, max: 100, inputmode: "decimal", "aria-label": "방어율 무시 " + (idx + 1) });
       i.value = x === 0 ? "" : x;
-      i.addEventListener("input", () => { let v = i.value === "" ? 0 : Number(i.value); if (!isFinite(v)) return; list[idx] = Math.min(100, Math.max(-1e9, v)); commit(); });
+      i.addEventListener("input", () => { let v = i.value === "" ? 0 : Number(i.value); if (!isFinite(v)) return; list[idx] = Math.min(100, Math.max(ARMOR_MIN, v)); commit(); });
       i.addEventListener("change", () => { i.value = list[idx] === 0 ? "" : list[idx]; });
       const del = el("button", { class: "btn small", type: "button", "aria-label": "삭제", onclick: () => { list.splice(idx, 1); draw(); commit(); } }, "×");
       rows.append(el("div", { class: "gline" }, i, del));
     });
   }
   const add = el("button", { class: "btn small", type: "button", onclick: () => { list.push(0); draw(); commit(); const l = rows.querySelectorAll("input"); if (l.length) l[l.length - 1].focus(); det.open = true; } }, "+ 값 추가");
-  det.append(el("summary", {}, "방어율 무시 전용 · 여러 값 입력 (곱적용)"), el("p", { class: "fnote", text: "방어율 무시만 해당합니다. 값을 따로 넣으면 합이 아니라 곱으로 합쳐서(30%, 40% → 58%) 위의 방어율 무시 칸에 넣습니다." }), rows, el("div", { class: "row-actions" }, add, out));
+  det.append(el("summary", {}, "방어율 무시 전용 · 여러 값 입력 (곱적용)"), el("p", { class: "fnote", text: "방어율 무시만 해당합니다. 값을 따로 넣으면 합이 아니라 곱으로 합쳐서(30%, 40% → 58%) 위의 방어율 무시 칸에 넣습니다. 음수는 그만큼 방무를 빼는 값입니다(30, -30 → 0%)." }), rows, el("div", { class: "row-actions" }, add, out));
   det.open = list.length > 0; draw(); if (list.length) { c.input.disabled = true; out.textContent = "합산 " + armorCombine(list) + "%"; }
   const lab = c.input.parentElement;
   if (lab && lab.tagName === "LABEL") lab.append(el("button", { class: "btn small amopen", type: "button", onclick: (e) => { e.preventDefault(); det.open = true; det.scrollIntoView({ block: "nearest" }); } }, "여러 값으로 입력"));
@@ -1213,7 +1223,7 @@ async function runSim() {
   await new Promise((r) => setTimeout(r, 30));
   try {
     const o = overrides(), ex = extraClean(); const t0 = performance.now();
-    S.py.globals.set("OVR_JSON", JSON.stringify(o)); S.py.globals.set("EXTRA_JSON", JSON.stringify(ex));
+    S.py.globals.set("OVR_JSON", JSON.stringify(o)); S.py.globals.set("EXTRA_JSON", JSON.stringify(extraForPy(ex)));
     const res = JSON.parse(S.py.runPython("w.run_sim(OVR_JSON, EXTRA_JSON)"));
     const sig = JSON.stringify([o, ex]);
     if (S.result && sig !== S.lastSig) { S.prev = S.result; S.prevCfg = S.lastCfg; }      // 직전 계산 결과를 기억해 둔다
@@ -1541,10 +1551,11 @@ S.extra = (() => { const v = store.get("blaster-dpm:extra"); return v && typeof 
 const EXTRA_LIM = {             // 추가 스펙: 음수 허용. 정수/소수 구분은 입력 탭과 같고, 방무·속성 내성 무시는 100 이하
   mainStat: { int: true }, mainStatp: { int: true }, fixedMainStat: { int: true }, subStat: { int: true }, subStatp: { int: true },
   fixedSubStat: { int: true }, attack: { int: true }, attackp: { int: true }, damage: { int: true }, bossDamage: { int: true },
-  cooldown: { int: true }, buffDuration: { int: true }, armorIgnore: { max: 100 }, attribResist: { max: 100 } };
-const cleanOf = (src) => { const o = {}; for (const k of EXTRA_KEYS) { const v = Number(src[k]); if (!isFinite(v)) continue; const L = EXTRA_LIM[k] || {}; let x = v; if (L.max != null) x = Math.min(L.max, x); if (L.int) x = Math.round(x); if (x !== 0) o[k] = x; } return o; };
+  cooldown: { int: true }, buffDuration: { int: true }, armorIgnore: { min: ARMOR_MIN, max: 100 }, attribResist: { max: 100 } };
+const cleanOf = (src) => { const o = {}; for (const k of EXTRA_KEYS) { const v = Number(src[k]); if (!isFinite(v)) continue; const L = EXTRA_LIM[k] || {}; let x = v; if (L.min != null) x = Math.max(L.min, x); if (L.max != null) x = Math.min(L.max, x); if (L.int) x = Math.round(x); if (x !== 0) o[k] = x; } return o; };
 S.extraApplied = (() => { const v = store.get("blaster-dpm:extra-applied"); return v && typeof v === "object" ? cleanOf(v) : {}; })();
 function extraClean() { return S.extraApplied; }          // 계산에는 "계산" 버튼으로 반영한 값만 쓴다
+function extraForPy(ex) { return ex && ex.armorIgnore < 0 ? { ...ex, armorIgnore: armorToAdd(ex.armorIgnore) } : ex; }   // 파이썬으로 보낼 때 음수 방무를 "빼기"와 같은 값으로 바꾼다 (파이썬 코드는 그대로)
 function buildExtra() {
   const root = $("#extra"); root.textContent = "";
   const ins = {};
