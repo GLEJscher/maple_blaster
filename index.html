@@ -499,7 +499,7 @@ const LOCAL_CODES = {
   attack: "KAPCLHKAOI KAPCLHKAOJ KAPCLHKAPA KAPCLHKAPB KAPCLHPBKD KAPCLHPBMF KFMFKDPBMA KFMFKDPBMC KFMFKDPBNC KFMFKDPEMA KFMFKDPEMC KFMFKDPEME KFMFKFOBID KFMFKFOBIE KFMFKFOBIF KFMFKFOBIG KFMFKFOBIH KFMFKDPBMJ",
   link: "KFHCLHKAKA KFHCLHMGKC KFHCLHMGLA KFHCLHNBNF KFHCLHOAEI KFHCLHOBIH KFHCLHOBJA KFHCLHOBMB KFHCLHODKB KFHCLHODKI KFHCLHOENE KFHCLHPAJF",
   seedring: "KEODIEMI KEODIHHJ",
-  doping: "KFGDLHPBOC KFGDLHPBOD KFGDLHPBOE KFGDLHPBOF KFHCLHMCKD KFHCLHNJIA KFMCLHPBMF" };
+  doping: "KFGDLHPBOC KFGDLHPBOD KFGDLHPBOE KFGDLHPBOF KFHCLHMCKC KFHCLHMCKD KFHCLHNJIA KFMCLHPBMF" };
 for (const [dir, list] of Object.entries(LOCAL_CODES)) for (const c of list.split(" ")) for (const [k, u] of Object.entries(ICON_DEFAULT)) if (String(u).split("/").pop() === c && !LOCAL_ICON[k]) LOCAL_ICON[k] = "icons/" + dir + "/" + c + ".png";
 function loadIcons() { const v = store.get("blaster-dpm:icons"); return { ...ICON_DEFAULT, ...(v && typeof v === "object" ? v : {}) }; }
 function saveIcons(m) { const cur = store.get("blaster-dpm:icons"), all = { ...(cur && typeof cur === "object" ? cur : {}) }; for (const [k, u] of Object.entries(m || {})) if (u && ICON_OK(u)) all[k] = u; store.set("blaster-dpm:icons", all); }
