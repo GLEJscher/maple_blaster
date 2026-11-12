@@ -87,21 +87,21 @@ main{padding-block:20px}
 .dchk:has(input:checked){border-color:var(--accent);background:var(--accent-wash)}
 .dchk .dico{width:calc(32px*var(--fs,1));height:calc(32px*var(--fs,1));flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--plane)}
 .dchk .dn{min-width:0;line-height:1.3;overflow-wrap:anywhere}
-.dchk.dchanged{border-color:var(--changed)}
+.dchk.dchanged,.dchk.dchanged:has(input:checked){border-color:var(--changed);box-shadow:inset 0 0 0 1px var(--changed)}
 .dnum{display:flex;flex-direction:column;gap:6px;min-width:0}
 .dlv{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:calc(12px*var(--fs,1))}.dlv .num{flex:1 1 auto;min-width:0;width:auto}
 /* 마우스를 올리면 보이는 설명 (지속시간, 효과). 오른쪽 끝 칸은 왼쪽으로 펼친다 */
-.dchk[data-tip]:hover::after,.dchk[data-tip]:focus-within::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:max-content;max-width:min(320px,80vw);padding:8px 10px;border:1px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--ink);box-shadow:0 6px 18px rgba(0,0,0,.28);font-size:calc(12px*var(--fs,1));line-height:1.5;font-weight:400;white-space:pre-line;pointer-events:none}
-.drow>.dchk:nth-child(4n):hover::after,.drow>.dnum:nth-child(4n) .dchk:hover::after,.drow>.dchk:nth-child(4n):focus-within::after,.drow>.dnum:nth-child(4n) .dchk:focus-within::after{left:auto;right:0}
+.dchk[data-tip]:hover::after,.dchk[data-tip]:has(input:focus-visible)::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:max-content;max-width:min(320px,80vw);padding:8px 10px;border:1px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--ink);box-shadow:0 6px 18px rgba(0,0,0,.28);font-size:calc(12px*var(--fs,1));line-height:1.5;font-weight:400;white-space:pre-line;pointer-events:none}
+.drow>.dchk:nth-child(4n):hover::after,.drow>.dnum:nth-child(4n) .dchk:hover::after,.drow>.dchk:nth-child(4n):has(input:focus-visible)::after,.drow>.dnum:nth-child(4n) .dchk:has(input:focus-visible)::after{left:auto;right:0}
 @media (max-width:760px){
   .drow{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .drow>.dchk:nth-child(4n):hover::after,.drow>.dnum:nth-child(4n) .dchk:hover::after,.drow>.dchk:nth-child(4n):focus-within::after,.drow>.dnum:nth-child(4n) .dchk:focus-within::after{left:0;right:auto}
-  .drow>.dchk:nth-child(2n):hover::after,.drow>.dnum:nth-child(2n) .dchk:hover::after,.drow>.dchk:nth-child(2n):focus-within::after,.drow>.dnum:nth-child(2n) .dchk:focus-within::after{left:auto;right:0}
+  .drow>.dchk:nth-child(4n):hover::after,.drow>.dnum:nth-child(4n) .dchk:hover::after,.drow>.dchk:nth-child(4n):has(input:focus-visible)::after,.drow>.dnum:nth-child(4n) .dchk:has(input:focus-visible)::after{left:0;right:auto}
+  .drow>.dchk:nth-child(2n):hover::after,.drow>.dnum:nth-child(2n) .dchk:hover::after,.drow>.dchk:nth-child(2n):has(input:focus-visible)::after,.drow>.dnum:nth-child(2n) .dchk:has(input:focus-visible)::after{left:auto;right:0}
 }
 .field.dop.changed .num{border-color:var(--ring)}.field.dop .dlv .num.dchanged{border-color:var(--changed)}
 html.no-hl .field.dop .dlv .num.dchanged{border-color:var(--ring)}
-html.no-hl .dchk.dchanged{border-color:var(--ring)}
-html.no-hl .dchk:has(input:checked).dchanged{border-color:var(--accent)}
+html.no-hl .dchk.dchanged{border-color:var(--ring);box-shadow:none}
+html.no-hl .dchk.dchanged:has(input:checked){border-color:var(--accent);box-shadow:none}
 .pname{width:9.5em;padding:5px 8px;border-radius:9px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);font:inherit;font-size:calc(13px*var(--fs,1))}.pslot .pst{font-size:calc(11px*var(--fs,1));color:var(--ink2)}
 .pslot.on{border-color:var(--accent);background:var(--accent-wash);box-shadow:inset 0 0 0 1px var(--accent)}
 .pslot.mod .pst{color:var(--accent);font-weight:700}
