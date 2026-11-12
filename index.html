@@ -78,6 +78,19 @@ main{padding-block:20px}
 .pslot{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:78px;padding:6px 12px;border:1px solid var(--ring);border-radius:10px;background:var(--surface);color:var(--ink);cursor:pointer;font:inherit}
 .pslot b{font-size:calc(15px*var(--fs,1));max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pnames{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+/* 도핑 카드 */
+.dop .dsec{margin-top:12px}
+.dop .dhead{font-weight:700;margin-bottom:4px}
+.drow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;align-items:stretch}
+.dchk{display:flex;align-items:center;gap:7px;padding:6px 11px;border:1px solid var(--ring);border-radius:10px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}
+.dchk:hover{background:var(--hover)}.dchk input{margin:0;flex:0 0 auto}
+.dchk:has(input:checked){border-color:var(--accent);background:var(--accent-wash)}
+.dchk .dtxt{display:flex;flex-direction:column;gap:1px}.dchk .dsub{color:var(--ink2);font-size:11px;line-height:1.3;max-width:15em}
+.dchk.dchanged{border-color:var(--changed)}
+.dnum{display:flex;flex-direction:column;gap:4px;min-width:150px;flex:1 1 150px;max-width:230px;font-size:12.5px;color:var(--ink2)}
+.dnum .dn{display:flex;align-items:center;gap:5px}
+html.no-hl .dchk.dchanged{border-color:var(--ring)}
+html.no-hl .dchk:has(input:checked).dchanged{border-color:var(--accent)}
 .pname{width:9.5em;padding:5px 8px;border-radius:9px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);font:inherit;font-size:calc(13px*var(--fs,1))}.pslot .pst{font-size:calc(11px*var(--fs,1));color:var(--ink2)}
 .pslot.on{border-color:var(--accent);background:var(--accent-wash);box-shadow:inset 0 0 0 1px var(--accent)}
 .pslot.mod .pst{color:var(--accent);font-weight:700}
@@ -402,7 +415,7 @@ function overrides() {
 function applyOverrides(o, sync = true) {
   S.values = clone(S.defaults);
   for (const [k, v] of Object.entries(o || {})) if (k in S.defaults && typeof v === typeof S.defaults[k]) S.values[k] = clone(v);
-  clampNonNeg(); clampRange();
+  clampNonNeg(); clampRange(); fixDopingExclusive();
   if (sync) syncAll();
 }
 const SPEC_LIM = {            // 스탯 칸의 한계: 레벨은 1 이상의 정수, 방어율 무시/속성 내성 무시는 100% 이하
@@ -488,7 +501,7 @@ function refreshChanged(name) {
   syncAscentVis();
   const ref = S.refs[name]; if (!ref) return;
   if (GEAR_NAMES.includes(name)) updateGearName(name, ref);
-  const ch = !same(S.values[name], S.defaults[name]);
+  const ch = ref.names ? ref.names.some((n) => !same(S.values[n], S.defaults[n])) : !same(S.values[name], S.defaults[name]);      // 도핑 카드처럼 여러 항목이 한 칸을 같이 쓰면 하나라도 바뀌었는지 본다
   ref.root.classList.toggle("changed", ch);
   updateGroupCounts();
 }
@@ -638,12 +651,17 @@ function buildInputs() {
     const d = el("details", { class: "group" }, el("summary", {}, g, cnt, chg), grid);
     if (openDefault.has(g)) d.open = true;
     const linkDone = new Set();
+    let dopDone = false;
     let lastSub = null;
     for (const it of editable) {
       if (it.sub && it.sub !== lastSub) { grid.append(el("div", { class: "subhead", text: it.sub })); lastSub = it.sub; }
       if ((it.name === "LINK_ON" || it.name === "LINK_LVL") && S.byName.LINK_ON && S.byName.LINK_LVL) {
         if (linkDone.size) continue; linkDone.add(1);
         grid.append(buildLinks());
+        continue;
+      }
+      if (DOP_NAMES.includes(it.name) && S.byName.DOPING_ON && S.byName.ASCENT_DOPING_ON) {      // 도핑 구역은 전용 카드 하나로 그린다
+        if (!dopDone) { dopDone = true; grid.append(buildDoping()); }
         continue;
       }
       if (it.name === "base_spec") grid.append(buildNexonStat());
@@ -708,12 +726,15 @@ function applyFilter() {
   const q = $("#q").value.trim().toLowerCase(), only = $("#onlychg").checked;
   for (const g of S.groupEls) {
     let shown = 0;
+    const sharedOk = new Map();       // 한 칸을 여러 항목이 같이 쓰면(도핑 카드) 항목 중 하나라도 보이면 칸을 보여 준다
     for (const it of g.items) {
       const ref = S.refs[it.name]; if (!ref) continue;
-      const hay = (it.name + " " + it.comment + " " + (it.label || "")).toLowerCase();
+      const hay = (it.name + " " + it.comment + " " + (it.label || "") + (it.kind === "dict" && it.value ? " " + Object.keys(it.value).join(" ") : "")).toLowerCase();
       const ok = (!q || hay.includes(q)) && (!only || !same(S.values[it.name], S.defaults[it.name]));
+      if (ref.shared) { sharedOk.set(ref, sharedOk.get(ref) || ok); continue; }
       ref.root.hidden = !ok; if (ok) shown++;
     }
+    for (const [ref, ok] of sharedOk) { ref.root.hidden = !ok; if (ok) shown++; }
     for (const sh of g.details.querySelectorAll(".subhead")) {      // 소구역 제목은 아래에 보이는 칸이 있을 때만 보인다
       let n = sh.nextElementSibling, vis = false;
       while (n && !n.classList.contains("subhead")) { if (!n.hidden) vis = true; n = n.nextElementSibling; }
@@ -877,7 +898,7 @@ function buildNexonStat() {
   const [nameIn, keyIn] = nxInputs();
   const go = el("button", { class: "btn", type: "button" }, "불러오기");
   const msg = el("div", { class: "fnote", role: "status" }), out = el("div");
-  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨, 와헌 유니온 레벨, 하이퍼 패시브 5개, 노블 스킬 4개(길드 스킬)의 레벨을 채웁니다. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 11건입니다 (길드가 없으면 9건). 서비스 단계 API 키가 필요하고, 한꺼번에 호출합니다. 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고, 키는 저장하지 않으며 이름은 입력값처럼 이 브라우저에만 저장합니다." }),
+  root.append(el("p", { class: "fnote", text: "보스 세팅(장비, 유니온, 링크, 하이퍼스탯, 어빌리티)으로 바꾼 뒤 캐시샵을 켰다 끄고 3~5분 뒤에 불러와 주세요. 데미지, 보스 데미지, 최종 데미지, 방어율 무시, 크리티컬 데미지, 속성 내성 무시, 버프 지속시간, 재사용 대기시간 감소(초), 레벨, 상태이상 추가 데미지(카데나 링크 몫을 뺀 값)와 지금 적용 중인 링크 12개의 레벨, 스킬 레벨 13개, 모자와 반지(시드링 제외 3개), 시드링 사용 여부와 레벨, 와헌 유니온 레벨, 하이퍼 패시브 5개, 노블 스킬 4개(길드 스킬)의 레벨을 채웁니다. 도핑은 모두 해제한 상태로 불러와 주세요: 영약, 붕어빵, 물약, 챔피언의 가호, 무기 제련, VIP/MVP 버프 같은 도핑이나 영웅의 메아리가 켜져 있으면 스탯창 값에 그 효과가 이미 들어 있어서, 아래 '도핑' 구역에서 체크하면 같은 효과가 두 번 더해집니다. 도핑 효과는 도핑 구역에서 체크해서 따로 더해 주세요. 장비는 지금 적용 중인 장비를 읽으므로 보스 세팅 장비 프리셋으로 바꾼 뒤 불러와 주세요. 호출은 11건입니다 (길드가 없으면 9건). 서비스 단계 API 키가 필요하고, 한꺼번에 호출합니다. 프리셋이 여러 개면 반드시 보스 세팅(스탯창, 링크, 유니온, 하이퍼스탯, 어빌리티)이 적용된 상태에서 불러와 주세요. 주스탯, 부스탯, 공격력의 세부 수치는 API에 없어서 직접 입력하고, 합산 값이 맞는지만 확인해 드려요. 키와 이름은 넥슨 서버로만 보내고, 키는 저장하지 않으며 이름은 입력값처럼 이 브라우저에만 저장합니다." }),
     el("div", { class: "nxrow" }, nameIn, keyIn, go), msg, out);
   const say = (t, cls) => { msg.textContent = t; msg.className = "fnote " + (cls || ""); };
   const norm = (t) => String(t || "").replace(/\s+/g, "");
@@ -1206,6 +1227,97 @@ function buildLinks() {
     el("div", { class: "scroll" }, el("table", { class: "tbl" }, el("thead", {}, el("tr", {}, el("th", { text: "링크" }), el("th", { text: "사용" }), el("th", { text: "레벨" }))), body)));
   const ref = { root, sync() { ins.forEach((i) => i.sync()); } };
   S.refs.LINK_ON = ref; S.refs.LINK_LVL = ref;
+  return root;
+}
+
+/* ============================ 도핑 ============================ */
+/* 도핑 구역은 한 장의 카드로 그린다: 어센트 미적용 / 적용으로 나누고, 줄마다 도핑을 놓는다.
+   같이 쓸 수 없는 도핑(챔피언의 가호 1~5단계, 무기 제련 2종, 붕어빵 15분/30분)은 하나를 체크하면 나머지가 해제된다.
+   입력 칸(스탯창 스펙)의 값은 바꾸지 않고, 체크한 효과는 파이썬이 계산할 때만 더한다. */
+const DOP_NAMES = ["DOPING_ON", "NOBLE_CRIT", "NOBLE_DAMAGE", "NOBLE_BOSS", "NOBLE_IGNORE", "ASCENT_DOPING_ON"];
+const DOP_EXCL = [
+  [["ASCENT_DOPING_ON", "무기 제련"], ["ASCENT_DOPING_ON", "고급 무기 제련"]],
+  [1, 2, 3, 4, 5].map((n) => ["ASCENT_DOPING_ON", "챔피언의 가호 " + n + "단계"]),
+  [["DOPING_ON", "붕어빵(15분)"], ["ASCENT_DOPING_ON", "달콤한 붕어빵 뿌리기(30분)"]],
+];
+/* 칸마다 [사전 이름, 키, 화면 이름, 설명, 아이콘]. 효과 숫자는 Skills.py의 ASCENT_DOPING_EFFECT와 같은 값이다(화면 설명용, 계산은 파이썬이 한다) */
+const DOP_ROWS_OFF = [
+  [["DOPING_ON", "영메", "영웅의 메아리", "40분 · 공격력 +4%", "도핑:영메"]],
+  [["DOPING_ON", "세이람", "세이람의 영약", "15분"], ["DOPING_ON", "콜렉터", "콜렉터의 영약", "8분"],
+   ["DOPING_ON", "붕어빵(15분)", "붕어빵 뿌리기(15분)", "15분 · 공격력 +30"]],
+];
+const DOP_ROWS_ON = [
+  [["ASCENT_DOPING_ON", "무기 제련", "무기 제련", "40분 · 크뎀 +3%"], ["ASCENT_DOPING_ON", "고급 무기 제련", "고급 무기 제련", "40분 · 크뎀 +5%"],
+   ...[1, 2, 3, 4, 5].map((n) => ["ASCENT_DOPING_ON", "챔피언의 가호 " + n + "단계", "챔피언의 가호 " + n + "단계",
+     "30분 · 올스탯 +" + 10 * n + ", 공격력 +" + 5 * n + ", 보스 +" + 2 * n + "%, 방무 +" + 2 * n + "%, 크뎀 +" + 0.5 * n + "%"])],
+  [["ASCENT_DOPING_ON", "반짝이는 빨간 별 물약", "반짝이는 빨간 별 물약", "120분 · 보스 데미지 +20%"]],
+  [["ASCENT_DOPING_ON", "명예의 영약", "명예의 영약", "30분 · 공격력 +60"],
+   ["ASCENT_DOPING_ON", "마슈르의 선물 기상효과", "마슈르의 선물 기상효과", "30분 · 공격력 +30"],
+   ["ASCENT_DOPING_ON", "유니온의 힘", "유니온의 힘", "30분 · 공격력 +30"],
+   ["ASCENT_DOPING_ON", "VIP 버프 (능력치)", "VIP 버프 (능력치)", "60분 · 올스탯 +15, 공격력 +15, 방무 +15%, 보스 +15%"],
+   ["ASCENT_DOPING_ON", "달콤한 붕어빵 뿌리기(30분)", "달콤한 붕어빵 뿌리기(30분)", "30분 · 공격력 +30"],
+   ["ASCENT_DOPING_ON", "MVP 슈퍼파워 버프", "MVP 슈퍼파워 버프", "30분 · 공격력 +30"],
+   ["ASCENT_DOPING_ON", "익스트림 레드", "익스트림 레드", "30분 · 공격력 +30"],
+   ["ASCENT_DOPING_ON", "향상된 10단계 힘의 물약", "향상된 10단계 힘의 물약", "30분 · 주스탯 +30"]],
+];
+function fixDopingExclusive() {      // 저장된 값이나 붙여 넣은 설정에 같이 쓸 수 없는 도핑이 함께 켜져 있으면 앞의 것만 남긴다. 빠진 키는 꺼짐으로 채운다
+  for (const d of ["DOPING_ON", "ASCENT_DOPING_ON"]) {
+    if (!S.defaults[d]) return;
+    S.values[d] = Object.fromEntries(Object.keys(S.defaults[d]).map((k) => [k, !!(S.values[d] && S.values[d][k])]));
+  }
+  for (const grp of DOP_EXCL) {
+    let kept = false;
+    for (const [d, k] of grp) { if (!S.values[d][k]) continue; if (kept) S.values[d][k] = false; else kept = true; }
+  }
+}
+function buildDoping() {
+  const boxes = [], nums = [];
+  const cur = (d, k) => !!(S.values[d] && S.values[d][k]);
+  const item = ([d, k, label, sub, icon]) => {
+    if (!S.defaults[d] || !(k in S.defaults[d])) return null;
+    const cb = el("input", { type: "checkbox", "aria-label": label });
+    const lab = el("label", { class: "dchk" }, cb, icon ? iconImg(icon) : null,
+      el("span", { class: "dtxt" }, el("span", { class: "dn", text: label }), sub ? el("small", { class: "dsub", text: sub }) : null));
+    cb.addEventListener("change", () => setDoping(d, k, cb.checked));
+    boxes.push({ d, k, cb, lab });
+    return lab;
+  };
+  const row = (list) => el("div", { class: "drow" }, list.map(item));
+  const nob = (n) => {
+    const it = S.byName[n]; if (!it) return null;
+    const c = numInput("dop-" + n, () => S.values[n], (v) => setVal(n, v), String(it.step || 2), { snap: it.step, min: it.min, max: it.max, int: true });
+    nums.push(c);
+    return el("label", { class: "dnum" }, el("span", { class: "dn" }, iconImg(NOBLE_ICON[n]), it.label), c.input);
+  };
+  const nobleRow = el("div", { class: "drow" }, item(["DOPING_ON", "노블", "노블 스킬 사용", "아래 4개 스킬을 레벨대로 사용"]),
+    ["NOBLE_CRIT", "NOBLE_DAMAGE", "NOBLE_BOSS", "NOBLE_IGNORE"].map(nob));
+  function setDoping(d, k, on) {
+    const touched = new Set([d]);
+    S.values[d] = { ...S.values[d], [k]: on };
+    if (on) for (const grp of DOP_EXCL) if (grp.some(([gd, gk]) => gd === d && gk === k))
+      for (const [gd, gk] of grp) if (!(gd === d && gk === k) && S.values[gd] && S.values[gd][gk]) { S.values[gd] = { ...S.values[gd], [gk]: false }; touched.add(gd); }
+    for (const n of touched) setVal(n, S.values[n]);
+    sync();
+  }
+  function sync() {
+    for (const b of boxes) { const on = cur(b.d, b.k); b.cb.checked = on; b.lab.classList.toggle("dchanged", on !== !!(S.defaults[b.d] && S.defaults[b.d][b.k])); }
+    nums.forEach((c) => c.sync());
+  }
+  const names = DOP_NAMES.filter((n) => S.byName[n]);
+  const noteOf = (n) => (S.byName[n] && (S.byName[n].note !== undefined ? S.byName[n].note : S.byName[n].comment)) || "";
+  const reset = el("button", { class: "freset", type: "button", onclick: () => {
+    for (const n of names) S.values[n] = clone(S.defaults[n]);
+    sync(); for (const n of names) refreshChanged(n);
+    store.set("blaster-dpm:current", overrides()); S.dirty = true; scheduleRun();
+  } }, "되돌리기");
+  const root = el("div", { class: "field wide dop" },
+    el("div", { class: "fhead" }, el("span", { class: "fkor strong", text: "도핑" }), el("span", { class: "fname dim", text: names.join(" / ") }), el("span", { class: "fchg", text: "바꿈" }), reset),
+    el("div", { class: "dsec" }, el("div", { class: "dhead", text: "어센트 미적용 도핑" }),
+      el("div", { class: "fnote", text: noteOf("DOPING_ON") }), nobleRow, el("div", { class: "fnote", text: noteOf("NOBLE_CRIT") }), DOP_ROWS_OFF.map(row)),
+    el("div", { class: "dsec" }, el("div", { class: "dhead", text: "어센트 적용 도핑 (지속시간 30분 이상)" }),
+      el("div", { class: "fnote", text: noteOf("ASCENT_DOPING_ON") }), DOP_ROWS_ON.map(row)));
+  const ref = { root, sync, names, shared: true };
+  for (const n of names) S.refs[n] = ref;
   return root;
 }
 
