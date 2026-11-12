@@ -494,6 +494,13 @@ const LOCAL_ICON = {
   "도핑:붕어빵(30분)": "icons/doping/bungeoppang_30.png", "도핑:명예의 영약": "icons/doping/honorable_elixir.png", "도핑:반짝이는 빨간 별 물약": "icons/doping/red_star_potion.png",
   "도핑:마슈르의 선물 기상효과": "icons/doping/masarayu_gift.png", "도핑:유니온의 힘": "icons/doping/union_might.png", "도핑:VIP 버프": "icons/doping/vip_buff.png",
   "도핑:MVP 슈퍼파워 버프": "icons/doping/mvp_superpower.png", "도핑:익스트림 레드": "icons/doping/extreme_red.png", "도핑:향상된 10단계 힘의 물약": "icons/doping/advanced_strength_potion.png" };
+/* 넥슨 아이콘은 저장소 icons 폴더에 코드 이름의 PNG로 넣어 두었다. 파일이 있는 아이콘은 넥슨 서버나 불러오기에서 받은 주소보다 이 파일을 먼저 쓴다 */
+const LOCAL_CODES = {
+  attack: "KAPCLHKAOI KAPCLHKAOJ KAPCLHKAPA KAPCLHKAPB KAPCLHPBKD KAPCLHPBMF KFMFKDPBMA KFMFKDPBMC KFMFKDPBNC KFMFKDPEMA KFMFKDPEMC KFMFKDPEME KFMFKFOBID KFMFKFOBIE KFMFKFOBIF KFMFKFOBIG KFMFKFOBIH KFMFKDPBMJ",
+  link: "KFHCLHKAKA KFHCLHMGKC KFHCLHMGLA KFHCLHNBNF KFHCLHOAEI KFHCLHOBIH KFHCLHOBJA KFHCLHOBMB KFHCLHODKB KFHCLHODKI KFHCLHOENE KFHCLHPAJF",
+  seedring: "KEODIEMI KEODIHHJ",
+  doping: "KFGDLHPBOC KFGDLHPBOD KFGDLHPBOE KFGDLHPBOF KFHCLHMCKD KFHCLHNJIA KFMCLHPBMF" };
+for (const [dir, list] of Object.entries(LOCAL_CODES)) for (const c of list.split(" ")) for (const [k, u] of Object.entries(ICON_DEFAULT)) if (String(u).split("/").pop() === c && !LOCAL_ICON[k]) LOCAL_ICON[k] = "icons/" + dir + "/" + c + ".png";
 function loadIcons() { const v = store.get("blaster-dpm:icons"); return { ...ICON_DEFAULT, ...(v && typeof v === "object" ? v : {}) }; }
 function saveIcons(m) { const cur = store.get("blaster-dpm:icons"), all = { ...(cur && typeof cur === "object" ? cur : {}) }; for (const [k, u] of Object.entries(m || {})) if (u && ICON_OK(u)) all[k] = u; store.set("blaster-dpm:icons", all); }
 function applyIcon(i, all) { const loc = LOCAL_ICON[i.dataset.ik], u = loc || (all || loadIcons())[i.dataset.ik]; if (u && (loc || ICON_OK(u))) { if (i.getAttribute("src") !== u) i.src = u; i.hidden = false; } else i.hidden = true; }
