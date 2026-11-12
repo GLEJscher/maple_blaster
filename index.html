@@ -485,7 +485,8 @@ const NOBLE_ICON = { NOBLE_CRIT: "노블:크게 한방", NOBLE_DAMAGE: "노블:�
 // 노블 스킬(길드 스킬)과 시드링 아이콘
 Object.assign(ICON_DEFAULT, {
   "노블:크게 한방": ICON_BASE + "KFGDLHPBOF", "노블:길드의 이름으로": ICON_BASE + "KFGDLHPBOE", "노블:보스 킬링 머신": ICON_BASE + "KFGDLHPBOC", "노블:방어력은 숫자일 뿐": ICON_BASE + "KFGDLHPBOD",
-  "도핑:영메": ICON_BASE + "KFMCLHPBMF", "SEED_CONTI": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIEMI", "SEED_RESTRAINT": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIHHJ" });
+  "도핑:영메": ICON_BASE + "KFMCLHPBMF", "도핑:무기 제련": ICON_BASE + "KFHCLHMCKC", "도핑:고급 무기 제련": ICON_BASE + "KFHCLHMCKD", "도핑:챔피언의 가호": ICON_BASE + "KFHCLHNJIA",
+  "SEED_CONTI": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIEMI", "SEED_RESTRAINT": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIHHJ" });
 function loadIcons() { const v = store.get("blaster-dpm:icons"); return { ...ICON_DEFAULT, ...(v && typeof v === "object" ? v : {}) }; }
 function saveIcons(m) { const cur = store.get("blaster-dpm:icons"), all = { ...(cur && typeof cur === "object" ? cur : {}) }; for (const [k, u] of Object.entries(m || {})) if (u && ICON_OK(u)) all[k] = u; store.set("blaster-dpm:icons", all); }
 function applyIcon(i, all) { const u = (all || loadIcons())[i.dataset.ik]; if (u && ICON_OK(u)) { if (i.getAttribute("src") !== u) i.src = u; i.hidden = false; } else i.hidden = true; }
@@ -1264,9 +1265,9 @@ const DOP_ROWS_OFF = [
    ["DOPING_ON", "붕어빵(15분)", "붕어빵 뿌리기(15분)", "15분", "공격력 +30"]],
 ];
 const DOP_ROWS_ON = [
-  [["ASCENT_DOPING_ON", "무기 제련", "무기 제련", "40분", "크리티컬 데미지 +3%"], ["ASCENT_DOPING_ON", "고급 무기 제련", "고급 무기 제련", "40분", "크리티컬 데미지 +5%"],
+  [["ASCENT_DOPING_ON", "무기 제련", "무기 제련", "40분", "크리티컬 데미지 +3%", "도핑:무기 제련"], ["ASCENT_DOPING_ON", "고급 무기 제련", "고급 무기 제련", "40분", "크리티컬 데미지 +5%", "도핑:고급 무기 제련"],
    ...[1, 2, 3, 4, 5].map((n) => ["ASCENT_DOPING_ON", "챔피언의 가호 " + n + "단계", "챔피언의 가호 " + n + "단계", "30분",
-     "올스탯 +" + 10 * n + ", 공격력 +" + 5 * n + ", 보스 데미지 +" + 2 * n + "%, 방어율 무시 +" + 2 * n + "%, 크리티컬 데미지 +" + 0.5 * n + "%"])],
+     "올스탯 +" + 10 * n + ", 공격력 +" + 5 * n + ", 보스 데미지 +" + 2 * n + "%, 방어율 무시 +" + 2 * n + "%, 크리티컬 데미지 +" + 0.5 * n + "%", "도핑:챔피언의 가호"])],
   [["ASCENT_DOPING_ON", "반짝이는 빨간 별 물약", "반짝이는 빨간 별 물약", "120분", "보스 데미지 +20%"]],
   [["ASCENT_DOPING_ON", "명예의 영약", "명예의 영약", "30분", "공격력 +60"],
    ["ASCENT_DOPING_ON", "마슈르의 선물 기상효과", "마슈르의 선물 기상효과", "30분", "공격력 +30"],
