@@ -79,16 +79,27 @@ main{padding-block:20px}
 .pslot b{font-size:calc(15px*var(--fs,1));max-width:9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pnames{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 /* 도핑 카드 */
-.dop .dsec{margin-top:12px}
-.dop .dhead{font-weight:700;margin-bottom:4px}
-.drow{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;align-items:stretch}
-.dchk{display:flex;align-items:center;gap:7px;padding:6px 11px;border:1px solid var(--ring);border-radius:10px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:13px}
+.dop .dsec{margin-top:14px}
+.dop .dhead{font-weight:700;margin-bottom:6px}
+.drow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}
+.dchk{position:relative;display:flex;align-items:center;gap:8px;min-width:0;min-height:50px;padding:8px 10px;border:1px solid var(--ring);border-radius:10px;background:var(--surface);color:var(--ink);cursor:pointer;font-size:calc(13px*var(--fs,1))}
 .dchk:hover{background:var(--hover)}.dchk input{margin:0;flex:0 0 auto}
 .dchk:has(input:checked){border-color:var(--accent);background:var(--accent-wash)}
-.dchk .dtxt{display:flex;flex-direction:column;gap:1px}.dchk .dsub{color:var(--ink2);font-size:11px;line-height:1.3;max-width:15em}
+.dchk .dico{width:calc(32px*var(--fs,1));height:calc(32px*var(--fs,1));flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--plane)}
+.dchk .dn{min-width:0;line-height:1.3;overflow-wrap:anywhere}
 .dchk.dchanged{border-color:var(--changed)}
-.dnum{display:flex;flex-direction:column;gap:4px;min-width:150px;flex:1 1 150px;max-width:230px;font-size:12.5px;color:var(--ink2)}
-.dnum .dn{display:flex;align-items:center;gap:5px}
+.dnum{display:flex;flex-direction:column;gap:6px;min-width:0}
+.dlv{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:calc(12px*var(--fs,1))}.dlv .num{flex:1 1 auto;min-width:0;width:auto}
+/* 마우스를 올리면 보이는 설명 (지속시간, 효과). 오른쪽 끝 칸은 왼쪽으로 펼친다 */
+.dchk[data-tip]:hover::after,.dchk[data-tip]:focus-within::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 6px);z-index:30;width:max-content;max-width:min(320px,80vw);padding:8px 10px;border:1px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--ink);box-shadow:0 6px 18px rgba(0,0,0,.28);font-size:calc(12px*var(--fs,1));line-height:1.5;font-weight:400;white-space:pre-line;pointer-events:none}
+.drow>.dchk:nth-child(4n):hover::after,.drow>.dnum:nth-child(4n) .dchk:hover::after,.drow>.dchk:nth-child(4n):focus-within::after,.drow>.dnum:nth-child(4n) .dchk:focus-within::after{left:auto;right:0}
+@media (max-width:760px){
+  .drow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .drow>.dchk:nth-child(4n):hover::after,.drow>.dnum:nth-child(4n) .dchk:hover::after,.drow>.dchk:nth-child(4n):focus-within::after,.drow>.dnum:nth-child(4n) .dchk:focus-within::after{left:0;right:auto}
+  .drow>.dchk:nth-child(2n):hover::after,.drow>.dnum:nth-child(2n) .dchk:hover::after,.drow>.dchk:nth-child(2n):focus-within::after,.drow>.dnum:nth-child(2n) .dchk:focus-within::after{left:auto;right:0}
+}
+.field.dop.changed .num{border-color:var(--ring)}.field.dop .dlv .num.dchanged{border-color:var(--changed)}
+html.no-hl .field.dop .dlv .num.dchanged{border-color:var(--ring)}
 html.no-hl .dchk.dchanged{border-color:var(--ring)}
 html.no-hl .dchk:has(input:checked).dchanged{border-color:var(--accent)}
 .pname{width:9.5em;padding:5px 8px;border-radius:9px;border:1px solid var(--ring);background:var(--surface);color:var(--ink);font:inherit;font-size:calc(13px*var(--fs,1))}.pslot .pst{font-size:calc(11px*var(--fs,1));color:var(--ink2)}
@@ -509,7 +520,7 @@ function syncAll() { for (const n of new Set(Object.values(S.refs))) n.sync && n
 
 /* 프리셋: 칸 3개. 번호를 누르면 불러오고, 저장을 누르면 지금 입력이 보고 있는 프리셋에 저장된다 */
 const PRESET_N = 3;
-function loadSlots() { const v = store.get("blaster-dpm:slots"); return Array.isArray(v) && v.length === PRESET_N ? v : Array(PRESET_N).fill(null); }
+function loadSlots() { const v = store.get("blaster-dpm:slots"); return Array.isArray(v) && v.length === PRESET_N ? v.map((x) => (x ? normDopingOverrides(x) : x)) : Array(PRESET_N).fill(null); }
 /* 프리셋 이름: 칸별로 따로 저장한다. 비어 있으면 "프리셋 N" 기본 이름을 쓴다 (이름 길이 최대 15자) */
 const NAME_MAX = 15;
 function loadNames() { const v = store.get("blaster-dpm:slot-names"); return Array.isArray(v) && v.length === PRESET_N ? v : Array(PRESET_N).fill(null); }
@@ -1240,31 +1251,49 @@ const DOP_EXCL = [
   [1, 2, 3, 4, 5].map((n) => ["ASCENT_DOPING_ON", "챔피언의 가호 " + n + "단계"]),
   [["DOPING_ON", "붕어빵(15분)"], ["ASCENT_DOPING_ON", "달콤한 붕어빵 뿌리기(30분)"]],
 ];
-/* 칸마다 [사전 이름, 키, 화면 이름, 설명, 아이콘]. 효과 숫자는 Skills.py의 ASCENT_DOPING_EFFECT와 같은 값이다(화면 설명용, 계산은 파이썬이 한다) */
+const NOBLE_KEYS = ["노블(크게 한방)", "노블(길드의 이름으로)", "노블(보스 킬링 머신)", "노블(방어력은 숫자일 뿐)"];
+/* 노블: [DOPING_ON 키, 레벨 변수, 화면 이름, 효과 이름]. 스킬마다 켜고 끄고, 레벨(효과 %, 지속 분)은 칸에 적는다 */
+const DOP_NOBLES = [["노블(크게 한방)", "NOBLE_CRIT", "크게 한방", "크리티컬 데미지"], ["노블(길드의 이름으로)", "NOBLE_DAMAGE", "길드의 이름으로", "데미지"],
+                    ["노블(보스 킬링 머신)", "NOBLE_BOSS", "보스 킬링 머신", "보스 데미지"], ["노블(방어력은 숫자일 뿐)", "NOBLE_IGNORE", "방어력은 숫자일 뿐", "방어율 무시"]];
+/* 칸마다 [사전 이름, 키, 화면 이름, 지속시간, 효과, 아이콘]. 지속시간과 효과는 칸에 마우스를 올리면 보인다.
+   효과 숫자는 Skills.py의 ASCENT_DOPING_EFFECT와 같은 값이다(화면 설명용, 계산은 파이썬이 한다) */
 const DOP_ROWS_OFF = [
-  [["DOPING_ON", "영메", "영웅의 메아리", "40분 · 공격력 +4%", "도핑:영메"]],
-  [["DOPING_ON", "세이람", "세이람의 영약", "15분"], ["DOPING_ON", "콜렉터", "콜렉터의 영약", "8분"],
-   ["DOPING_ON", "붕어빵(15분)", "붕어빵 뿌리기(15분)", "15분 · 공격력 +30"]],
+  [["DOPING_ON", "영메", "영웅의 메아리", "40분", "공격력 +4%", "도핑:영메"]],
+  [["DOPING_ON", "세이람", "세이람의 영약", "15분", "공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16%"],
+   ["DOPING_ON", "콜렉터", "콜렉터의 영약", "8분", "공격력 +100, 주스탯 +30, 부스탯 +30, 방어율 무시 +3%(38% → 41%), 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 기본 데미지 +3%p)"],
+   ["DOPING_ON", "붕어빵(15분)", "붕어빵 뿌리기(15분)", "15분", "공격력 +30"]],
 ];
 const DOP_ROWS_ON = [
-  [["ASCENT_DOPING_ON", "무기 제련", "무기 제련", "40분 · 크뎀 +3%"], ["ASCENT_DOPING_ON", "고급 무기 제련", "고급 무기 제련", "40분 · 크뎀 +5%"],
-   ...[1, 2, 3, 4, 5].map((n) => ["ASCENT_DOPING_ON", "챔피언의 가호 " + n + "단계", "챔피언의 가호 " + n + "단계",
-     "30분 · 올스탯 +" + 10 * n + ", 공격력 +" + 5 * n + ", 보스 +" + 2 * n + "%, 방무 +" + 2 * n + "%, 크뎀 +" + 0.5 * n + "%"])],
-  [["ASCENT_DOPING_ON", "반짝이는 빨간 별 물약", "반짝이는 빨간 별 물약", "120분 · 보스 데미지 +20%"]],
-  [["ASCENT_DOPING_ON", "명예의 영약", "명예의 영약", "30분 · 공격력 +60"],
-   ["ASCENT_DOPING_ON", "마슈르의 선물 기상효과", "마슈르의 선물 기상효과", "30분 · 공격력 +30"],
-   ["ASCENT_DOPING_ON", "유니온의 힘", "유니온의 힘", "30분 · 공격력 +30"],
-   ["ASCENT_DOPING_ON", "VIP 버프 (능력치)", "VIP 버프 (능력치)", "60분 · 올스탯 +15, 공격력 +15, 방무 +15%, 보스 +15%"],
-   ["ASCENT_DOPING_ON", "달콤한 붕어빵 뿌리기(30분)", "달콤한 붕어빵 뿌리기(30분)", "30분 · 공격력 +30"],
-   ["ASCENT_DOPING_ON", "MVP 슈퍼파워 버프", "MVP 슈퍼파워 버프", "30분 · 공격력 +30"],
-   ["ASCENT_DOPING_ON", "익스트림 레드", "익스트림 레드", "30분 · 공격력 +30"],
-   ["ASCENT_DOPING_ON", "향상된 10단계 힘의 물약", "향상된 10단계 힘의 물약", "30분 · 주스탯 +30"]],
+  [["ASCENT_DOPING_ON", "무기 제련", "무기 제련", "40분", "크리티컬 데미지 +3%"], ["ASCENT_DOPING_ON", "고급 무기 제련", "고급 무기 제련", "40분", "크리티컬 데미지 +5%"],
+   ...[1, 2, 3, 4, 5].map((n) => ["ASCENT_DOPING_ON", "챔피언의 가호 " + n + "단계", "챔피언의 가호 " + n + "단계", "30분",
+     "올스탯 +" + 10 * n + ", 공격력 +" + 5 * n + ", 보스 데미지 +" + 2 * n + "%, 방어율 무시 +" + 2 * n + "%, 크리티컬 데미지 +" + 0.5 * n + "%"])],
+  [["ASCENT_DOPING_ON", "반짝이는 빨간 별 물약", "반짝이는 빨간 별 물약", "120분", "보스 데미지 +20%"]],
+  [["ASCENT_DOPING_ON", "명예의 영약", "명예의 영약", "30분", "공격력 +60"],
+   ["ASCENT_DOPING_ON", "마슈르의 선물 기상효과", "마슈르의 선물 기상효과", "30분", "공격력 +30"],
+   ["ASCENT_DOPING_ON", "유니온의 힘", "유니온의 힘", "30분", "공격력 +30"],
+   ["ASCENT_DOPING_ON", "VIP 버프 (능력치)", "VIP 버프 (능력치)", "60분", "올스탯 +15, 공격력 +15, 방어율 무시 +15%, 보스 데미지 +15%"],
+   ["ASCENT_DOPING_ON", "달콤한 붕어빵 뿌리기(30분)", "달콤한 붕어빵 뿌리기(30분)", "30분", "공격력 +30"],
+   ["ASCENT_DOPING_ON", "MVP 슈퍼파워 버프", "MVP 슈퍼파워 버프", "30분", "공격력 +30"],
+   ["ASCENT_DOPING_ON", "익스트림 레드", "익스트림 레드", "30분", "공격력 +30"],
+   ["ASCENT_DOPING_ON", "향상된 10단계 힘의 물약", "향상된 10단계 힘의 물약", "30분", "주스탯 +30"]],
 ];
-function fixDopingExclusive() {      // 저장된 값이나 붙여 넣은 설정에 같이 쓸 수 없는 도핑이 함께 켜져 있으면 앞의 것만 남긴다. 빠진 키는 꺼짐으로 채운다
+/* 저장된 도핑 값을 지금 구조에 맞춘다: 빠진 키는 꺼짐으로, 모르는 키는 버린다. 예전에 "노블" 한 칸으로 4개를 켰다면 4개를 모두 켠다 */
+function normDopingDict(d, old) {
+  old = old && typeof old === "object" ? old : {};
+  return Object.fromEntries(Object.keys(S.defaults[d]).map((k) => [k, !!(old[k] || (d === "DOPING_ON" && old["노블"] && NOBLE_KEYS.includes(k)))]));
+}
+function normDopingOverrides(o) {      // 저장해 둔 프리셋의 도핑 값을 맞춘다. 기본값과 같아지면 뺀다(overrides()와 같은 모양)
+  if (!o || !S.defaults || !S.defaults.DOPING_ON) return o;
+  const r = { ...o };
   for (const d of ["DOPING_ON", "ASCENT_DOPING_ON"]) {
-    if (!S.defaults[d]) return;
-    S.values[d] = Object.fromEntries(Object.keys(S.defaults[d]).map((k) => [k, !!(S.values[d] && S.values[d][k])]));
+    if (!(d in r)) continue;
+    const nv = normDopingDict(d, r[d]);
+    if (same(nv, S.defaults[d])) delete r[d]; else r[d] = nv;
   }
+  return r;
+}
+function fixDopingExclusive() {      // 같이 쓸 수 없는 도핑이 함께 켜져 있으면 앞의 것만 남긴다
+  for (const d of ["DOPING_ON", "ASCENT_DOPING_ON"]) { if (!S.defaults[d]) return; S.values[d] = normDopingDict(d, S.values[d]); }
   for (const grp of DOP_EXCL) {
     let kept = false;
     for (const [d, k] of grp) { if (!S.values[d][k]) continue; if (kept) S.values[d][k] = false; else kept = true; }
@@ -1273,24 +1302,28 @@ function fixDopingExclusive() {      // 저장된 값이나 붙여 넣은 설정
 function buildDoping() {
   const boxes = [], nums = [];
   const cur = (d, k) => !!(S.values[d] && S.values[d][k]);
-  const item = ([d, k, label, sub, icon]) => {
+  const item = ([d, k, label, dur, eff, icon]) => {
     if (!S.defaults[d] || !(k in S.defaults[d])) return null;
-    const cb = el("input", { type: "checkbox", "aria-label": label });
-    const lab = el("label", { class: "dchk" }, cb, icon ? iconImg(icon) : null,
-      el("span", { class: "dtxt" }, el("span", { class: "dn", text: label }), sub ? el("small", { class: "dsub", text: sub }) : null));
+    const tip = "지속시간: " + dur + "\n효과: " + eff;
+    const cb = el("input", { type: "checkbox", "aria-label": label + " (" + tip.replace("\n", ", ") + ")" });
+    const lab = el("label", { class: "dchk", "data-tip": tip }, cb, el("span", { class: "dico" }, icon ? iconImg(icon) : null), el("span", { class: "dn", text: label }));
     cb.addEventListener("change", () => setDoping(d, k, cb.checked));
     boxes.push({ d, k, cb, lab });
     return lab;
   };
   const row = (list) => el("div", { class: "drow" }, list.map(item));
-  const nob = (n) => {
-    const it = S.byName[n]; if (!it) return null;
-    const c = numInput("dop-" + n, () => S.values[n], (v) => setVal(n, v), String(it.step || 2), { snap: it.step, min: it.min, max: it.max, int: true });
-    nums.push(c);
-    return el("label", { class: "dnum" }, el("span", { class: "dn" }, iconImg(NOBLE_ICON[n]), it.label), c.input);
+  const nobleTile = ([key, lv, name, stat]) => {
+    const it = S.byName[lv];
+    const head = it && item(["DOPING_ON", key, name, "레벨 × 2분 (예: 15레벨 = 30분)", stat + " +레벨 × 2% (예: 15레벨 = 30%)", NOBLE_ICON[lv]]);
+    if (!head) return null;
+    const c = numInput("dop-" + lv, () => S.values[lv], (v) => setVal(lv, v), String(it.step || 2), { snap: it.step, min: it.min, max: it.max, int: true });
+    c.input.setAttribute("aria-label", name + " 레벨 (" + stat + " %)");
+    const mark = () => c.input.classList.toggle("dchanged", !same(S.values[lv], S.defaults[lv]));      // 바뀐 레벨 칸만 표시한다
+    c.input.addEventListener("input", mark); c.input.addEventListener("change", mark);
+    nums.push({ ...c, sync() { c.sync(); mark(); } });
+    return el("div", { class: "dnum" }, head, el("label", { class: "dlv" }, c.input, el("span", { text: "% (지속 분과 같음)" })));
   };
-  const nobleRow = el("div", { class: "drow" }, item(["DOPING_ON", "노블", "노블 스킬 사용", "아래 4개 스킬을 레벨대로 사용"]),
-    ["NOBLE_CRIT", "NOBLE_DAMAGE", "NOBLE_BOSS", "NOBLE_IGNORE"].map(nob));
+  const nobleRow = el("div", { class: "drow" }, DOP_NOBLES.map(nobleTile));
   function setDoping(d, k, on) {
     const touched = new Set([d]);
     S.values[d] = { ...S.values[d], [k]: on };
