@@ -86,6 +86,7 @@ main{padding-block:20px}
 .dchk:hover{background:var(--hover)}.dchk input{margin:0;flex:0 0 auto}
 .dchk:has(input:checked){border-color:var(--accent);background:var(--accent-wash)}
 .dchk .dico{width:calc(32px*var(--fs,1));height:calc(32px*var(--fs,1));flex:0 0 auto;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--plane)}
+.dchk .dico .ico{width:100%;height:100%;object-fit:contain;image-rendering:auto}
 .dchk .dn{min-width:0;line-height:1.3;overflow-wrap:anywhere}
 .dchk.dchanged,.dchk.dchanged:has(input:checked){border-color:var(--changed);box-shadow:inset 0 0 0 1px var(--changed)}
 .dnum{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -487,9 +488,15 @@ Object.assign(ICON_DEFAULT, {
   "노블:크게 한방": ICON_BASE + "KFGDLHPBOF", "노블:길드의 이름으로": ICON_BASE + "KFGDLHPBOE", "노블:보스 킬링 머신": ICON_BASE + "KFGDLHPBOC", "노블:방어력은 숫자일 뿐": ICON_BASE + "KFGDLHPBOD",
   "도핑:영메": ICON_BASE + "KFMCLHPBMF", "도핑:무기 제련": ICON_BASE + "KFHCLHMCKC", "도핑:고급 무기 제련": ICON_BASE + "KFHCLHMCKD", "도핑:챔피언의 가호": ICON_BASE + "KFHCLHNJIA",
   "SEED_CONTI": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIEMI", "SEED_RESTRAINT": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIHHJ" });
+/* 아이템 도핑(영약, 붕어빵, 물약 등)은 스킬 API에 아이콘이 없어서 저장소의 icons/doping 폴더에 있는 PNG를 쓴다 */
+const LOCAL_ICON = {
+  "도핑:세이람": "icons/doping/sayram_elixir.png", "도핑:콜렉터": "icons/doping/collector_elixir.png", "도핑:붕어빵(15분)": "icons/doping/bungeoppang_15.png",
+  "도핑:붕어빵(30분)": "icons/doping/bungeoppang_30.png", "도핑:명예의 영약": "icons/doping/honorable_elixir.png", "도핑:반짝이는 빨간 별 물약": "icons/doping/red_star_potion.png",
+  "도핑:마슈르의 선물 기상효과": "icons/doping/masarayu_gift.png", "도핑:유니온의 힘": "icons/doping/union_might.png", "도핑:VIP 버프": "icons/doping/vip_buff.png",
+  "도핑:MVP 슈퍼파워 버프": "icons/doping/mvp_superpower.png", "도핑:익스트림 레드": "icons/doping/extreme_red.png", "도핑:향상된 10단계 힘의 물약": "icons/doping/advanced_strength_potion.png" };
 function loadIcons() { const v = store.get("blaster-dpm:icons"); return { ...ICON_DEFAULT, ...(v && typeof v === "object" ? v : {}) }; }
 function saveIcons(m) { const cur = store.get("blaster-dpm:icons"), all = { ...(cur && typeof cur === "object" ? cur : {}) }; for (const [k, u] of Object.entries(m || {})) if (u && ICON_OK(u)) all[k] = u; store.set("blaster-dpm:icons", all); }
-function applyIcon(i, all) { const u = (all || loadIcons())[i.dataset.ik]; if (u && ICON_OK(u)) { if (i.getAttribute("src") !== u) i.src = u; i.hidden = false; } else i.hidden = true; }
+function applyIcon(i, all) { const loc = LOCAL_ICON[i.dataset.ik], u = loc || (all || loadIcons())[i.dataset.ik]; if (u && (loc || ICON_OK(u))) { if (i.getAttribute("src") !== u) i.src = u; i.hidden = false; } else i.hidden = true; }
 function iconImg(key) { const i = el("img", { class: "ico", alt: "", hidden: true }); i.dataset.ik = key; i.addEventListener("error", () => { i.hidden = true; }); applyIcon(i); return i; }
 function refreshIcons() { const all = loadIcons(); document.querySelectorAll("img.ico[data-ik]").forEach((i) => applyIcon(i, all)); }
 function loadGearNames() { const v = store.get("blaster-dpm:gear-names"); return v && typeof v === "object" ? v : {}; }
@@ -1260,23 +1267,23 @@ const DOP_NOBLES = [["노블(크게 한방)", "NOBLE_CRIT", "크게 한방", "�
    효과 숫자는 Skills.py의 ASCENT_DOPING_EFFECT와 같은 값이다(화면 설명용, 계산은 파이썬이 한다) */
 const DOP_ROWS_OFF = [
   [["DOPING_ON", "영메", "영웅의 메아리", "40분", "공격력 +4%", "도핑:영메"]],
-  [["DOPING_ON", "세이람", "세이람의 영약", "15분", "공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16%"],
-   ["DOPING_ON", "콜렉터", "콜렉터의 영약", "8분", "공격력 +100, 주스탯 +30, 부스탯 +30, 방어율 무시 +3%(38% → 41%), 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 기본 데미지 +3%p)"],
-   ["DOPING_ON", "붕어빵(15분)", "붕어빵 뿌리기(15분)", "15분", "공격력 +30"]],
+  [["DOPING_ON", "세이람", "세이람의 영약", "15분", "공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16%", "도핑:세이람"],
+   ["DOPING_ON", "콜렉터", "콜렉터의 영약", "8분", "공격력 +100, 주스탯 +30, 부스탯 +30, 방어율 무시 +3%(38% → 41%), 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 기본 데미지 +3%p)", "도핑:콜렉터"],
+   ["DOPING_ON", "붕어빵(15분)", "붕어빵 뿌리기(15분)", "15분", "공격력 +30", "도핑:붕어빵(15분)"]],
 ];
 const DOP_ROWS_ON = [
   [["ASCENT_DOPING_ON", "무기 제련", "무기 제련", "40분", "크리티컬 데미지 +3%", "도핑:무기 제련"], ["ASCENT_DOPING_ON", "고급 무기 제련", "고급 무기 제련", "40분", "크리티컬 데미지 +5%", "도핑:고급 무기 제련"],
    ...[1, 2, 3, 4, 5].map((n) => ["ASCENT_DOPING_ON", "챔피언의 가호 " + n + "단계", "챔피언의 가호 " + n + "단계", "30분",
      "올스탯 +" + 10 * n + ", 공격력 +" + 5 * n + ", 보스 데미지 +" + 2 * n + "%, 방어율 무시 +" + 2 * n + "%, 크리티컬 데미지 +" + 0.5 * n + "%", "도핑:챔피언의 가호"])],
-  [["ASCENT_DOPING_ON", "반짝이는 빨간 별 물약", "반짝이는 빨간 별 물약", "120분", "보스 데미지 +20%"]],
-  [["ASCENT_DOPING_ON", "명예의 영약", "명예의 영약", "30분", "공격력 +60"],
-   ["ASCENT_DOPING_ON", "마슈르의 선물 기상효과", "마슈르의 선물 기상효과", "30분", "공격력 +30"],
-   ["ASCENT_DOPING_ON", "유니온의 힘", "유니온의 힘", "30분", "공격력 +30"],
-   ["ASCENT_DOPING_ON", "VIP 버프 (능력치)", "VIP 버프 (능력치)", "60분", "올스탯 +15, 공격력 +15, 방어율 무시 +15%, 보스 데미지 +15%"],
-   ["ASCENT_DOPING_ON", "달콤한 붕어빵 뿌리기(30분)", "달콤한 붕어빵 뿌리기(30분)", "30분", "공격력 +30"],
-   ["ASCENT_DOPING_ON", "MVP 슈퍼파워 버프", "MVP 슈퍼파워 버프", "30분", "공격력 +30"],
-   ["ASCENT_DOPING_ON", "익스트림 레드", "익스트림 레드", "30분", "공격력 +30"],
-   ["ASCENT_DOPING_ON", "향상된 10단계 힘의 물약", "향상된 10단계 힘의 물약", "30분", "주스탯 +30"]],
+  [["ASCENT_DOPING_ON", "반짝이는 빨간 별 물약", "반짝이는 빨간 별 물약", "120분", "보스 데미지 +20%", "도핑:반짝이는 빨간 별 물약"]],
+  [["ASCENT_DOPING_ON", "명예의 영약", "명예의 영약", "30분", "공격력 +60", "도핑:명예의 영약"],
+   ["ASCENT_DOPING_ON", "마슈르의 선물 기상효과", "마슈르의 선물 기상효과", "30분", "공격력 +30", "도핑:마슈르의 선물 기상효과"],
+   ["ASCENT_DOPING_ON", "유니온의 힘", "유니온의 힘", "30분", "공격력 +30", "도핑:유니온의 힘"],
+   ["ASCENT_DOPING_ON", "VIP 버프 (능력치)", "VIP 버프 (능력치)", "60분", "올스탯 +15, 공격력 +15, 방어율 무시 +15%, 보스 데미지 +15%", "도핑:VIP 버프"],
+   ["ASCENT_DOPING_ON", "달콤한 붕어빵 뿌리기(30분)", "달콤한 붕어빵 뿌리기(30분)", "30분", "공격력 +30", "도핑:붕어빵(30분)"],
+   ["ASCENT_DOPING_ON", "MVP 슈퍼파워 버프", "MVP 슈퍼파워 버프", "30분", "공격력 +30", "도핑:MVP 슈퍼파워 버프"],
+   ["ASCENT_DOPING_ON", "익스트림 레드", "익스트림 레드", "30분", "공격력 +30", "도핑:익스트림 레드"],
+   ["ASCENT_DOPING_ON", "향상된 10단계 힘의 물약", "향상된 10단계 힘의 물약", "30분", "주스탯 +30", "도핑:향상된 10단계 힘의 물약"]],
 ];
 /* 저장된 도핑 값을 지금 구조에 맞춘다: 빠진 키는 꺼짐으로, 모르는 키는 버린다. 예전에 "노블" 한 칸으로 4개를 켰다면 4개를 모두 켠다 */
 function normDopingDict(d, old) {
