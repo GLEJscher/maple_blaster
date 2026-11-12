@@ -488,19 +488,64 @@ Object.assign(ICON_DEFAULT, {
   "노블:크게 한방": ICON_BASE + "KFGDLHPBOF", "노블:길드의 이름으로": ICON_BASE + "KFGDLHPBOE", "노블:보스 킬링 머신": ICON_BASE + "KFGDLHPBOC", "노블:방어력은 숫자일 뿐": ICON_BASE + "KFGDLHPBOD",
   "도핑:영메": ICON_BASE + "KFMCLHPBMF", "도핑:무기 제련": ICON_BASE + "KFHCLHMCKC", "도핑:고급 무기 제련": ICON_BASE + "KFHCLHMCKD", "도핑:챔피언의 가호": ICON_BASE + "KFHCLHNJIA",
   "SEED_CONTI": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIEMI", "SEED_RESTRAINT": "https://open.api.nexon.com/static/maplestory/item/icon/KEODIHHJ" });
-/* 아이템 도핑(영약, 붕어빵, 물약 등)은 스킬 API에 아이콘이 없어서 저장소의 icons/doping 폴더에 있는 PNG를 쓴다 */
+/* 아이콘 파일은 저장소의 icons 폴더에 있다. 파일 이름은 코드의 변수 이름과 같다 (예: MF_LVL -> mf_lvl.png). 넥슨 아이콘 코드와의 대응표는 icons/README.md.
+   여기에 있는 아이콘은 넥슨 서버나 불러오기에서 받은 주소보다 이 파일을 먼저 쓴다. 파일이 없는 아이콘은 ICON_DEFAULT의 넥슨 서버 주소를 쓴다 */
 const LOCAL_ICON = {
-  "도핑:세이람": "icons/doping/sayram_elixir.png", "도핑:콜렉터": "icons/doping/collector_elixir.png", "도핑:붕어빵(15분)": "icons/doping/bungeoppang_15.png",
-  "도핑:붕어빵(30분)": "icons/doping/bungeoppang_30.png", "도핑:명예의 영약": "icons/doping/honorable_elixir.png", "도핑:반짝이는 빨간 별 물약": "icons/doping/red_star_potion.png",
-  "도핑:마슈르의 선물 기상효과": "icons/doping/masarayu_gift.png", "도핑:유니온의 힘": "icons/doping/union_might.png", "도핑:VIP 버프": "icons/doping/vip_buff.png",
-  "도핑:MVP 슈퍼파워 버프": "icons/doping/mvp_superpower.png", "도핑:익스트림 레드": "icons/doping/extreme_red.png", "도핑:향상된 10단계 힘의 물약": "icons/doping/advanced_strength_potion.png" };
-/* 넥슨 아이콘은 저장소 icons 폴더에 코드 이름의 PNG로 넣어 두었다. 파일이 있는 아이콘은 넥슨 서버나 불러오기에서 받은 주소보다 이 파일을 먼저 쓴다 */
-const LOCAL_CODES = {
-  attack: "KAPCLHKAOI KAPCLHKAOJ KAPCLHKAPA KAPCLHKAPB KAPCLHPBKD KAPCLHPBMF KFMFKDPBMA KFMFKDPBMC KFMFKDPBNC KFMFKDPEMA KFMFKDPEMC KFMFKDPEME KFMFKFOBID KFMFKFOBIE KFMFKFOBIF KFMFKFOBIG KFMFKFOBIH KFMFKDPBMJ",
-  link: "KFHCLHKAKA KFHCLHMGKC KFHCLHMGLA KFHCLHNBNF KFHCLHOAEI KFHCLHOBIH KFHCLHOBJA KFHCLHOBMB KFHCLHODKB KFHCLHODKI KFHCLHOENE KFHCLHPAJF",
-  seedring: "KEODIEMI KEODIHHJ",
-  doping: "KFGDLHPBOC KFGDLHPBOD KFGDLHPBOE KFGDLHPBOF KFHCLHMCKC KFHCLHMCKD KFHCLHNJIA KFMCLHPBMF" };
-for (const [dir, list] of Object.entries(LOCAL_CODES)) for (const c of list.split(" ")) for (const [k, u] of Object.entries(ICON_DEFAULT)) if (String(u).split("/").pop() === c && !LOCAL_ICON[k]) LOCAL_ICON[k] = "icons/" + dir + "/" + c + ".png";
+  // 링크 스킬
+  "링크:데슬": "icons/link/link_deseul.png",
+  "링크:아크": "icons/link/link_ark.png",
+  "링크:엔버": "icons/link/link_enber.png",
+  "링크:모도": "icons/link/link_modo.png",
+  "링크:데벤져": "icons/link/link_debenjyeo.png",
+  "링크:카데나": "icons/link/link_kadena.png",
+  "링크:모법": "icons/link/link_mobeop.png",
+  "링크:일리움": "icons/link/link_illium.png",
+  "링크:레테": "icons/link/link_rete.png",
+  "링크:키네시스": "icons/link/link_kinesis.png",
+  "링크:카인": "icons/link/link_kain.png",
+  "링크:제논": "icons/link/link_jenon.png",
+  // 스킬 레벨 / 하이퍼 패시브
+  "MF_LVL": "icons/attack/mf_lvl.png",
+  "RPB_LVL": "icons/attack/rpb_lvl.png",
+  "HAMM_LVL": "icons/attack/hamm_lvl.png",
+  "CANNON_LVL": "icons/attack/cannon_lvl.png",
+  "ORIGIN_LVL": "icons/attack/origin_lvl.png",
+  "VANGUARD_LVL": "icons/attack/vanguard_lvl.png",
+  "OH_LVL": "icons/attack/oh_lvl.png",
+  "HECATE_LVL": "icons/attack/hecate_lvl.png",
+  "INFANTRY_LVL": "icons/attack/infantry_lvl.png",
+  "BUNK_BUST_LVL": "icons/attack/bunk_bust_lvl.png",
+  "VULCAN_LVL": "icons/attack/vulcan_lvl.png",
+  "BURN_BRK_LVL": "icons/attack/burn_brk_lvl.png",
+  "AFT_SHCK_LVL": "icons/attack/aft_shck_lvl.png",
+  "HYPER_PUNCH_ATTACK": "icons/attack/hyper_punch_attack.png",
+  "HYPER_PUNCH_REINFORCE": "icons/attack/hyper_punch_reinforce.png",
+  "HYPER_PUNCH_IGNORE": "icons/attack/hyper_punch_ignore.png",
+  "HYPER_RPB_REINFORCE": "icons/attack/hyper_rpb_reinforce.png",
+  "HYPER_RPB_SHOCK": "icons/attack/hyper_rpb_shock.png",
+  // 시드링
+  "SEED_CONTI": "icons/seedring/seed_conti.png", "SEED_RESTRAINT": "icons/seedring/seed_restraint.png",
+  // 노블 / 영메 / 아이템 도핑
+  "노블:크게 한방": "icons/doping/noble_crit.png",
+  "노블:길드의 이름으로": "icons/doping/noble_damage.png",
+  "노블:보스 킬링 머신": "icons/doping/noble_boss.png",
+  "노블:방어력은 숫자일 뿐": "icons/doping/noble_ignore.png",
+  "도핑:영메": "icons/doping/hero_echo.png",
+  "도핑:무기 제련": "icons/doping/weapon_refine.png",
+  "도핑:고급 무기 제련": "icons/doping/advanced_weapon_refine.png",
+  "도핑:챔피언의 가호": "icons/doping/champion_blessing.png",
+  "도핑:세이람": "icons/doping/seiram.png",
+  "도핑:콜렉터": "icons/doping/collector.png",
+  "도핑:붕어빵(15분)": "icons/doping/bungeoppang_15.png",
+  "도핑:붕어빵(30분)": "icons/doping/bungeoppang_30.png",
+  "도핑:명예의 영약": "icons/doping/honorable_elixir.png",
+  "도핑:반짝이는 빨간 별 물약": "icons/doping/red_star_potion.png",
+  "도핑:마슈르의 선물 기상효과": "icons/doping/masarayu_gift.png",
+  "도핑:유니온의 힘": "icons/doping/union_might.png",
+  "도핑:VIP 버프": "icons/doping/vip_buff.png",
+  "도핑:MVP 슈퍼파워 버프": "icons/doping/mvp_superpower.png",
+  "도핑:익스트림 레드": "icons/doping/extreme_red.png",
+  "도핑:향상된 10단계 힘의 물약": "icons/doping/advanced_strength_potion.png" };
 function loadIcons() { const v = store.get("blaster-dpm:icons"); return { ...ICON_DEFAULT, ...(v && typeof v === "object" ? v : {}) }; }
 function saveIcons(m) { const cur = store.get("blaster-dpm:icons"), all = { ...(cur && typeof cur === "object" ? cur : {}) }; for (const [k, u] of Object.entries(m || {})) if (u && ICON_OK(u)) all[k] = u; store.set("blaster-dpm:icons", all); }
 function applyIcon(i, all) { const loc = LOCAL_ICON[i.dataset.ik], u = loc || (all || loadIcons())[i.dataset.ik]; if (u && (loc || ICON_OK(u))) { if (i.getAttribute("src") !== u) i.src = u; i.hidden = false; } else i.hidden = true; }
