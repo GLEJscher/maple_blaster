@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>넥슨 스킬 아이콘 받기</title>
+<style>
+:root{--plane:#f3f3f1;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--ring:rgba(11,11,11,.14);--accent:#2a78d6;--accent-ink:#fff;--bad:#b3261e;--hover:rgba(11,11,11,.05)}
+@media (prefers-color-scheme:dark){:root{--plane:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--ring:rgba(240,239,236,.18);--accent:#3b8ae6;--bad:#ff8a80;--hover:rgba(240,239,236,.07)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plane);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:20px;margin:0 0 4px}
+.note{color:var(--ink2);font-size:13px;margin:0 0 16px}
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink2);flex:1 1 220px}
+input[type=text],input[type=password]{padding:8px 10px;border-radius:9px;border:1px solid var(--ring);background:var(--plane);color:var(--ink);font:inherit}
+.grades{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:13px}
+.grades label{display:flex;align-items:center;gap:5px;cursor:pointer}
+button{border:1px solid var(--ring);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:9px;cursor:pointer;font:inherit;font-weight:600}
+button:hover{background:var(--hover)}button:disabled{opacity:.5;cursor:default}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+button.small{padding:3px 9px;font-size:12px}
+#status{min-height:1.5em;font-size:13px;color:var(--ink2);white-space:pre-wrap}
+#status.bad{color:var(--bad)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.grp{margin:16px 0 6px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.ic{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;border:1px solid var(--ring);border-radius:10px;background:var(--surface);text-align:center}
+.ic img{width:64px;height:64px;image-rendering:pixelated;background:var(--plane);border-radius:8px}
+.ic .n{font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.ic .m{font-size:11px;color:var(--ink2);overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>넥슨 스킬 아이콘 받기</h1>
+  <p class="note">API 키는 이 브라우저에서 넥슨 서버로만 보내고 저장하지 않습니다. 캐릭터가 가진 스킬만 조회됩니다 (익히지 않은 스킬은 나오지 않을 수 있어요).</p>
+
+  <div class="card">
+    <div class="row">
+      <label class="f">API 키<input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="test_... 또는 live_..."></label>
+      <label class="f">캐릭터 이름<input id="name" type="text" autocomplete="off" spellcheck="false" placeholder="블래스터 캐릭터 이름"></label>
+      <button class="primary" id="go">불러오기</button>
+    </div>
+    <div class="grades" id="grades" role="group" aria-label="스킬 차수"></div>
+  </div>
+
+  <div id="status" role="status" aria-live="polite"></div>
+  <div id="out" hidden>
+    <div class="tools">
+      <button id="zip">전체 ZIP으로 받기</button>
+      <button id="copyTsv">주소 목록 복사 (탭 구분)</button>
+      <button id="copyJson">JSON 복사</button>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const BASE = "https://open.api.nexon.com/maplestory/v1";
+const GRADES = [["1", "1차", true], ["2", "2차", true], ["3", "3차", true], ["4", "4차", true], ["5", "5차", true],
+                ["hyperpassive", "하이퍼 패시브", false], ["hyperactive", "하이퍼 액티브", false], ["6", "6차", false], ["0", "0차", false], ["1.5", "1.5차", false], ["2.5", "2.5차", false]];
+const GKOR = Object.fromEntries(GRADES.map(([v, k]) => [v, k]));
+let ROWS = [];
+
+for (const [v, k, on] of GRADES) {
+  const l = document.createElement("label"), c = document.createElement("input");
+  c.type = "checkbox"; c.value = v; c.checked = on; l.append(c, k); $("#grades").append(l);
+}
+const say = (t, bad) => { const s = $("#status"); s.textContent = t || ""; s.className = bad ? "bad" : ""; };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const codeOf = (u) => String(u).split("/").pop();
+const safe = (t) => String(t).replace(/[\\/:*?"<>|]/g, "_").trim();
+const fileOf = (x) => safe(x.grade) + "_" + safe(x.name) + "_" + codeOf(x.icon) + ".png";
+
+async function api(path, key) {
+  let r;
+  try { r = await fetch(BASE + path, { headers: { "x-nxopen-api-key": key } }); }
+  catch (e) { throw new Error("넥슨 서버에 연결하지 못했어요. 네트워크나 광고 차단 확장 프로그램을 확인해 주세요."); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(path.split("?")[0] + " → " + r.status + " " + ((j.error && (j.error.message || j.error.name)) || ""));
+  return j;
+}
+
+async function run() {
+  const key = $("#key").value.trim(), name = $("#name").value.trim();
+  const grades = [...document.querySelectorAll("#grades input:checked")].map((c) => c.value);
+  if (!key || !name) return say("API 키와 캐릭터 이름을 입력해 주세요.", true);
+  if (!grades.length) return say("스킬 차수를 하나 이상 골라 주세요.", true);
+  $("#go").disabled = true; $("#out").hidden = true; ROWS = []; $("#list").textContent = "";
+  try {
+    say("캐릭터를 찾는 중…");
+    const { ocid } = await api("/id?character_name=" + encodeURIComponent(name), key);
+    const basic = await api("/character/basic?ocid=" + ocid, key);
+    const info = basic.character_name + " / " + basic.character_class + " / Lv." + basic.character_level;
+    const seen = new Set(), fails = [];
+    for (const g of grades) {
+      say(info + "\n" + GKOR[g] + " 스킬을 불러오는 중…");
+      try {
+        const r = await api("/character/skill?ocid=" + ocid + "&character_skill_grade=" + g, key);
+        for (const s of r.character_skill || []) {
+          if (!s.skill_icon || seen.has(s.skill_icon)) continue;
+          seen.add(s.skill_icon); ROWS.push({ grade: GKOR[g], name: s.skill_name, level: s.skill_level, icon: s.skill_icon });
+        }
+      } catch (e) { fails.push(GKOR[g] + ": " + e.message); }
+      await wait(300);
+    }
+    render();
+    say(info + "\n아이콘 " + ROWS.length + "개를 찾았어요." + (fails.length ? "\n불러오지 못한 차수 - " + fails.join(" / ") : ""), fails.length && !ROWS.length);
+  } catch (e) { say(e.message, true); }
+  finally { $("#go").disabled = false; }
+}
+
+function render() {
+  const list = $("#list"); list.textContent = "";
+  const by = new Map(); for (const x of ROWS) (by.get(x.grade) || by.set(x.grade, []).get(x.grade)).push(x);
+  for (const [g, xs] of by) {
+    const h = document.createElement("div"); h.className = "grp"; h.textContent = g + " (" + xs.length + "개)";
+    const grid = document.createElement("div"); grid.className = "grid";
+    for (const x of xs) {
+      const c = document.createElement("div"); c.className = "ic";
+      const img = document.createElement("img"); img.src = x.icon; img.alt = x.name; img.loading = "lazy";
+      const n = document.createElement("div"); n.className = "n"; n.textContent = x.name;
+      const m = document.createElement("div"); m.className = "m"; m.textContent = "Lv." + x.level + " · " + codeOf(x.icon);
+      const b = document.createElement("button"); b.className = "small"; b.textContent = "저장";
+      b.addEventListener("click", () => saveOne(x));
+      c.append(img, n, m, b); grid.append(c);
+    }
+    list.append(h, grid);
+  }
+  $("#out").hidden = !ROWS.length;
+}
+
+const download = (blob, name) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+const NOCORS = "이미지 파일을 직접 받을 수 없었어요 (넥슨 서버가 이 페이지의 다운로드를 허용하지 않아요). 아이콘을 우클릭해서 '이미지를 다른 이름으로 저장'을 쓰거나, 주소 목록을 복사해서 받아 주세요.";
+async function saveOne(x) {
+  try { download(await (await fetch(x.icon)).blob(), fileOf(x)); } catch (e) { say(NOCORS, true); }
+}
+
+/* ---- 압축 없는 ZIP (STORE) ---- */
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+const crc32 = (u) => { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+function makeZip(files) {
+  const enc = new TextEncoder(), parts = [], cen = []; let off = 0;
+  const u16 = (v) => [v & 255, (v >> 8) & 255], u32 = (v) => [v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255];
+  for (const f of files) {
+    const nb = enc.encode(f.name), crc = crc32(f.data), sz = f.data.length;
+    const lh = new Uint8Array([0x50, 0x4b, 3, 4, ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(sz), ...u32(sz), ...u16(nb.length), ...u16(0)]);
+    parts.push(lh, nb, f.data); cen.push({ nb, crc, sz, off }); off += lh.length + nb.length + sz;
+  }
+  const start = off;
+  for (const c of cen) {
+    const h = new Uint8Array([0x50, 0x4b, 1, 2, ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(c.crc), ...u32(c.sz), ...u32(c.sz), ...u16(c.nb.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(c.off)]);
+    parts.push(h, c.nb); off += h.length + c.nb.length;
+  }
+  parts.push(new Uint8Array([0x50, 0x4b, 5, 6, 0, 0, 0, 0, ...u16(cen.length), ...u16(cen.length), ...u32(off - start), ...u32(start), 0, 0]));
+  return new Blob(parts, { type: "application/zip" });
+}
+async function zipAll() {
+  $("#zip").disabled = true;
+  try {
+    const files = [], used = new Set();
+    for (let i = 0; i < ROWS.length; i++) {
+      say("이미지를 받는 중… " + (i + 1) + " / " + ROWS.length);
+      let name = fileOf(ROWS[i]); while (used.has(name)) name = name.replace(/\.png$/, "_2.png"); used.add(name);
+      files.push({ name, data: new Uint8Array(await (await fetch(ROWS[i].icon)).arrayBuffer()) });
+    }
+    download(makeZip(files), "nexon_skill_icons.zip"); say("ZIP으로 " + files.length + "개를 받았어요.");
+  } catch (e) { say(NOCORS, true); }
+  finally { $("#zip").disabled = false; }
+}
+const copy = async (t, msg) => { try { await navigator.clipboard.writeText(t); say(msg); } catch (e) { say("복사하지 못했어요. 브라우저 설정을 확인해 주세요.", true); } };
+
+$("#go").addEventListener("click", run);
+$("#name").addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+$("#key").addEventListener("keydown", (e) => { if (e.key === "Enter") run(); });
+$("#zip").addEventListener("click", zipAll);
+$("#copyTsv").addEventListener("click", () => copy(ROWS.map((x) => [x.grade, x.name, x.level, x.icon].join("\t")).join("\n"), "주소 목록을 복사했어요."));
+$("#copyJson").addEventListener("click", () => copy(JSON.stringify(ROWS, null, 1), "JSON을 복사했어요."));
+</script>
+</body>
+</html>
