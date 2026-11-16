@@ -1497,8 +1497,8 @@ function renderAnalysis() {
             el("div", { text: "직전 계산 대비 " + (delta >= 0 ? "+" : "") + fmt(delta * 100, 2) + "% (" + (r.total >= S.prev.total ? "+" : "-") + fmtJo(Math.abs(r.total - S.prev.total)) + ")" }),
             el("div", { class: "d2", text: "직전 계산 " + fmtJo(S.prev.total) + " → 지금 " + fmtJo(r.total) }),
             (() => { const ch = S.prevCfg && S.lastCfg ? changedLabels(S.prevCfg, S.lastCfg) : []; return ch.length ? el("div", { class: "d2", text: "바뀐 값: " + ch.slice(0, 4).join(", ") + (ch.length > 4 ? " 외 " + (ch.length - 4) + "개" : "") }) : null; })())),
-    el("div", { class: "kpi" }, el("div", { class: "l", text: "초당 평균 데미지" }), el("div", { class: "v", text: fmtJo(r.per_second_total) })),
-    el("div", { class: "kpi" }, el("div", { class: "l", text: "1분당 평균 데미지" }), el("div", { class: "v", text: fmtJo(perMin, 1) })),
+    el("div", { class: "kpi" }, el("div", { class: "l", text: "DPS" }), el("div", { class: "v", text: fmtJo(r.per_second_total) })),
+    el("div", { class: "kpi" }, el("div", { class: "l", text: "DPM" }), el("div", { class: "v", text: fmtJo(perMin, 1) })),
     el("div", { class: "kpi" }, el("div", { class: "l", text: "공격 횟수" }), el("div", { class: "v", text: fmt(r.skills.reduce((a, s) => a + s.count, 0), 0) + "회" })));
   root.append(kpis);
 
