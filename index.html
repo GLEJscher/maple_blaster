@@ -1795,7 +1795,7 @@ function buildExtra() {
     S.dirty = true; if (S.refreshRec) S.refreshRec(); clearTimeout(S.timer); S.timer = setTimeout(runSim, 30);
   }
   S.extraState = state;
-  state(); d.open = true;
+  state();      // 처음에는 닫아 둔다 (반영 중인 개수는 제목 옆에 보인다)
 }
 
 /* ============================ 탭 · 시작 ============================ */
