@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from typing import Callable, Any
 
 # 도핑: base_spec에는 도핑을 쓰지 않은 스탯창을 입력한다. 도핑 효과는 입력한 숫자에 포함하지 않고 아래 두 곳에서 켜서 따로 더한다 (스탯창에 도핑이 이미 들어 있으면 같은 도핑이 두 번 더해진다).
-#  - 어센트에 적용되지 않는 도핑/액티브 버프(노블, 영메, 세이람, 콜렉터, 붕어빵 15분): 아래 DOPING_ON으로 켠다. 시뮬레이션 시작과 함께 쓰고 지속시간이 끝나면 꺼진다. 노블은 스킬 4개이고 DOPING_ON에서 스킬마다 따로 켜고 끈다 (효과와 지속시간은 NOBLE_* 값으로 정한다)
+#  - 어센트에 적용되지 않는 도핑/액티브 버프(노블, 영메, 세이람, 콜렉터, 붕어빵 15분, 무기 제련, 챔피언의 가호): 아래 DOPING_ON으로 켠다. 시뮬레이션 시작과 함께 쓰고 지속시간이 끝나면 꺼진다. 노블은 스킬 4개이고 DOPING_ON에서 스킬마다 따로 켜고 끈다 (효과와 지속시간은 NOBLE_* 값으로 정한다)
 #  - 어센트에도 적용되는 도핑(지속시간 30분 이상): 아래 ASCENT_DOPING_ON으로 켠다. 효과가 base_spec에 더해져서 어센트를 포함한 전체에 적용된다
 
 # CharaInfo, 자버프 모두 사용 기준
@@ -30,19 +30,13 @@ union_effect = CharaInfo(damage=UNION_TABLE[UNION_LVL])
 
 # 어센트에도 적용되는 도핑 (지속시간 30분 이상): True로 켠 도핑의 효과를 base_spec(스탯창 스펙)에 더한다. 위 base_spec 숫자는 그대로 두고 계산할 때만 더해진다.
 #  방어율 무시는 base_spec과 곱연산으로 합친다 (CharaInfo의 덧셈과 같다). 올스탯 +n은 주스탯 +n, 부스탯 +n이다.
-#  챔피언의 가호는 1~5단계 중 1개, 무기 제련과 고급 무기 제련은 둘 중 1개, 붕어빵은 15분(DOPING_ON)과 30분 중 1개만 고른다 (웹 화면에서는 하나를 고르면 나머지가 해제된다)
-#  지속시간: 무기 제련 40분 / 고급 무기 제련 40분 / 챔피언의 가호 30분 / 반짝이는 빨간 별 물약 120분 / VIP 버프 60분 / 나머지 30분
-ASCENT_DOPING_ON = {"무기 제련": False, "고급 무기 제련": False,
-                    "챔피언의 가호 1단계": False, "챔피언의 가호 2단계": False, "챔피언의 가호 3단계": False,
-                    "챔피언의 가호 4단계": False, "챔피언의 가호 5단계": False,
-                    "반짝이는 빨간 별 물약": False,
+#  붕어빵은 15분(DOPING_ON)과 30분 중 1개만 고른다 (웹 화면에서는 하나를 고르면 나머지가 해제된다). 무기 제련과 챔피언의 가호는 액티브 스킬이라 어센트에 적용되지 않으므로 DOPING_ON에 있다
+#  지속시간: 반짝이는 빨간 별 물약 120분 / VIP 버프 60분 / 나머지 30분
+ASCENT_DOPING_ON = {"반짝이는 빨간 별 물약": False,
                     "명예의 영약": False, "마슈르의 선물 기상효과": False, "유니온의 힘": False, "VIP 버프 (능력치)": False,
                     "달콤한 붕어빵 뿌리기(30분)": False, "MVP 슈퍼파워 버프": False, "익스트림 레드": False,
                     "향상된 10단계 힘의 물약": False}
 ASCENT_DOPING_EFFECT = {
-    "무기 제련": CharaInfo(critDamage=3), "고급 무기 제련": CharaInfo(critDamage=5),
-    # 챔피언의 가호 n단계: 올스탯 +10n, 공격력 +5n, 보스 데미지 +2n%, 방어율 무시 +2n%, 크리티컬 데미지 +0.5n%
-    **{"챔피언의 가호 %d단계" % n: CharaInfo(mainStat=10*n, subStat=10*n, attack=5*n, bossDamage=2*n, armorIgnore=2*n, critDamage=0.5*n) for n in range(1, 6)},
     "반짝이는 빨간 별 물약": CharaInfo(bossDamage=20),
     "명예의 영약": CharaInfo(attack=60),
     "마슈르의 선물 기상효과": CharaInfo(attack=30), "유니온의 힘": CharaInfo(attack=30),
@@ -254,9 +248,14 @@ AURA_EXCLUDE = ("인팬트리",)      # 이 스킬로는 오라 웨폰이 발동
 #  세이람(15분 도핑): 공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16%
 #  콜렉터(8분 도핑): 공격력 +100, 주스탯 +30, 부스탯 +30, 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 A, B, C 기본 데미지 +3%p), 방어율 무시 38% -> 41% (스탯창의 방무 38%가 41%로 바뀌므로 -38 + 41)
 #  붕어빵(붕어빵 뿌리기 15분): 공격력 +30. 30분짜리(ASCENT_DOPING_ON의 달콤한 붕어빵 뿌리기)와 같이 쓸 수 없다
-#  지속시간이 30분 이상인 도핑은 어센트에도 적용되므로 이 표가 아니라 위의 ASCENT_DOPING_ON에 있다
+#  무기 제련(장비 장인, 40분): 크리티컬 데미지 +3% / 고급 무기 제련(장비 명장, 40분): 크리티컬 데미지 +5%. 둘 중 하나만 쓴다
+#  챔피언의 가호 n단계(30분): 올스탯 +10n, 공격력 +5n, 보스 데미지 +2n%, 방어율 무시 +2n%, 크리티컬 데미지 +0.5n%. 1~5단계 중 하나만 쓴다 (올스탯 +n은 주스탯 +n, 부스탯 +n)
+#  무기 제련과 챔피언의 가호는 액티브 스킬이라 어센트에 적용되지 않는다. 지속시간이 30분 이상인 도핑 아이템은 어센트에도 적용되므로 이 표가 아니라 위의 ASCENT_DOPING_ON에 있다
 DOPING_ON = {"노블(크게 한방)": False, "노블(길드의 이름으로)": False, "노블(보스 킬링 머신)": False, "노블(방어력은 숫자일 뿐)": False,
-             "영메": False, "세이람": False, "콜렉터": False, "붕어빵(15분)": False}
+             "영메": False, "세이람": False, "콜렉터": False, "붕어빵(15분)": False,
+             "무기 제련": False, "고급 무기 제련": False,
+             "챔피언의 가호 1단계": False, "챔피언의 가호 2단계": False, "챔피언의 가호 3단계": False,
+             "챔피언의 가호 4단계": False, "챔피언의 가호 5단계": False}
 # 노블 스킬 4개: 값은 효과 %이고 0~30, 2의 배수(0, 2, 4, ...)이다. 지속 시간(분)도 이 값과 같다 (2%면 2분, 30%면 30분, 0이면 효과 없음)
 NOBLE_CRIT = 0         # 크게 한방: 크리티컬 데미지 %
 NOBLE_DAMAGE = 0       # 길드의 이름으로: 데미지 %
@@ -763,7 +762,16 @@ collector_buff = BuffSkill(name="콜렉터", duration=480, cooldown=0, cooldown_
                            pct_effects={"rpb_up": 3})
 bungeoppang_buff = BuffSkill(name="붕어빵(15분)", duration=900, cooldown=0, cooldown_applies=False,
                              effect=CharaInfo(attack=30))
-DOPING_BUFFS = {**{b.name: b for b in noble_buff}, "영메": hero_echo_buff, "세이람": seiram_buff, "콜렉터": collector_buff, "붕어빵(15분)": bungeoppang_buff}
+weapon_refine_buff = BuffSkill(name="무기 제련", duration=2400, cooldown=0, cooldown_applies=False,
+                               effect=CharaInfo(critDamage=3))
+adv_weapon_refine_buff = BuffSkill(name="고급 무기 제련", duration=2400, cooldown=0, cooldown_applies=False,
+                                   effect=CharaInfo(critDamage=5))
+# 챔피언의 가호 n단계: 올스탯 +10n, 공격력 +5n, 보스 데미지 +2n%, 방어율 무시 +2n%, 크리티컬 데미지 +0.5n%
+champion_buffs = {"챔피언의 가호 %d단계" % n: BuffSkill(name="챔피언의 가호 %d단계" % n, duration=1800, cooldown=0, cooldown_applies=False,
+                                                  effect=CharaInfo(mainStat=10*n, subStat=10*n, attack=5*n, bossDamage=2*n, armorIgnore=2*n, critDamage=0.5*n))
+                  for n in range(1, 6)}
+DOPING_BUFFS = {**{b.name: b for b in noble_buff}, "영메": hero_echo_buff, "세이람": seiram_buff, "콜렉터": collector_buff, "붕어빵(15분)": bungeoppang_buff,
+                "무기 제련": weapon_refine_buff, "고급 무기 제련": adv_weapon_refine_buff, **champion_buffs}
 
 # 링크 스킬 중 스펙에 더하는 부분: 스탯창에 반영된 링크는 OFF일 때만 LINK_LVL 레벨 효과를 빼고(ON이면 그대로), 반영되지 않은 링크는 ON일 때 효과를 더한다
 # 엔버, 모도, 카인은 버프(엔버는 버프 시퀀스, 모도/카인은 TriggerBuff)로 따로 적용하므로 여기에 들어 있지 않다

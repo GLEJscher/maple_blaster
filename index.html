@@ -1307,10 +1307,11 @@ function buildLinks() {
    입력 칸(스탯창 스펙)의 값은 바꾸지 않고, 체크한 효과는 파이썬이 계산할 때만 더한다. */
 const DOP_NAMES = ["DOPING_ON", "NOBLE_CRIT", "NOBLE_DAMAGE", "NOBLE_BOSS", "NOBLE_IGNORE", "ASCENT_DOPING_ON"];
 const DOP_EXCL = [
-  [["ASCENT_DOPING_ON", "무기 제련"], ["ASCENT_DOPING_ON", "고급 무기 제련"]],
-  [1, 2, 3, 4, 5].map((n) => ["ASCENT_DOPING_ON", "챔피언의 가호 " + n + "단계"]),
+  [["DOPING_ON", "무기 제련"], ["DOPING_ON", "고급 무기 제련"]],
+  [1, 2, 3, 4, 5].map((n) => ["DOPING_ON", "챔피언의 가호 " + n + "단계"]),
   [["DOPING_ON", "붕어빵(15분)"], ["ASCENT_DOPING_ON", "달콤한 붕어빵 뿌리기(30분)"]],
 ];
+const MOVED_KEYS = ["무기 제련", "고급 무기 제련", ...[1, 2, 3, 4, 5].map((n) => "챔피언의 가호 " + n + "단계")];      // 예전에는 어센트 적용 도핑에 있었다 (액티브 스킬이라 어센트 미적용으로 옮김)
 const NOBLE_KEYS = ["노블(크게 한방)", "노블(길드의 이름으로)", "노블(보스 킬링 머신)", "노블(방어력은 숫자일 뿐)"];
 /* 노블: [DOPING_ON 키, 레벨 변수, 화면 이름, 효과 이름]. 스킬마다 켜고 끄고, 레벨(효과 %, 지속 분)은 칸에 적는다 */
 const DOP_NOBLES = [["노블(크게 한방)", "NOBLE_CRIT", "크게 한방", "크리티컬 데미지"], ["노블(길드의 이름으로)", "NOBLE_DAMAGE", "길드의 이름으로", "데미지"],
@@ -1322,11 +1323,11 @@ const DOP_ROWS_OFF = [
   [["DOPING_ON", "세이람", "세이람의 영약", "15분", "공격력 +10%, 공격력 +50, 보스 데미지 +10%, 크리티컬 데미지 +16%", "도핑:세이람"],
    ["DOPING_ON", "콜렉터", "콜렉터의 영약", "8분", "공격력 +100, 주스탯 +30, 부스탯 +30, 방어율 무시 +3%(38% → 41%), 스킬 레벨 +2(공격력 +2, 릴파벙 직격/충격파 기본 데미지 +3%p)", "도핑:콜렉터"],
    ["DOPING_ON", "붕어빵(15분)", "붕어빵 뿌리기(15분)", "15분", "공격력 +30", "도핑:붕어빵(15분)"]],
+  [["DOPING_ON", "무기 제련", "무기 제련", "40분", "크리티컬 데미지 +3%", "도핑:무기 제련"], ["DOPING_ON", "고급 무기 제련", "고급 무기 제련", "40분", "크리티컬 데미지 +5%", "도핑:고급 무기 제련"],
+   ...[1, 2, 3, 4, 5].map((n) => ["DOPING_ON", "챔피언의 가호 " + n + "단계", "챔피언의 가호 " + n + "단계", "30분",
+     "올스탯 +" + 10 * n + ", 공격력 +" + 5 * n + ", 보스 데미지 +" + 2 * n + "%, 방어율 무시 +" + 2 * n + "%, 크리티컬 데미지 +" + 0.5 * n + "%", "도핑:챔피언의 가호"])],
 ];
 const DOP_ROWS_ON = [
-  [["ASCENT_DOPING_ON", "무기 제련", "무기 제련", "40분", "크리티컬 데미지 +3%", "도핑:무기 제련"], ["ASCENT_DOPING_ON", "고급 무기 제련", "고급 무기 제련", "40분", "크리티컬 데미지 +5%", "도핑:고급 무기 제련"],
-   ...[1, 2, 3, 4, 5].map((n) => ["ASCENT_DOPING_ON", "챔피언의 가호 " + n + "단계", "챔피언의 가호 " + n + "단계", "30분",
-     "올스탯 +" + 10 * n + ", 공격력 +" + 5 * n + ", 보스 데미지 +" + 2 * n + "%, 방어율 무시 +" + 2 * n + "%, 크리티컬 데미지 +" + 0.5 * n + "%", "도핑:챔피언의 가호"])],
   [["ASCENT_DOPING_ON", "반짝이는 빨간 별 물약", "반짝이는 빨간 별 물약", "120분", "보스 데미지 +20%", "도핑:반짝이는 빨간 별 물약"]],
   [["ASCENT_DOPING_ON", "명예의 영약", "명예의 영약", "30분", "공격력 +60", "도핑:명예의 영약"],
    ["ASCENT_DOPING_ON", "마슈르의 선물 기상효과", "마슈르의 선물 기상효과", "30분", "공격력 +30", "도핑:마슈르의 선물 기상효과"],
@@ -1338,22 +1339,23 @@ const DOP_ROWS_ON = [
    ["ASCENT_DOPING_ON", "향상된 10단계 힘의 물약", "향상된 10단계 힘의 물약", "30분", "주스탯 +30", "도핑:향상된 10단계 힘의 물약"]],
 ];
 /* 저장된 도핑 값을 지금 구조에 맞춘다: 빠진 키는 꺼짐으로, 모르는 키는 버린다. 예전에 "노블" 한 칸으로 4개를 켰다면 4개를 모두 켠다 */
-function normDopingDict(d, old) {
+function normDopingDict(d, old, legacy) {      // legacy: 예전 어센트 적용 도핑 값 (제련/챔피언을 어센트 미적용으로 옮길 때 쓴다)
   old = old && typeof old === "object" ? old : {};
-  return Object.fromEntries(Object.keys(S.defaults[d]).map((k) => [k, !!(old[k] || (d === "DOPING_ON" && old["노블"] && NOBLE_KEYS.includes(k)))]));
+  return Object.fromEntries(Object.keys(S.defaults[d]).map((k) => [k, !!(old[k] || (d === "DOPING_ON" && ((old["노블"] && NOBLE_KEYS.includes(k)) || (legacy && legacy[k] && MOVED_KEYS.includes(k)))))]));
 }
 function normDopingOverrides(o) {      // 저장해 둔 프리셋의 도핑 값을 맞춘다. 기본값과 같아지면 뺀다(overrides()와 같은 모양)
   if (!o || !S.defaults || !S.defaults.DOPING_ON) return o;
-  const r = { ...o };
+  const r = { ...o }, legacy = r.ASCENT_DOPING_ON;
   for (const d of ["DOPING_ON", "ASCENT_DOPING_ON"]) {
-    if (!(d in r)) continue;
-    const nv = normDopingDict(d, r[d]);
+    if (!(d in r) && !(d === "DOPING_ON" && legacy && MOVED_KEYS.some((k) => legacy[k]))) continue;
+    const nv = normDopingDict(d, r[d], legacy);
     if (same(nv, S.defaults[d])) delete r[d]; else r[d] = nv;
   }
   return r;
 }
 function fixDopingExclusive() {      // 같이 쓸 수 없는 도핑이 함께 켜져 있으면 앞의 것만 남긴다
-  for (const d of ["DOPING_ON", "ASCENT_DOPING_ON"]) { if (!S.defaults[d]) return; S.values[d] = normDopingDict(d, S.values[d]); }
+  const legacy = S.values.ASCENT_DOPING_ON;
+  for (const d of ["DOPING_ON", "ASCENT_DOPING_ON"]) { if (!S.defaults[d]) return; S.values[d] = normDopingDict(d, S.values[d], legacy); }
   for (const grp of DOP_EXCL) {
     let kept = false;
     for (const [d, k] of grp) { if (!S.values[d][k]) continue; if (kept) S.values[d][k] = false; else kept = true; }
