@@ -91,7 +91,7 @@ Hat = gear_stat(main=421, sub=213, attack=56, all_pct=5, pot_main_pct=34, pot_su
 
 | 변수 | 의미 |
 |---|---|
-| `aw`, `Sharp`, `Combat_ord1` | 어센트에 적용되지 않는 오라 웨폰(방무, 최종뎀), 쓸샾(크뎀), 쓸컴뱃(주/부스탯%, 공격력, 크뎀, 보공, 최종뎀, 방무 38% → 35%로 줄어든 만큼) |
+| `aw`, `Sharp`, `Combat_ord1` | 어센트에 적용되지 않는 오라 웨폰(방무, 최종뎀), 쓸샾(크뎀), 쓸컴뱃(주/부스탯%, 공격력, 크뎀, 보공, 그리고 곱연산으로 최종뎀 72% → 70%, 방무 38% → 35%로 줄어든 만큼) |
 | `ASCENT_EXCLUDE` | 위 스탯과 모자/반지를 더한 값 (기본값 `Ring_1 + Ring_2 + Ring_3 + Hat + aw + Sharp + Combat_ord1`) |
 | `ASCENT_PROFICIENCY` | 쓸컴뱃을 쓰지 않을 때의 숙련도 (기본 0.90, 스탯창은 0.91) |
 | `ASCENT_EXCLUDE_EXTRA` | 이 밖에 `base_spec`에 들어 있지만 어센트에는 적용되지 않는 효과(자버프 등 액티브 스킬 사용 효과, 조건부 패시브 등)를 `CharaInfo`로 적는 곳. 기본은 비어 있음 |

@@ -88,10 +88,13 @@ Sharp = CharaInfo(critDamage=8)
 # 쓸컴뱃 + 숙련도 91 -> 90으로 감소
 # 쓸컴뱃 방어율 무시: 미적용 +35%, 적용(스킬 레벨 +1) +38%, 콜렉터 적용(스킬 레벨 +2) +41%. base_spec의 방무에는 38%가 들어 있으므로 어센트에서는 38% -> 35%로 줄어든 만큼 뺀다
 #  (방무는 곱연산이라 CharaInfo의 뺄셈으로 구한다: 100 - 100*(100-38)/(100-35) = 4.615%)
+# 쓸컴뱃 최종 데미지: 미적용 +70%, 적용 +72%. 최종 데미지도 곱연산이라 "2%p 감소"가 아니라 72% 출처를 빼고 70% 출처를 넣는다
+#  (CharaInfo의 뺄셈으로 구한다: (1.72/1.70 - 1) x 100 = 1.176%를 빼는 것과 같다)
 # 쓸컴뱃 메용, 소숫점 버림 / 기본 스탯: 5*level + 18 에서 1%p만큼 mainstat 감소(level은 base_spec의 레벨)
 decrease_stat = math.floor((5*base_spec.level+18)*0.16) - math.floor((5*base_spec.level+18)*0.15)
 Combat_ord1 = CharaInfo(mainStat=decrease_stat, 
-                        attack=2, critDamage=1, bossDamage=1, finalDamage=2,
+                        attack=2, critDamage=1, bossDamage=1,
+                        finalDamage=(CharaInfo(finalDamage=72) - CharaInfo(finalDamage=70)).finalDamage,
                         armorIgnore=(CharaInfo(armorIgnore=38) - CharaInfo(armorIgnore=35)).armorIgnore)
 
 
