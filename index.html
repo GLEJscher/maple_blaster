@@ -201,6 +201,7 @@ html.no-hl .field.changed .num,html.no-hl .field.changed .txt,html.no-hl .field.
 .tip .r b{color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
 .ordlist{display:flex;flex-direction:column;gap:6px;max-width:420px}
 .ordrow{display:flex;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--grid);border-radius:10px}
+.ordrow.dis{opacity:.5;pointer-events:none}
 .ordrow .no{width:20px;color:var(--muted);font-variant-numeric:tabular-nums}.ordrow .nm{flex:1;font-weight:600}.ordrow .nm small{font-weight:400;color:var(--ink2);margin-left:8px}
 .pconf{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-wash)}
 .pconf[hidden]{display:none}.pconf .ct{flex:1 1 220px;font-size:calc(12.5px*var(--fs,1))}
@@ -371,7 +372,8 @@ const GEAR_NAMES = ["Hat", "Ring_1", "Ring_2", "Ring_3"];      // 어센트에 �
 const ASCENT_ONLY = [...GEAR_NAMES, "SEED_RING_STAT"];
 const GEAR_KOR = {};
 const ORDER_LABEL = { ORDER_ORIGIN_LAST: "후오리진", ORDER_ORIGIN_FIRST: "선오리진", ORDER_BIG: "극딜(오리진 없음)", ORDER_MINI: "준극딜" };
-const BUFF_FULL = { 벙버: "벙커 버스터", 맥마: "맥시마이즈 캐논", 앺숔: "애프터이미지 쇼크", 메여축: "메이플 여신의 축복", 리버티: "윌 오브 리버티", 엔버: "엔버 링크", 리레: "리스트레인트 링" };
+const BUFF_FULL = { 벙버: "벙커 버스터", 맥마: "맥시마이즈 캐논", 앺숔: "애프터이미지 쇼크", 메여축: "메이플 여신의 축복", 리버티: "윌 오브 리버티", 엔버: "엔버 링크", 리레: "리스트레인트 링", 데티: "데티 2차 해방 버프(초월: 최초의 유산)" };
+const BUFF_LOCK = (b) => b === "데티" && !S.values.DESTINY_WEAPON_2;   // 데스티니 무기 2차 초월을 끄면 데티는 맨 아래에서 움직일 수 없다
 const ACTIONS = ["인팬트리", "버프", "버브", "발칸", "오리진", "엔버"];
 
 /* ============================ 상태 ============================ */
@@ -427,7 +429,7 @@ function overrides() {
 function applyOverrides(o, sync = true) {
   S.values = clone(S.defaults);
   for (const [k, v] of Object.entries(o || {})) if (k in S.defaults && typeof v === typeof S.defaults[k]) S.values[k] = clone(v);
-  clampNonNeg(); clampRange(); fixDopingExclusive();
+  clampNonNeg(); clampRange(); fixDopingExclusive(); fixBuffOrder();
   if (sync) syncAll();
 }
 const SPEC_LIM = {            // 스탯 칸의 한계: 레벨은 1 이상의 정수, 방어율 무시/속성 내성 무시는 100% 이하
@@ -462,8 +464,15 @@ function clampRange() {
   if (+S.values.t_0 > +S.values.t_n) S.values.t_0 = S.values.t_n;
   if (+S.values.t_0 < 0) S.values.t_0 = 0;
 }
+function fixBuffOrder() {            // 극딜 버프 순서: 빠진 버프는 맨 뒤에 붙이고(예전에 저장한 7개짜리 순서), 데티는 2차 초월이 꺼져 있으면 맨 아래에 둔다
+  const def = S.defaults.BUFF_ORDER; if (!Array.isArray(def)) return;
+  const a = (Array.isArray(S.values.BUFF_ORDER) ? S.values.BUFF_ORDER : []).filter((b, i, l) => def.includes(b) && l.indexOf(b) === i);
+  for (const b of def) if (!a.includes(b)) a.push(b);
+  S.values.BUFF_ORDER = [...a.filter((b) => !BUFF_LOCK(b)), ...a.filter(BUFF_LOCK)];
+}
 function setVal(name, v) {
   S.values[name] = v;
+  if (name === "BUFF_ORDER" || name === "DESTINY_WEAPON_2") { fixBuffOrder(); if (S.refs.BUFF_ORDER && S.refs.BUFF_ORDER.sync) S.refs.BUFF_ORDER.sync(); refreshChanged("BUFF_ORDER"); }
   if (name === "SIM_TIME" || name === "t_n" || name === "t_0") { clampRange(); for (const k of ["SIM_TIME", "t_n", "t_0"]) if (S.refs[k] && S.refs[k].sync) S.refs[k].sync(); }
   refreshChanged(name);
   store.set("blaster-dpm:current", overrides());
@@ -823,7 +832,7 @@ function fieldShell(it, control, wide) {
       it.sub || it.name === "SEED_CONTI" || it.name === "SEED_RESTRAINT" || NOBLE_ICON[it.name] ? iconImg(NOBLE_ICON[it.name] || it.name) : null,
       it.label ? el("span", { class: "fkor strong", text: it.label }) : null, el("span", { class: "fname" + (it.label ? " dim" : ""), text: it.name }),
       el("span", { class: "fchg", text: "바꿈" }),
-      el("button", { class: "freset", onclick: () => { S.values[it.name] = clone(S.defaults[it.name]); S.refs[it.name].sync(); refreshChanged(it.name); store.set("blaster-dpm:current", overrides()); S.dirty = true; scheduleRun(); } }, "되돌리기")),
+      el("button", { class: "freset", onclick: () => { S.values[it.name] = clone(S.defaults[it.name]); if (it.name === "DESTINY_WEAPON_2" || it.name === "BUFF_ORDER") { fixBuffOrder(); refreshChanged("BUFF_ORDER"); if (S.refs.BUFF_ORDER) S.refs.BUFF_ORDER.sync(); } S.refs[it.name].sync(); refreshChanged(it.name); store.set("blaster-dpm:current", overrides()); S.dirty = true; scheduleRun(); } }, "되돌리기")),
     isGear ? el("div", { class: "fitem", hidden: true }) : null,
     (it.note !== undefined ? it.note : it.comment) ? el("div", { class: "fnote", text: it.note !== undefined ? it.note : it.comment }) : null, control);
   return root;
@@ -1228,10 +1237,11 @@ function buildField(it) {
       box.textContent = "";
       S.values[n].forEach((b, i) => {
         const mv = (d) => { const a = S.values[n].slice(); [a[i], a[i + d]] = [a[i + d], a[i]]; setVal(n, a); draw(); };
-        box.append(el("div", { class: "ordrow" },
+        const lock = BUFF_LOCK(b), L = S.values[n];
+        box.append(el("div", { class: "ordrow" + (lock ? " dis" : ""), title: lock ? "'데스티니 무기 2차 초월'을 켜면 쓸 수 있습니다" : "" },
           el("span", { class: "no", text: String(i + 1) }), el("span", { class: "nm" }, b, el("small", { text: BUFF_FULL[b] || "" })),
-          el("button", { class: "btn small", type: "button", "aria-label": b + " 위로", disabled: i === 0, onclick: () => mv(-1) }, "▲"),
-          el("button", { class: "btn small", type: "button", "aria-label": b + " 아래로", disabled: i === S.values[n].length - 1, onclick: () => mv(1) }, "▼")));
+          el("button", { class: "btn small", type: "button", "aria-label": b + " 위로", disabled: lock || i === 0, onclick: () => mv(-1) }, "▲"),
+          el("button", { class: "btn small", type: "button", "aria-label": b + " 아래로", disabled: lock || i === L.length - 1 || BUFF_LOCK(L[i + 1]), onclick: () => mv(1) }, "▼")));
       });
     };
     control = box; sync = draw;

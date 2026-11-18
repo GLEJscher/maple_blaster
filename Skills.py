@@ -186,9 +186,11 @@ PILE_START_STACK = 0
 # 스킬 딜레이
 # 버프 시퀀스 딜레이, 버프당 100ms(0.1) / 블래는 총 8개 사용이지만, 1개는 딜과 관련이 없으므로 시뮬레이션에서는 7개만 구현
 BUFF_DELAY = 0.8     
-# 극딜 버프를 쓰는 순서: 벙버(벙커 버스터), 맥마(맥시마이즈 캐논), 앺숔(애프터이미지 쇼크), 메여축(메이플 여신의 축복), 리버티(윌 오브 리버티), 엔버(엔버링크), 리레(리스트레인트 링)
-# 순서만 바꿔 쓴다 (7개를 모두 한 번씩 적어야 한다). 꺼 둔 버프(링크/시드링 OFF 등)는 건너뛴다
-BUFF_ORDER = ["벙버", "맥마", "앺숔", "메여축", "리버티", "엔버", "리레"]
+# 극딜 버프를 쓰는 순서: 벙버(벙커 버스터), 맥마(맥시마이즈 캐논), 앺숔(애프터이미지 쇼크), 메여축(메이플 여신의 축복), 리버티(윌 오브 리버티), 엔버(엔버링크), 리레(리스트레인트 링), 데티(데티 2차 해방 버프)
+# 순서만 바꿔 쓴다 (8개를 모두 한 번씩 적어야 한다). 꺼 둔 버프(링크/시드링 OFF, 데티 2차 초월 OFF 등)는 건너뛴다
+BUFF_ORDER = ["벙버", "맥마", "앺숔", "메여축", "리버티", "엔버", "리레", "데티"]
+# 데스티니 무기 2차 초월: 켜면 데티 2차 해방 버프(초월: 최초의 유산, 60초 공격력 +10%, 쿨 120초, 쿨감/쿨초/벞지 무관)를 극딜 버프에 쓴다
+DESTINY_WEAPON_2 = False
 
 #매그팡
 MAG_FANG_DELAY = 0.5
@@ -745,6 +747,11 @@ for _name, _lv, _tb in (("컨티뉴어스 링", CONTI_LVL, CONTI_TABLE), ("리�
 restraint = BuffSkill(name="리레",
                       duration=RESTRAINT_DURATION[RESTRAINT_LVL], cooldown=120,
                       effect=RESTRAINT_TABLE[RESTRAINT_LVL])
+
+# 데스티니 무기 2차 초월 - 데티 2차 해방 버프(초월: 최초의 유산): 60초 동안 공격력 +10%, 쿨 120초. 쿨감/쿨타임 초기화/버프 지속 시간 증가의 영향을 받지 않는다
+destiny_buff = BuffSkill(name="데티 2차 해방 버프",
+                         duration=60, cooldown=120, cooldown_applies=False,
+                         effect=CharaInfo(attackp=10))
 
 # 시드링 - 컨티뉴어스 링: 상시 적용 (쿨타임 없음). run()의 always 인자로 시작 시각부터 켜 둔다
 continuous = BuffSkill(name="컨티",
@@ -1546,12 +1553,14 @@ def run_bunker_maxi(spec, duration=60, buff_delay=BUFF_DELAY, breaker=True, vulk
         elif l and not g:
             spec = spec + SEED_RING_STAT
     buff_pool = {"벙버": bunker_buster_bff, "맥마": maximize_cannon, "앺숔": afterimage_shock_bff, "메여축": goddess_glory,
-                 "리버티": liberty, "엔버": soul_contract, "리레": restraint}
-    if sorted(BUFF_ORDER) != sorted(buff_pool):
+                 "리버티": liberty, "엔버": soul_contract, "리레": restraint, "데티": destiny_buff}
+    buff_order = list(BUFF_ORDER) + (["데티"] if "데티" not in BUFF_ORDER and len(BUFF_ORDER) == len(buff_pool) - 1 else [])   # 예전 7개짜리 순서는 데티를 맨 뒤에 붙인다
+    if sorted(buff_order) != sorted(buff_pool):
         raise ValueError(f"BUFF_ORDER는 {list(buff_pool)}를 한 번씩 모두 적어야 합니다 (지금: {BUFF_ORDER})")
     buff_use = {"벙버": True, "맥마": True, "앺숔": afterimage, "메여축": extra_buffs, "리버티": extra_buffs,
-                "엔버": extra_buffs and bool(links["엔버"]), "리레": bool(restraint_on)}      # 엔버링크는 링크 ON일 때, 리레는 시드링 ON일 때
-    buffs = tuple(buff_pool[n] for n in BUFF_ORDER if buff_use[n])    # 버프 시퀀스 (BUFF_ORDER 순서)
+                "엔버": extra_buffs and bool(links["엔버"]), "리레": bool(restraint_on),
+                "데티": bool(DESTINY_WEAPON_2)}      # 엔버링크는 링크 ON일 때, 리레는 시드링 ON일 때, 데티는 데스티니 무기 2차 초월 ON일 때
+    buffs = tuple(buff_pool[n] for n in buff_order if buff_use[n])    # 버프 시퀀스 (BUFF_ORDER 순서)
     buff_combo = make_buff_combo(*buffs, delay=buff_delay)
     if order is not None:                                # order를 주면 breaker/vulkan/infantry 옵션 대신 order 순서대로 사용
         opening = make_opening(order, buff_combo)
