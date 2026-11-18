@@ -203,6 +203,8 @@ html.no-hl .field.changed .num,html.no-hl .field.changed .txt,html.no-hl .field.
 .ordrow{display:flex;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--grid);border-radius:10px}
 .ordrow.dis{opacity:.5;pointer-events:none}
 .ordrow .no{width:20px;color:var(--muted);font-variant-numeric:tabular-nums}.ordrow .nm{flex:1;font-weight:600}.ordrow .nm small{font-weight:400;color:var(--ink2);margin-left:8px}
+.pdiff{flex-basis:100%;font-size:calc(12.5px*var(--fs,1));color:var(--ink2)}.pdiff[hidden]{display:none}.pdiff summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.pdiff ul{margin:6px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;max-height:260px;overflow:auto}.pdiff li{display:flex;flex-wrap:wrap;gap:4px 8px}.pdiff .dn{font-weight:600;color:var(--ink)}.pdiff .dv{font-variant-numeric:tabular-nums;word-break:break-all}.pdiff .da{color:var(--muted)}
 .pconf{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--accent);border-radius:10px;background:var(--accent-wash)}
 .pconf[hidden]{display:none}.pconf .ct{flex:1 1 220px;font-size:calc(12.5px*var(--fs,1))}
 .simlist{margin:4px 0 0;padding-left:18px}
@@ -596,6 +598,29 @@ function loadNames() { const v = store.get("blaster-dpm:slot-names"); return Arr
 function cleanName(s) { return [...String(s == null ? "" : s)].slice(0, NAME_MAX).join("").trim(); }
 function slotName(i) { const n = loadNames()[i]; return typeof n === "string" && cleanName(n) ? cleanName(n) : "프리셋 " + (i + 1); }
 function setSlotName(i, v) { const names = loadNames(); const c = cleanName(v); names[i] = c || null; store.set("blaster-dpm:slot-names", names); }
+function diffText(v) {            // 바뀐 값 목록에 보여 줄 값 (참/거짓은 사용/끔, 목록은 쉼표로 이어 붙인다)
+  if (typeof v === "boolean") return v ? "사용" : "끔";
+  if (v === null || v === undefined || v === "") return "(비어 있음)";
+  if (typeof v === "number") return String(Math.round(v * 1e6) / 1e6);
+  if (Array.isArray(v)) return v.every((x) => x === null || typeof x !== "object") ? (v.length ? v.join(", ") : "(없음)") : JSON.stringify(v);
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+}
+function diffRows(saved, cur) {     // 저장한 값과 지금 값에서 다른 칸 [{이름, 저장, 현재}] (저장값에 없는 칸은 기본값으로 비교한다)
+  const rows = [];
+  const walk = (label, a, b) => {
+    if (same(a, b)) return;
+    const obj = (x) => x && typeof x === "object" && !Array.isArray(x);
+    if (obj(a) && obj(b)) { for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) walk(label + " › " + k, a[k], b[k]); return; }
+    rows.push({ name: label, a: diffText(a), b: diffText(b) });
+  };
+  for (const n of new Set([...Object.keys(saved), ...Object.keys(cur)])) {
+    if (!S.byName[n]) continue;
+    const it = S.byName[n];
+    walk(it.label || n, n in saved ? saved[n] : S.defaults[n], n in cur ? cur[n] : S.defaults[n]);
+  }
+  return rows;
+}
 function buildPresets() {
   const box = el("div", { class: "presets", role: "group", "aria-label": "프리셋" });
   const btns = [];
@@ -646,7 +671,8 @@ function buildPresets() {
   const resetNamesB = el("button", { class: "btn small", type: "button" }, "프리셋 이름 초기화");
   resetNamesB.addEventListener("click", () => { store.set("blaster-dpm:slot-names", Array(PRESET_N).fill(null)); flash("프리셋 이름을 기본 이름으로 되돌렸어요"); updatePresetUI(); });
   namesRow.append(resetNamesB);
-  box.append(row, acts, namesRow, conf, msg);
+  const diffBox = el("details", { class: "pdiff", hidden: true });
+  box.append(row, acts, namesRow, conf, msg, diffBox);
   let ft = null;
   function flash(t) { msg.dataset.flash = t; msg.textContent = t; clearTimeout(ft); ft = setTimeout(() => { delete msg.dataset.flash; updatePresetUI(); }, 3500); }
   saveB.addEventListener("click", () => {
@@ -689,6 +715,13 @@ function buildPresets() {
       : mod ? "「" + slotName(act) + "」 보는 중 · 저장한 값에서 바뀌었어요 (저장을 누르면 덮어써요)"
       : "「" + slotName(act) + "」 보는 중 · 저장한 값과 같아요";
     msg.classList.toggle("warn", !!mod && !msg.dataset.flash);
+    const wasOpen = diffBox.open; diffBox.textContent = ""; diffBox.hidden = !mod;
+    if (mod) {
+      const rows = diffRows(saved, cur);
+      diffBox.append(el("summary", { text: "바뀐 값 " + rows.length + "개 보기" }),
+        el("ul", {}, rows.map((r) => el("li", {}, el("span", { class: "dn", text: r.name }), el("span", { class: "dv", text: r.a }), el("span", { class: "da", text: "→" }), el("span", { class: "dv", text: r.b })))));
+      diffBox.open = wasOpen;
+    }
   };
   const a0 = store.get("blaster-dpm:active"); S.activeSlot = Number.isInteger(a0) && a0 >= 0 && a0 < PRESET_N ? a0 : null;
   return box;
